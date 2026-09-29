@@ -1,0 +1,1 @@
+{"data_version":"2026-07-30","n_proteins":11757,"n_shards":256,"n_proteomics_only_proteins":7337,"n_low_confidence_site_organ_records":7095,"site_confidence_rule":"total raw PSM across all glycoforms and 54 samples >= 5","pairwise_rule":"same UniProt glycosite ID; both organ records pass site confidence"}
