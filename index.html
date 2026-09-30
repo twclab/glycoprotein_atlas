@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore age-associated protein abundance and site-resolved glycan composition across five mouse organs.">
+  <meta name="description" content="Explore age-associated protein abundance and site-resolved N-glycosylation across five mouse atlas organs and male and female myelin.">
   <title>The Glycoprotein Atlas</title>
   <link rel="icon" href="assets/glycan-5.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css?v=2026-09-04b">
-  <script src="assets/theme.js?v=2026-09-04b" defer></script>
-  <script src="assets/app.js?v=2026-09-04b" defer></script>
+  <link rel="stylesheet" href="assets/styles.css?v=2026-09-29-e330">
+  <script src="assets/theme.js?v=2026-09-29-e330" defer></script>
+  <script src="assets/app.js?v=2026-09-29-e330" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -23,6 +23,7 @@
     <nav class="main-nav" aria-label="Primary navigation">
       <a href="#overview" data-page-link="overview">Overview</a>
       <a href="#explore" data-explore-link>Explore</a>
+      <a href="#tvd" data-page-link="tvd">Age comparisons</a>
       <a href="#methods" data-page-link="methods">Methods</a>
       <a href="#learning" data-page-link="learning">Learning</a>
       <a href="#publications" data-page-link="publications">Publications</a>
@@ -34,14 +35,13 @@
   <main id="main">
     <section class="home-view" id="home" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow">Mouse lifespan atlas</p>
         <div class="hero-title-lockup">
           <h1 id="hero-title">The <em class="glycoprotein-word">Glycoprotein<span class="glycan-animation" aria-hidden="true"><img src="assets/glycan-1.svg" alt="" class="glycan-frame frame-1"><img src="assets/glycan-2.svg" alt="" class="glycan-frame frame-2"><img src="assets/glycan-3.svg" alt="" class="glycan-frame frame-3"><img src="assets/glycan-4.svg" alt="" class="glycan-frame frame-4"><img src="assets/glycan-5.svg" alt="" class="glycan-frame frame-5"></span></em> <span class="atlas-word">Atlas</span></h1>
         </div>
       </div>
 
       <div class="hero-search-shell">
-        <p class="hero-intro">Follow protein abundance and site-specific N-glycosylation across the mouse lifespan.</p>
+        <p class="hero-intro">Explore protein abundance and site-specific N-glycosylation across the mouse lifespan.</p>
         <form class="protein-search hero-search" role="search" autocomplete="off" data-search-form>
           <label class="sr-only" for="hero-search-input">Search proteins</label>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
@@ -51,10 +51,10 @@
         </form>
         <div class="favorite-row" aria-label="Example proteins">
           <span>Start with</span>
-          <button type="button" data-favorite="Ace">Ace</button>
+          <button type="button" data-favorite="Acan">Acan</button>
           <button type="button" data-favorite="Lgmn">Lgmn</button>
           <button type="button" data-favorite="Mog">Mog</button>
-          <button type="button" data-favorite="Hapln2">Hapln2</button>
+          <button type="button" data-favorite="Hapln1">Hapln1</button>
         </div>
       </div>
 
@@ -72,10 +72,11 @@
           <div class="search-results" id="explore-search-results" role="listbox" data-search-results hidden></div>
         </form>
         <div class="explore-top-actions">
-          <span class="release-pill">July 30 release</span>
+          <span class="release-pill">E330 data release</span>
           <nav class="explore-nav" aria-label="Explorer navigation">
             <a href="#overview" data-page-link="overview">Overview</a>
             <a href="#explore" data-explore-link aria-current="page">Explore</a>
+            <a href="#tvd" data-page-link="tvd">Age comparisons</a>
             <a href="#methods" data-page-link="methods">Methods</a>
             <a href="#learning" data-page-link="learning">Learning</a>
             <a href="#publications" data-page-link="publications">Publications</a>
@@ -96,6 +97,7 @@
 
             <h2 id="protein-title"><span data-gene>—</span> <small data-protein-id></small></h2>
             <p data-description></p>
+            <figure class="cat-easter-egg" data-cat-easter-egg hidden><img data-src="assets/cat-test.jpg" alt="Ada or Dalton, the atlas test cat" loading="lazy"><figcaption>A little CAT from the atlas team.</figcaption></figure>
           </div>
           <div class="protein-heading-side">
             <div class="protein-class-legend" data-segment-legend aria-label="Glycan class legend"></div>
@@ -105,17 +107,17 @@
         <section class="protein-map" aria-labelledby="protein-map-title">
           <div class="section-label-row overlay-heading">
             <div>
-              <h3 id="protein-map-title">Protein Site Composition Overlay</h3>
+              <h3 id="protein-map-title">N-glycosite Composition Overview</h3>
             </div>
           </div>
           <div class="segment-scroll" data-segment-overlay></div>
-          <p class="segment-note">Asterisk signifies low confidence site; composition pooled across all detected ages.</p>
+          <p class="segment-note">* Signifies low-confidence site (&lt;5 PSMs); composition calculated from all detected ages and replicates by pooling PSMs.</p>
         </section>
 
         <section class="site-analysis" aria-labelledby="site-analysis-title">
           <div class="scientific-plot-grid">
             <article class="scientific-panel site-statistics">
-              <h3 id="site-analysis-title">Site Statistics</h3>
+              <h3 id="site-analysis-title">N-glycosite Statistics</h3>
               <h4 data-detail-site>Choose a glycosite</h4>
               <p class="confidence-note" data-confidence-note></p>
             <div class="analysis-controls">
@@ -124,38 +126,39 @@
               <div>
                 <span class="control-label">Glycan ages</span>
                 <div class="segmented-control quiet" aria-label="Glycan age grouping" data-age-control>
-                  <button type="button" class="active" data-age-mode="age_bins">Y / MA / Old</button>
-                  <button type="button" data-age-mode="ages">9 ages</button>
+                  <button type="button" class="active" data-age-mode="age_bins">Age bins</button>
+                  <button type="button" data-age-mode="ages">Individual ages</button>
                 </div>
+                <small>Y = young; MA = middle-aged; O = old</small>
               </div>
             </div>
               <div class="site-metrics" data-site-metrics></div>
             </article>
               <article class="scientific-panel">
                 <div class="scientific-panel-heading">
-                  <h4>Glycan Types, mean ± SEM <span data-glycan-mode-label></span></h4>
-                  <p>Composition (%)</p>
+                  <h4>N-glycosite composition with age</h4>
                 </div>
-                <div class="scientific-chart" data-class-chart></div>
                 <div class="chart-legend" data-class-legend></div>
+                <div class="scientific-chart" data-class-chart></div>
               </article>
 
               <article class="scientific-panel">
                 <div class="scientific-panel-heading">
-                  <h4>Protein Scaled Intensity, mean ± SEM</h4>
+                  <h4>Protein abundance with age</h4>
 
                 </div>
-                <div class="scientific-chart" data-protein-chart></div>
                 <div class="chart-legend" data-protein-legend></div>
+                <div class="scientific-chart" data-protein-chart></div>
               </article>
 
               <article class="scientific-panel">
                 <div class="scientific-panel-heading">
-                  <h4><span data-diversity-title></span>, mean ± SEM <span data-shannon-mode-label></span></h4>
+                  <h4 data-diversity-title>N-glycosite heterogeneity with age</h4>
 
                 </div>
-                <div class="scientific-chart" data-shannon-chart></div>
+                <div class="heterogeneity-controls"><div class="segmented-control quiet"><button type="button" class="active" data-diversity-metric="effective">Weighted glycan types</button><button type="button" data-diversity-metric="shannon">Shannon H</button></div><div class="segmented-control quiet"><button type="button" class="active" data-diversity-grouping="auto">Automatic</button><button type="button" data-diversity-grouping="sample">Per sample</button><button type="button" data-diversity-grouping="pooled">Pooled by age</button></div></div>
                 <div class="chart-legend" data-shannon-legend></div>
+                <div class="scientific-chart" data-shannon-chart></div>
               </article>
 
           </div>
@@ -163,10 +166,9 @@
             <article class="pairwise-detail-panel" aria-labelledby="pairwise-title">
               <div class="panel-header">
                 <div>
-                  <p class="eyebrow">Cross-organ</p>
-                  <h3 id="pairwise-title">Pairwise organ comparison</h3>
+                  <h3 id="pairwise-title">Pairwise glycosite comparison</h3>
                 </div>
-                <span class="method-pill">Pooled class vectors</span>
+                <span class="method-pill">All-age PSM-pooled profiles</span>
               </div>
               <div class="pairwise-detail" data-pairwise-list></div>
             </article>
@@ -174,11 +176,11 @@
               <div class="panel-header">
                 <div>
 
-                  <h3>Exact Glycan Abundance</h3>
+                  <h3>Exact N-glycan composition with age</h3>
                 </div>
-                <span class="hover-hint">Hover for PSM count</span>
+                <span class="hover-hint">Hover for full composition, type, and PSM count</span>
               </div>
-              <div class="abundance-scale" aria-label="Percent abundance: 0 to 100 percent"><span>0%</span><i></i><span>100%</span></div>
+              <div class="abundance-scale" data-exact-scale aria-label="Percent abundance"><span>0%</span><i></i><span>100%</span></div>
               <p class="exact-key">N: HexNAc · H: Hex · F: Fuc · A: NeuAc · G: NeuGc · P: Phospho</p>
               <div class="exact-grid" data-exact-grid tabindex="0" role="region" aria-label="Exact glycan abundance by age"></div>
             </article>
@@ -188,21 +190,38 @@
       </div>
     </section>
 
+    <section class="content-page" id="tvd" data-page="tvd" aria-labelledby="tvd-title" hidden>
+      <div class="page-hero">
+        <p class="eyebrow">Age comparisons</p>
+        <h2 id="tvd-title">Glycosite composition changes with age.</h2>
+        <p class="page-lede">Each point is a tested N-glycosite. The horizontal axis shows glycan-type composition percent difference (total variation distance); the vertical axis shows the raw permutation p value. Unmeasured or insufficient-evidence comparisons are omitted, not treated as zero.</p>
+      </div>
+      <div class="tvd-controls">
+        <label>Dataset<select data-tvd-dataset></select></label>
+        <label>Grouping<select data-tvd-family></select></label>
+        <label>Comparison<select data-tvd-comparison></select></label>
+        <label>Find a protein or site<input type="search" data-tvd-search placeholder="Gene, UniProt ID, or site"></label>
+        <div class="tvd-zoom"><span>Zoom</span><button type="button" data-tvd-zoom="1.5">+</button><button type="button" data-tvd-zoom="0.666667">−</button><button type="button" data-tvd-zoom="reset">Reset</button></div>
+      </div>
+      <div class="tvd-plot" data-tvd-plot><p class="empty-note">Loading age-comparison data…</p></div>
+      <p class="page-lede">Tests compare glycan-type composition among animals with detected sites. Orange points pass raw p &lt; 0.05; no multiple-testing cutoff is applied here.</p>
+    </section>
+
     <section class="content-page" id="overview" data-page="overview" aria-labelledby="overview-title" hidden>
       <div class="page-hero">
         <p class="eyebrow">Overview</p>
-        <h2 id="overview-title">One lifespan, five organs, two molecular layers.</h2>
-        <p class="page-lede">The Glycoprotein Atlas brings total-protein abundance and site-resolved glycan composition into one protein-first view across the mouse lifespan.</p>
+        <h2 id="overview-title">One lifespan, seven datasets, two molecular layers.</h2>
+        <p class="page-lede">The Glycoprotein Atlas brings total-protein abundance and site-resolved glycan composition into one protein-first view across five mouse atlas organs and male and female myelin.</p>
       </div>
       <div class="page-stat-grid" aria-label="Atlas scope">
-        <div><strong data-stat="proteins">11,757</strong><span>searchable proteins</span></div>
-        <div><strong>5</strong><span>organs</span></div>
-        <div><strong>9</strong><span>ages</span></div>
-        <div><strong>6</strong><span>replicates per age</span></div>
+        <div><strong data-stat="proteins">12,280</strong><span>searchable proteins</span></div>
+        <div><strong>5 + 2</strong><span>organs + myelin datasets</span></div>
+        <div><strong>9</strong><span>atlas ages</span></div>
+        <div><strong>3</strong><span>male-myelin ages</span></div>
       </div>
       <div class="page-grid page-grid-three">
         <article class="page-card"><span>01</span><h3>Find a protein</h3><p>Search by gene symbol or UniProt accession, including proteins observed only in the total-proteome layer.</p></article>
-        <article class="page-card"><span>02</span><h3>Follow abundance</h3><p>Compare normalized protein trajectories across brain, kidney, liver, plasma, and spleen from 1 to 28 months.</p></article>
+        <article class="page-card"><span>02</span><h3>Follow abundance</h3><p>Inspect globally median-normalized protein trajectories within the selected dataset. Atlas organs span 1–28 months; male myelin spans 3, 16, and 29 months.</p></article>
         <article class="page-card"><span>03</span><h3>Inspect glycosites</h3><p>Move from glycan-class summaries to exact structures, diversity, and matched cross-organ differences at individual sites.</p></article>
       </div>
       <div class="page-callout"><div><p class="eyebrow">Start exploring</p><h3>Open a known example or search the full catalog.</h3></div><a href="#explore" data-explore-link>Explore the atlas</a></div>
@@ -215,12 +234,12 @@
         <p class="page-lede">The display keeps abundance, site composition, and comparison confidence distinct so that each visual claim remains tied to the layer that supports it.</p>
       </div>
       <div class="page-grid page-grid-three">
-        <article class="page-card"><span>Protein abundance</span><h3>Age trajectories</h3><p>Median-normalized scaled intensity is summarized across six biological replicates at each age. The refreshed July 30 normalized values are used directly: upstream normalization resolved the prior group/run structure, so no secondary run adjustment is applied.</p></article>
-        <article class="page-card"><span>Site composition</span><h3>PSM-derived percentages</h3><p>Glycan composition is calculated at each observed N-glycosite and can be viewed as broad classes, exact structures, or Shannon diversity across three age bins or all age points.</p></article>
-        <article class="page-card"><span>Cross-organ comparison</span><h3>Matched sites only</h3><p>A site is high confidence when total PSM is at least 5 in each organ being compared. Lower-confidence observations stay visible with an asterisk but never enter pairwise distances.</p></article>
+        <article class="page-card"><span>Protein abundance</span><h3>Age trajectories</h3><p>Globally median-normalized scaled intensity is summarized as mean ± SEM across detected biological replicates. Datasets with only one or two detected replicates are marked with an asterisk.</p></article>
+        <article class="page-card"><span>Site composition</span><h3>Two distinct summaries</h3><p>Overview bars, hover values, and dominant type pool all PSMs. Age trajectories show the mean of sample percentages ± SEM. Neither treats missing samples as zero.</p></article>
+        <article class="page-card"><span>Heterogeneity</span><h3>Sample and pooled views</h3><p>Weighted glycan types and Shannon H can be shown as sample means ± SEM or as a PSM-pooled value per age group. Automatic mode uses sample means for evidence tier 4 or higher and pooled values otherwise.</p></article>
       </div>
       <div class="method-notes">
-        <div><strong>Age bins</strong><p>Young: 1, 3, 6 months · Middle-aged: 9, 12, 16 months · Old: 19, 22, 28 months.</p></div>
+        <div><strong>Age bins</strong><p>Atlas Y: 1, 3, 6 months · MA: 9, 12, 16 months · O: 19, 22, 28 months. Myelin groupings follow the source dataset.</p></div>
         <div><strong>Pairwise distance</strong><p>Total variation measures the absolute redistribution of glycan-class composition between matched organ-site profiles.</p></div>
         <div><strong>Missingness</strong><p>Absent measurements are reported as not detected. They are not silently imputed or converted to zero abundance.</p></div>
       </div>
@@ -237,8 +256,8 @@
         <article><h3>Glycosite</h3><p>A specific amino-acid position where a glycan was observed. Atlas labels such as N323 identify an asparagine-linked site at residue 323.</p></article>
         <article><h3>Glycan class</h3><p>A broad structural category—such as high mannose, fucosylated, or sialylated—used to make complex glycan inventories comparable.</p></article>
         <article><h3>Exact structure</h3><p>The measured monosaccharide composition for a glycan assignment. Several exact structures can contribute to one broad glycan class.</p></article>
-        <article><h3>Shannon diversity</h3><p>A summary of how many glycan classes are present and how evenly abundance is distributed among them. Higher values indicate a more diverse composition.</p></article>
-        <article><h3>PSM confidence</h3><p>Peptide-spectrum matches support a site observation. The atlas marks total PSM below 5 as low confidence and excludes it from cross-organ comparisons.</p></article>
+        <article><h3>Shannon diversity</h3><p>A measure of both the number and evenness of glycan types. Weighted glycan types (effective types) is exp(Shannon H), expressed as a more intuitive count.</p></article>
+        <article><h3>PSM confidence</h3><p>Peptide-spectrum matches support a site observation. An asterisk marks fewer than 5 site PSMs; seven evidence tiers are shown in the explorer.</p></article>
       </div>
       <div class="page-callout"><div><p class="eyebrow">Try an example</p><h3>Ace shows multiple shared sites; Hapln2 shows a proteomics-only record.</h3></div><a href="#explore" data-explore-link>Open Explore</a></div>
     </section>
@@ -259,13 +278,13 @@
       <div class="page-hero">
         <p class="eyebrow">Raw data</p>
         <h2 id="raw-data-title">Versioned inputs, reproducible outputs.</h2>
-        <p class="page-lede">The normalized 2026-07-30 release is versioned in the analysis repository with source identifiers, file hashes, dimensions, and import metadata.</p>
+        <p class="page-lede">The E330 website data release is generated reproducibly from the September E322 glycoproteomics outputs and seven normalized proteomics datasets. The browser reads processed JSON; raw experiment files are not served.</p>
       </div>
       <div class="page-grid page-grid-two">
-        <article class="page-card"><span>Proteomics</span><h3>Five normalized organ tables</h3><p>The current dashboard uses the refreshed normalized values directly for brain, kidney, liver, plasma, and spleen across all 54 age-by-replicate channels.</p></article>
-        <article class="page-card"><span>Glycoproteomics</span><h3>Five collapsed-peptide tables</h3><p>Site records include glycan-class percentages, exact glycan inventories, sample-level diversity summaries, and explicit confidence fields.</p></article>
+        <article class="page-card"><span>Proteomics</span><h3>Seven normalized datasets</h3><p>Five atlas organs plus male and female myelin. Data are summarized by dataset and age, with detected replicate counts.</p></article>
+        <article class="page-card"><span>Glycoproteomics</span><h3>Seven processed datasets</h3><p>Site records include PSM-pooled class percentages, exact glycan compositions, Shannon H, weighted glycan types, and evidence tiers.</p></article>
       </div>
-      <a class="repository-link" href="https://github.com/seyonechithrananda/aging_proteome_atlas">Open the analysis repository <span aria-hidden="true">↗</span></a>
+      <a class="repository-link" href="https://github.com/twclab/glycoprotein_atlas">Open the website repository <span aria-hidden="true">↗</span></a>
     </section>
 
     <section class="content-page" id="contact" data-page="contact" aria-labelledby="contact-title" hidden>
@@ -283,7 +302,7 @@
 
   <footer>
     <a class="wordmark" href="#home" data-home-link>The <span>Glycoprotein</span> Atlas</a>
-    <p>Mouse aging · proteome + glycoproteome · release <span data-version>2026-07-30</span></p>
+    <p>Mouse aging · proteome + glycoproteome · release <span data-version>E330-2026-09-29</span></p>
   </footer>
   <div class="tooltip" role="tooltip" data-tooltip hidden></div>
   <div class="sr-only" aria-live="polite" data-live-region></div>

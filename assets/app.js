@@ -1,10 +1,10 @@
 (() => {
   "use strict";
 
-  const ORGANS = ["brain", "kidney", "liver", "plasma", "spleen"];
-  const AGE_MONTHS = [1, 3, 6, 9, 12, 16, 19, 22, 28];
+  const ORGANS = ["brain", "spleen", "liver", "kidney", "plasma", "myelin_male", "myelin_female"];
+  const ORGAN_LABELS = { brain: "Brain", spleen: "Spleen", liver: "Liver", kidney: "Kidney", plasma: "Plasma", myelin_male: "Myelin · male", myelin_female: "Myelin · female" };
   const AGE_BINS = ["Y", "MA", "O"];
-  const AGE_BIN_LABELS = { Y: "Young", MA: "Middle-aged", O: "Old" };
+  const AGE_BIN_LABELS = { Y: "Y", MA: "MA", O: "O" };
   const PAGE_TITLES = {
     overview: "Overview",
     methods: "Methods",
@@ -12,9 +12,10 @@
     publications: "Publications",
     "raw-data": "Raw data",
     contact: "Contact",
+    tvd: "Age comparisons",
   };
   const { CLASS_ORDER, CLASS_LABELS, CLASS_COLORS, ORGAN_COLORS, DIVERSITY_LABEL } = window.ATLAS_THEME;
-  const EXPLORER_BUILD = "2026-09-04b";
+  const EXPLORER_BUILD = "2026-09-29-e330";
   const classPaint = (name) => name === "fucosylated_and_sialylated"
     ? `repeating-linear-gradient(135deg, ${CLASS_COLORS.fucosylated} 0 4px, ${CLASS_COLORS.sialylated} 4px 8px)`
     : CLASS_COLORS[name] || "#7a8d89";
@@ -30,6 +31,11 @@
     ageMode: "age_bins",
     pairOrganA: null,
     pairOrganB: null,
+    pairMode: "between_organs",
+    pairSiteB: null,
+    diversityMetric: "effective",
+    diversityGrouping: "auto",
+    tvdManifest: null,
   };
 
   const dom = {
@@ -53,6 +59,11 @@
     pairwiseList: document.querySelector("[data-pairwise-list]"),
     tooltip: document.querySelector("[data-tooltip]"),
     live: document.querySelector("[data-live-region]"),
+    tvdPlot: document.querySelector("[data-tvd-plot]"),
+    tvdDataset: document.querySelector("[data-tvd-dataset]"),
+    tvdFamily: document.querySelector("[data-tvd-family]"),
+    tvdComparison: document.querySelector("[data-tvd-comparison]"),
+    tvdSearch: document.querySelector("[data-tvd-search]"),
   };
 
   document.addEventListener("DOMContentLoaded", init);
@@ -86,7 +97,7 @@
       if (initialProteinId && state.byProtein.has(initialProteinId)) {
         await openProtein(state.byProtein.get(initialProteinId), false);
       } else if (initialProteinId) {
-        dom.loading.innerHTML = `<p>This protein is not present in the July 30 atlas release. Please choose another result.</p>`;
+        dom.loading.innerHTML = `<p>This protein is not present in the current atlas release. Please choose another result.</p>`;
         announce("Protein is not present in this atlas release.");
       }
     } catch (error) {
@@ -185,8 +196,10 @@
   function search(query, limit = 10) {
     const q = normalize(query);
     if (!q) return [];
+    const commonNames = { ire1: "ern1", "ire1α": "ern1", bip: "hspa5", grp78: "hspa5" };
+    const expanded = commonNames[q] || q;
     return state.searchIndex
-      .map((row) => ({ row, score: matchScore(row, q) }))
+      .map((row) => ({ row, score: matchScore(row, expanded) }))
       .filter(({ score }) => Number.isFinite(score))
       .sort((a, b) => a.score - b.score || normalize(a.row.gene).localeCompare(normalize(b.row.gene)) || a.row.protein_id.localeCompare(b.row.protein_id))
       .slice(0, limit)
@@ -197,18 +210,23 @@
     const gene = normalize(row.gene);
     const protein = normalize(row.protein_id);
     const description = normalize(row.description);
+    const aliases = normalize(row.aliases || "");
     if (gene === q || protein === q) return 0;
     if (gene.startsWith(q)) return 1;
     if (protein.startsWith(q)) return 2;
     if (gene.includes(q)) return 3;
     if (protein.includes(q)) return 4;
+    if (aliases.split(/[,;| ]+/).includes(q)) return 2;
+    if (aliases.includes(q)) return 5;
     if (description.includes(q)) return 6;
     return Infinity;
   }
 
   function findExact(value) {
     const q = normalize(value);
-    return state.searchIndex.find((row) => normalize(row.gene) === q || normalize(row.protein_id) === q);
+    const commonNames = { ire1: "ern1", "ire1α": "ern1", bip: "hspa5", grp78: "hspa5" };
+    const target = commonNames[q] || q;
+    return state.searchIndex.find((row) => normalize(row.gene) === target || normalize(row.protein_id) === target);
   }
 
   async function openProtein(indexRow, updateHistory = true) {
@@ -229,6 +247,12 @@
         state.selectedSites[organ] = (sites.find((site) => site.comparison_eligible) || sites[0] || {}).id || null;
       });
       state.activeOrgan = ORGANS.find((organ) => protein.organs[organ]?.glycosites?.length) || ORGANS.find((organ) => protein.organs[organ]?.proteome) || "brain";
+      const cat = document.querySelector("[data-cat-easter-egg]");
+      cat.hidden = normalize(protein.gene) !== "cat";
+      if (!cat.hidden) {
+        const photo = cat.querySelector("img");
+        if (!photo.src) photo.src = photo.dataset.src;
+      }
       dom.loading.hidden = true;
       dom.dashboard.hidden = false;
       renderProtein();
@@ -305,15 +329,15 @@
         const site = organSites.get(summary.id);
         const left = profileLeftFor(summary, index);
         if (!site) {
-          return `<span class="composition-tile uncovered" style="left:${left}%" aria-label="${escapeHTML(`${organ}, ${summary.label}: not detected`)}"></span>`;
+          return `<span class="composition-tile uncovered" style="left:${left}%" data-tooltip="${escapeHTML(`${summary.position ? `N${summary.position}` : summary.label} not detected in the ${ORGAN_LABELS[organ]}`)}" aria-label="${escapeHTML(`${organ}, ${summary.label}: not detected`)}"></span>`;
         }
         const compositionVector = pooledClassVector(site);
         const rows = orderedClasses([...compositionVector.keys()]).map((name) => ({ name, percent: compositionVector.get(name) }));
         const segments = rows.filter((row) => row.percent > 0).map((row) => `<i style="width:${Math.max(0, Math.min(100, row.percent))}%;background:${classPaint(row.name)}"></i>`).join("");
         const selected = state.activeOrgan === organ && selectedSite(organ)?.id === site.id;
-        return `<button type="button" class="composition-tile ${site.comparison_eligible ? "" : "low"} ${rows.length ? "" : "no-composition"} ${selected ? "selected" : ""}" style="left:${left}%" data-overlay-site="${escapeHTML(site.id)}" data-overlay-organ="${organ}" data-tooltip="Site composition">${segments}<span class="sr-only">${escapeHTML(`${organ} ${site.label}${site.comparison_eligible ? "" : ", low confidence"}`)}</span></button>`;
+        return `<button type="button" class="composition-tile ${site.total_psm >= 5 ? "" : "low"} ${rows.length ? "" : "no-composition"} ${selected ? "selected" : ""}" style="left:${left}%" data-overlay-site="${escapeHTML(site.id)}" data-overlay-organ="${organ}" data-tooltip="Site composition">${segments}<span class="sr-only">${escapeHTML(`${organ} ${site.label}${site.total_psm >= 5 ? "" : ", low confidence"}`)}</span></button>`;
       }).join("");
-      return `<div class="segment-organ-row"><strong style="color:${ORGAN_COLORS[organ]}">${organ}</strong><div class="segment-space">${tiles}</div></div>`;
+      return `<div class="segment-organ-row"><strong style="color:${ORGAN_COLORS[organ]}">${ORGAN_LABELS[organ]}</strong><div class="segment-space">${tiles}</div></div>`;
     }).join("");
     dom.segmentOverlay.innerHTML = `
       <div class="segment-canvas ${sites.length ? "" : "no-sites"}" style="min-width:${canvasWidth}px">
@@ -340,7 +364,7 @@
       });
     });
     const classNames = [...new Set(glycoOrgans.flatMap((organ) => (state.currentProtein.organs[organ]?.glycosites || []).flatMap((site) => [...pooledClassVector(site).entries()].filter(([, percent]) => percent > 0).map(([name]) => name))))];
-    dom.segmentLegend.innerHTML = orderedClasses(classNames).map((name) => `<span class="legend-item"><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</span>`).join("");
+    dom.segmentLegend.innerHTML = `<strong>Glycan Types |</strong> ` + orderedClasses(classNames).map((name) => `<span class="legend-item"><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</span>`).join("");
   }
 
   function bindControls() {
@@ -361,6 +385,16 @@
       renderSegmentOverlay();
       renderDetail();
     });
+    document.querySelectorAll("[data-diversity-metric]").forEach((button) => button.addEventListener("click", () => {
+      state.diversityMetric = button.dataset.diversityMetric;
+      document.querySelectorAll("[data-diversity-metric]").forEach((node) => node.classList.toggle("active", node === button));
+      renderShannonChart(selectedSite(state.activeOrgan));
+    }));
+    document.querySelectorAll("[data-diversity-grouping]").forEach((button) => button.addEventListener("click", () => {
+      state.diversityGrouping = button.dataset.diversityGrouping;
+      document.querySelectorAll("[data-diversity-grouping]").forEach((node) => node.classList.toggle("active", node === button));
+      renderShannonChart(selectedSite(state.activeOrgan));
+    }));
   }
 
   function renderDetail() {
@@ -368,12 +402,10 @@
     const site = selectedSite(organ);
     document.querySelector("[data-detail-site]").textContent = site ? (site.position ? `${state.currentProtein.gene} N${site.position}` : site.label) : "No glycosite selected";
     const note = document.querySelector("[data-confidence-note]");
-    note.classList.toggle("low", Boolean(site && !site.comparison_eligible));
+    note.classList.toggle("low", Boolean(site && site.total_psm < 5));
     note.textContent = !site
       ? `${state.currentProtein.protein_id} · glycan data were not detected for the selected organ.`
-      : site.comparison_eligible
-        ? `${state.currentProtein.protein_id} · ${organ} · high confidence · total PSM ${formatNumber(site.total_psm)}`
-        : `${state.currentProtein.protein_id} · ${organ} · low confidence* · total PSM ${formatNumber(site.total_psm)} · excluded from cross-organ comparison`;
+      : `${state.currentProtein.protein_id} · ${ORGAN_LABELS[organ]}`;
     renderSiteControls(site);
     renderSiteMetrics(site);
     renderDetailCharts();
@@ -382,13 +414,13 @@
 
   function renderSiteControls(site) {
     const glycoOrgans = ORGANS.filter((organ) => state.currentProtein.organs[organ]?.glycosites?.length);
-    const availableOrgans = glycoOrgans.length ? glycoOrgans : ORGANS.filter((organ) => state.currentProtein.organs[organ]?.proteome);
+    const availableOrgans = ORGANS.filter((organ) => state.currentProtein.organs[organ]?.glycosites?.length || state.currentProtein.organs[organ]?.proteome);
     if (!availableOrgans.includes(state.activeOrgan)) state.activeOrgan = availableOrgans[0] || "brain";
-    dom.organSelect.innerHTML = availableOrgans.map((organ) => `<option value="${organ}" ${organ === state.activeOrgan ? "selected" : ""}>${organ[0].toUpperCase()}${organ.slice(1)}</option>`).join("");
+    dom.organSelect.innerHTML = availableOrgans.map((organ) => `<option value="${organ}" ${organ === state.activeOrgan ? "selected" : ""}>${ORGAN_LABELS[organ]}</option>`).join("");
     dom.organSelect.disabled = availableOrgans.length < 2;
     const sites = state.currentProtein.organs[state.activeOrgan]?.glycosites || [];
     dom.siteSelect.innerHTML = sites.length
-      ? sites.map((row) => `<option value="${escapeHTML(row.id)}" ${site?.id === row.id ? "selected" : ""}>${escapeHTML(row.position ? `N${row.position}` : row.label)}${row.comparison_eligible ? "" : " *"}</option>`).join("")
+      ? sites.map((row) => `<option value="${escapeHTML(row.id)}" ${site?.id === row.id ? "selected" : ""}>${escapeHTML(row.position ? `N${row.position}` : row.label)}${row.total_psm >= 5 ? "" : " *"}</option>`).join("")
       : `<option value="">No glycosites</option>`;
     dom.siteSelect.disabled = !sites.length;
   }
@@ -398,36 +430,29 @@
       dom.siteMetrics.innerHTML = `<p class="proteomics-only-note"><strong>Proteomics-only record.</strong> This protein remains searchable because normalized abundance is available even though no glycosite passed into the current display payload.</p>`;
       return;
     }
-    const sampleRows = (site.shannon?.ages || []).filter((row) => Number.isFinite(row.mean) && row.n > 0);
-    const detected = sampleRows.reduce((total, row) => total + row.n, 0);
-    const meanH = detected ? sampleRows.reduce((total, row) => total + row.mean * row.n, 0) / detected : null;
-    const exactNames = new Set(Object.values(site.exact_compositions?.ages || {}).flatMap((rows) => rows.map((row) => row.name)));
-    const classTotals = new Map();
-    let classGroups = 0;
-    Object.values(site.glycan_classes?.ages || {}).forEach((rows) => {
-      if (!rows.length) return;
-      classGroups += 1;
-      rows.forEach((row) => classTotals.set(row.name, (classTotals.get(row.name) || 0) + row.percent));
-    });
-    const dominant = [...classTotals.entries()].sort((a, b) => b[1] - a[1])[0];
-    const dominantText = dominant ? `${CLASS_LABELS[dominant[0]] || dominant[0]} ${(dominant[1] / Math.max(1, classGroups)).toFixed(1)}%` : "—";
+    const pooled = site.shannon?.pooled_all || {};
+    const detected = pooled.n_samples_detected;
+    const possible = pooled.n_samples_possible;
+    const dominant = site.dominant_class || [...pooledClassVector(site)].sort((a, b) => b[1] - a[1]).map(([name, percent]) => ({ name, percent }))[0];
+    const dominantText = dominant ? `${CLASS_LABELS[dominant.name] || dominant.name} ${dominant.percent.toFixed(1)}%` : "—";
+    const tier = site.site_psm_depth_tier ?? 0;
+    const tierLabel = tier === 0 ? "Insufficient" : tier === 1 ? "Low" : tier <= 4 ? "Moderate" : tier <= 6 ? "High" : "Ultra high";
     const metrics = [
-      ["Detected samples", `${detected}/54`],
-      [`Mean sample ${DIVERSITY_LABEL}`, meanH === null ? "—" : meanH.toFixed(3)],
-      ["Effective classes", meanH === null ? "—" : Math.exp(meanH).toFixed(2)],
-      ["Dominant class", dominantText],
-      ["Exact glycans", site.exact_compositions ? formatNumber(exactNames.size) : "Unavailable"],
-      ["Site evidence", `${formatNumber(site.total_psm)} PSM · ${site.comparison_eligible ? "high confidence" : "low confidence*"}`],
+      ["Detected samples", `${formatNumber(detected)}/${formatNumber(possible)}`],
+      ["Site evidence", `${formatNumber(site.total_psm)} total PSMs · ${detected ? (site.total_psm / detected).toFixed(1) : "—"} average per detected sample`],
+      ["Evidence tier", `${tier}/7 · ${tierLabel}`],
+      ["Observed glycans", formatNumber(pooled.observed_glycans)],
+      ["Observed glycan types", formatNumber(pooled.observed_glycan_types)],
+      ["Weighted glycan types", Number.isFinite(pooled.effective_glycan_types) ? pooled.effective_glycan_types.toFixed(2) : "—"],
+      ["Dominant glycan type", dominantText],
+      ["Pooled glycan-type Shannon H", Number.isFinite(pooled.glycan_type_shannon_h) ? pooled.glycan_type_shannon_h.toFixed(3) : "—"],
     ];
     dom.siteMetrics.innerHTML = metrics.map(([label, value]) => `<div><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></div>`).join("");
   }
 
   function renderDetailCharts() {
     const site = selectedSite(state.activeOrgan);
-    const modeLabel = "";
-    document.querySelector("[data-diversity-title]").textContent = DIVERSITY_LABEL;
-    document.querySelector("[data-glycan-mode-label]").textContent = modeLabel;
-    document.querySelector("[data-shannon-mode-label]").textContent = modeLabel;
+    document.querySelector("[data-diversity-title]").textContent = "N-glycosite heterogeneity with age";
     renderProteinChart();
     if (!site) {
       dom.classChart.innerHTML = `<p class="empty-note">No glycan-class composition is available for this protein.</p>`;
@@ -443,23 +468,39 @@
   }
 
   function chartGeometry(container) {
-    const w = container.clientWidth;
-    const left = 76, right = 24, top = 18, bottom = 72;
+    const w = Math.max(320, container.clientWidth);
+    const left = 66, right = 20, top = 16, bottom = 54;
     const plotW = Math.max(50, w - left - right);
-    const plotH = plotW * 2;
+    const plotH = Math.max(200, Math.min(390, plotW / 1.55));
     const h = top + plotH + bottom;
     container.style.height = `${h}px`;
     return { w, h, left, right, top, plotW, plotH };
   }
 
   function ageTick(label, x, y, rotate) {
-    return `<text class="age-tick" x="${x}" y="${y}" ${rotate ? `transform="rotate(-60 ${x} ${y})" text-anchor="end"` : 'text-anchor="middle"'}>${escapeHTML(label.replace("Middle-aged", "Adult"))}</text>`;
+    return `<text class="age-tick" x="${x}" y="${y}" ${rotate ? `transform="rotate(-45 ${x} ${y})" text-anchor="end"` : 'text-anchor="middle"'}>${escapeHTML(label)}</text>`;
+  }
+
+  function ageSpec(site, mode = state.ageMode) {
+    const available = Object.keys(site?.glycan_classes?.ages || {});
+    const keys = mode === "age_bins" ? AGE_BINS.filter((key) => site?.glycan_classes?.age_bins?.[key]) : available.sort((a, b) => Number.parseFloat(a) - Number.parseFloat(b));
+    return { keys, labels: keys.map((key) => mode === "age_bins" ? AGE_BIN_LABELS[key] : `${key}M`), numeric: mode === "ages" && keys.every((key) => Number.isFinite(Number(key))) };
+  }
+
+  function niceCeiling(value, cap = Infinity) {
+    const step = value <= 20 ? 5 : value <= 100 ? 10 : value <= 500 ? 50 : 100;
+    return Math.min(cap, Math.max(step, Math.ceil(value / step) * step));
+  }
+
+  function axisTicks(max, step) {
+    const values = [];
+    for (let tick = 0; tick <= max + step / 100; tick += step) values.push(tick);
+    return values;
   }
 
   function renderClassChart(site) {
     const values = site.glycan_classes?.[state.ageMode] || {};
-    const keys = state.ageMode === "age_bins" ? AGE_BINS : AGE_MONTHS.map(String);
-    const labels = state.ageMode === "age_bins" ? AGE_BINS.map((key) => AGE_BIN_LABELS[key]) : AGE_MONTHS.map((age) => `${age}M`);
+    const { keys, labels, numeric } = ageSpec(site);
     const classes = CLASS_ORDER.filter((name) => keys.some((key) => (values[key] || []).some((row) => row.name === name && row.percent > 0)));
     if (!classes.length) {
       dom.classChart.innerHTML = `<p class="empty-note">No glycan-class composition is available for this site and grouping.</p>`;
@@ -467,13 +508,14 @@
       return;
     }
     const { w, h, left, right, top, plotW, plotH } = chartGeometry(dom.classChart);
-    const x = (index) => left + (keys.length === 1 ? plotW / 2 : (index / (keys.length - 1)) * plotW);
+    const x = (index) => left + (keys.length === 1 ? plotW / 2 : numeric ? (Number(keys[index]) / 30) * plotW : (index / (keys.length - 1)) * plotW);
     const upperBounds = keys.flatMap((key) => (values[key] || []).filter((row) => Number.isFinite(row.percent)).map((row) => row.percent + (row.sem || 0)));
-    const max = Math.max(1, ...upperBounds) * 1.08;
+    const max = niceCeiling(Math.max(1, ...upperBounds), 100);
+    const tickStep = max <= 20 ? 5 : max <= 100 ? 10 : 20;
     const y = (value) => top + plotH - (value / max) * plotH;
-    const grid = [0, max / 2, max].map((tick) => {
+    const grid = axisTicks(max, tickStep).map((tick) => {
       const y = top + plotH - (tick / max) * plotH;
-      return `<line class="gridline" x1="${left}" y1="${y}" x2="${w - right}" y2="${y}"/><text x="${left - 8}" y="${y + 3}" text-anchor="end">${tick.toFixed(1)}</text>`;
+      return `<line class="tick-mark" x1="${left - 4}" y1="${y}" x2="${left}" y2="${y}"/><text x="${left - 8}" y="${y + 3}" text-anchor="end">${tick}</text>`;
     }).join("");
     const series = classes.map((name) => {
       const points = keys.map((key, index) => {
@@ -491,17 +533,17 @@
       const marks = points.map((point) => {
         const uncertainty = Number.isFinite(point.sem) ? ` ± ${point.sem.toFixed(1)}% SEM` : "";
         const sampleSize = Number.isFinite(point.n) ? ` · n=${point.n}` : "";
-        return `<circle cx="${x(point.index)}" cy="${y(point.percent)}" r="3.2" fill="${CLASS_COLORS[name]}" data-tooltip="${escapeHTML(`${labels[point.index]} · ${CLASS_LABELS[name]} ${point.percent.toFixed(1)}%${uncertainty}${sampleSize}`)}"></circle>`;
+        return `<circle cx="${x(point.index)}" cy="${y(point.percent)}" r="3.5" fill="${name === "fucosylated_and_sialylated" ? "url(#dual-glycan)" : CLASS_COLORS[name]}" data-tooltip="${escapeHTML(`${labels[point.index]} · ${CLASS_LABELS[name]} ${point.percent.toFixed(1)}%${uncertainty}${sampleSize}`)}"></circle>`;
       }).join("");
       return `<polyline points="${pointString}" fill="none" stroke="${CLASS_COLORS[name]}" stroke-width="2.2" ${name === "fucosylated_and_sialylated" ? 'stroke-dasharray="6 4"' : ""} stroke-linejoin="round" stroke-linecap="round"/>${errorBars}${marks}`;
     }).join("");
-    const xLabels = labels.map((label, index) => ageTick(label, x(index), top + plotH + 22, keys.length > 3)).join("");
-    dom.classChart.innerHTML = `<svg viewBox="0 0 ${w} ${h}" data-plot-width="${plotW}" data-plot-height="${plotH}" data-y-max="${max}" role="img" aria-label="Mean glycan class composition across age groups"><text class="axis-label" transform="translate(13 ${top + plotH / 2}) rotate(-90)" text-anchor="middle">Composition (%)</text>${grid}<line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="axis" x1="${left}" y1="${top + plotH}" x2="${w - right}" y2="${top + plotH}"/>${series}${xLabels}</svg>`;
-    dom.classLegend.innerHTML = classes.map((name) => `<span class="legend-item"><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</span>`).join("");
+    const xLabels = labels.map((label, index) => ageTick(label, x(index), top + plotH + 22, keys.length > 5)).join("");
+    dom.classChart.innerHTML = `<svg viewBox="0 0 ${w} ${h}" data-plot-width="${plotW}" data-plot-height="${plotH}" data-y-max="${max}" role="img" aria-label="Mean glycan type composition ± SEM across age groups"><defs><linearGradient id="dual-glycan"><stop offset="50%" stop-color="#CD4D2C"/><stop offset="50%" stop-color="#A34599"/></linearGradient></defs><text class="axis-label" transform="translate(13 ${top + plotH / 2}) rotate(-90)" text-anchor="middle">Composition (%)</text>${grid}<line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="axis" x1="${left}" y1="${top + plotH}" x2="${w - right}" y2="${top + plotH}"/>${series}${xLabels}<text class="axis-label" x="${left + plotW / 2}" y="${h - 4}" text-anchor="middle">${numeric ? "Age (months)" : "Age bin"}</text></svg>`;
+    dom.classLegend.innerHTML = classes.map((name) => `<span class="legend-item"><i class="legend-line ${name === "fucosylated_and_sialylated" ? "combined" : ""}" style="--legend-color:${CLASS_COLORS[name]}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</span>`).join("");
   }
 
   function renderProteinChart() {
-    const series = ORGANS.map((organ) => ({ organ, rows: state.currentProtein.organs[organ]?.proteome?.scaled_intensity || [] }))
+    const series = [{ organ: state.activeOrgan, rows: state.currentProtein.organs[state.activeOrgan]?.proteome?.scaled_intensity || [] }]
       .filter(({ rows }) => rows.some((row) => Number.isFinite(row.mean)));
     if (!series.length) {
       dom.proteinChart.innerHTML = `<p class="empty-note">Normalized protein abundance is not available for this protein.</p>`;
@@ -510,58 +552,63 @@
     }
     const values = series.flatMap(({ rows }) => rows.filter((row) => Number.isFinite(row.mean)).flatMap((row) => [row.mean - (row.sem || 0), row.mean + (row.sem || 0)]));
     const rawMin = Math.min(...values), rawMax = Math.max(...values);
-    const min = rawMin >= 0 ? 0 : rawMin - Math.max(.02, (rawMax - rawMin) * .08);
-    const max = rawMax + Math.max(.02, (rawMax - min) * .06);
+    const min = rawMin >= 0 ? 0 : Math.floor(rawMin * 2) / 2;
+    const max = Math.ceil((rawMax + .05) * 2) / 2;
     const range = Math.max(.01, max - min);
     const { w, h, left, right, top, plotW, plotH } = chartGeometry(dom.proteinChart);
-    const x = (age) => left + (AGE_MONTHS.indexOf(Number(age)) / (AGE_MONTHS.length - 1)) * plotW;
+    const x = (age) => left + (Number(age) / 30) * plotW;
     const y = (value) => top + ((max - value) / range) * plotH;
-    const ticks = [min, min + range / 2, max];
-    const grid = ticks.map((tick) => `<line class="gridline" x1="${left}" y1="${y(tick)}" x2="${w - right}" y2="${y(tick)}"/><text x="${left - 8}" y="${y(tick) + 3}" text-anchor="end">${tick.toFixed(2)}</text>`).join("");
+    const ticks = axisTicks(max, max <= 2 ? .5 : 1).filter((tick) => tick >= min);
+    const grid = ticks.map((tick) => `<line class="tick-mark" x1="${left - 4}" y1="${y(tick)}" x2="${left}" y2="${y(tick)}"/><text x="${left - 8}" y="${y(tick) + 3}" text-anchor="end">${tick.toFixed(tick % 1 ? 1 : 0)}</text>`).join("");
     const paths = series.map(({ organ, rows }) => {
       const valid = rows.filter((row) => Number.isFinite(row.mean));
       const points = valid.map((row) => `${x(row.age)},${y(row.mean)}`).join(" ");
       const marks = valid.map((row) => {
         const px = x(row.age), py = y(row.mean), sem = row.sem || 0;
         const y1 = y(Math.min(max, row.mean + sem)), y2 = y(Math.max(min, row.mean - sem));
-        return `<path d="M${px},${y1}V${y2}M${px - 3},${y1}H${px + 3}M${px - 3},${y2}H${px + 3}" stroke="${ORGAN_COLORS[organ]}" stroke-width="1"/><circle cx="${px}" cy="${py}" r="3" fill="${ORGAN_COLORS[organ]}" data-tooltip="${escapeHTML(`${organ} · ${row.age}M · ${row.mean.toFixed(3)} ± ${sem.toFixed(3)} · n=${row.n}`)}"></circle>`;
+        return `<path d="M${px},${y1}V${y2}M${px - 3},${y1}H${px + 3}M${px - 3},${y2}H${px + 3}" stroke="${ORGAN_COLORS[organ]}" stroke-width="1"/><circle cx="${px}" cy="${py}" r="3" fill="${ORGAN_COLORS[organ]}" data-tooltip="${escapeHTML(`${ORGAN_LABELS[organ]} · ${row.age} months · mean ${row.mean.toFixed(3)} ± ${sem.toFixed(3)} SEM · n=${row.n}${row.n <= 2 ? " *" : ""}`)}"></circle>`;
       }).join("");
       return `<polyline points="${points}" fill="none" stroke="${ORGAN_COLORS[organ]}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${marks}`;
     }).join("");
-    const xLabels = AGE_MONTHS.map((age) => ageTick(`${age}M`, x(age), top + plotH + 22, true)).join("");
-    dom.proteinChart.innerHTML = `<svg viewBox="0 0 ${w} ${h}" data-plot-width="${plotW}" data-plot-height="${plotH}" data-y-max="${max}" role="img" aria-label="Normalized protein scaled intensity by age"><text class="axis-label" transform="translate(13 ${top + plotH / 2}) rotate(-90)" text-anchor="middle">Scaled intensity</text>${grid}<line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="axis" x1="${left}" y1="${top + plotH}" x2="${w - right}" y2="${top + plotH}"/>${paths}${xLabels}</svg>`;
-    dom.proteinLegend.innerHTML = series.map(({ organ }) => `<span class="legend-item"><i class="legend-swatch" style="background:${ORGAN_COLORS[organ]}"></i>${organ[0].toUpperCase()}${organ.slice(1)}</span>`).join("");
+    const ages = [...new Set(series.flatMap(({ rows }) => rows.map((row) => Number(row.age))))].sort((a, b) => a - b);
+    const xLabels = ages.map((age) => ageTick(`${age}`, x(age), top + plotH + 22, ages.length > 5)).join("");
+    dom.proteinChart.innerHTML = `<svg viewBox="0 0 ${w} ${h}" data-plot-width="${plotW}" data-plot-height="${plotH}" data-y-max="${max}" role="img" aria-label="Scaled protein abundance by age, mean ± SEM"><text class="axis-label" transform="translate(13 ${top + plotH / 2}) rotate(-90)" text-anchor="middle">Scaled protein abundance</text>${grid}<line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="axis" x1="${left}" y1="${top + plotH}" x2="${w - right}" y2="${top + plotH}"/>${paths}${xLabels}<text class="axis-label" x="${left + plotW / 2}" y="${h - 4}" text-anchor="middle">Age (months)</text></svg>`;
+    dom.proteinLegend.innerHTML = series.map(({ organ, rows }) => `<span class="legend-item"><i class="legend-line" style="--legend-color:${ORGAN_COLORS[organ]}"></i>${ORGAN_LABELS[organ]}${Math.max(...rows.map((row) => row.n || 0)) <= 2 ? " *" : ""}</span>`).join("") + `<span class="legend-note">Mean ± SEM; * 1–2 detected replicates</span>`;
   }
 
   function renderShannonChart(site) {
-    const keys = state.ageMode === "age_bins" ? AGE_BINS : AGE_MONTHS.map(String);
-    const labels = state.ageMode === "age_bins" ? AGE_BINS.map((key) => AGE_BIN_LABELS[key]) : AGE_MONTHS.map((age) => `${age}M`);
-    const sampleRows = site.shannon?.[state.ageMode] || [];
-    const sampleByKey = new Map(sampleRows.map((row) => [String(row.key), row]));
-    const sampleValid = keys.map((key, index) => ({ index, row: sampleByKey.get(String(key)) })).filter(({ row }) => row && Number.isFinite(row.mean));
-    if (!sampleValid.length) {
-      dom.shannonChart.innerHTML = `<p class="empty-note">Shannon diversity is unavailable for this site and grouping.</p>`;
+    if (!site) return;
+    const { keys, labels, numeric } = ageSpec(site);
+    const rows = new Map((site.shannon?.[state.ageMode] || []).map((row) => [String(row.key), row]));
+    const pooled = state.diversityGrouping === "pooled" || (state.diversityGrouping === "auto" && (site.site_psm_depth_tier || 0) < 4);
+    const effective = state.diversityMetric === "effective";
+    const field = pooled ? (effective ? "effective_glycan_types" : "glycan_type_shannon_h") : (effective ? "effective_classes" : "mean");
+    const semField = effective ? "effective_classes_sem" : "sem";
+    const valid = keys.map((key, index) => ({ index, row: rows.get(key) })).filter(({ row }) => Number.isFinite(pooled ? row?.pooled?.[field] : row?.[field]));
+    if (!valid.length) {
+      dom.shannonChart.innerHTML = `<p class="empty-note">No heterogeneity measurements for this site and grouping.</p>`;
       dom.shannonLegend.innerHTML = "";
       return;
     }
     const { w, h, left, right, top, plotW, plotH } = chartGeometry(dom.shannonChart);
-    const max = Math.max(1, ...sampleValid.map(({ row }) => row.mean + (row.sem || 0))) * 1.08;
-    const x = (index) => left + (keys.length === 1 ? plotW / 2 : (index / (keys.length - 1)) * plotW);
-    const y = (value) => top + plotH - (value / max) * plotH;
-    const samplePoints = sampleValid.map(({ index, row }) => `${x(index)},${y(row.mean)}`).join(" ");
-    const grid = [0, .5, 1].map((fraction) => {
-      const value = fraction * max;
-      const py = y(value);
-      return `<line class="gridline" x1="${left}" y1="${py}" x2="${w - right}" y2="${py}"/><text x="${left - 8}" y="${py + 3}" text-anchor="end">${value.toFixed(2)}</text>`;
+    const value = (row) => pooled ? row.pooled[field] : row[field];
+    const observedMax = Math.max(...valid.map(({ row }) => value(row) + (pooled ? 0 : row[semField] || 0)));
+    const step = observedMax <= 1 ? .25 : observedMax <= 3 ? .5 : observedMax <= 10 ? 1 : observedMax <= 20 ? 2 : 5;
+    const max = Math.max(step, Math.ceil(observedMax / step) * step);
+    const x = (index) => left + (keys.length === 1 ? plotW / 2 : numeric ? Number(keys[index]) / 30 * plotW : index / (keys.length - 1) * plotW);
+    const y = (v) => top + plotH - v / max * plotH;
+    const grid = axisTicks(max, step).map((tick) => `<line class="tick-mark" x1="${left - 4}" y1="${y(tick)}" x2="${left}" y2="${y(tick)}"/><text x="${left - 8}" y="${y(tick) + 3}" text-anchor="end">${tick}</text>`).join("");
+    const points = valid.map(({ index, row }) => `${x(index)},${y(value(row))}`).join(" ");
+    const marks = valid.map(({ index, row }) => {
+      const px = x(index), py = y(value(row)), sem = pooled ? null : row[semField];
+      const error = Number.isFinite(sem) ? `<path d="M${px},${y(Math.min(max, value(row) + sem))}V${y(Math.max(0, value(row) - sem))}" stroke="#28768a"/>` : "";
+      const tooltip = `${labels[index]} · ${pooled ? "pooled PSMs" : "mean across detected samples"} · ${effective ? "weighted glycan types" : "Shannon H"} ${value(row).toFixed(3)}${Number.isFinite(sem) ? ` ± ${sem.toFixed(3)} SEM` : ""} · ${pooled ? row.pooled.glycosite_psms + " PSMs" : "n=" + row.n}`;
+      return `${error}<circle cx="${px}" cy="${py}" r="3.4" fill="#28768a" data-tooltip="${escapeHTML(tooltip)}"></circle>`;
     }).join("");
-    const sampleMarks = sampleValid.map(({ index, row }) => {
-      const px = x(index), py = y(row.mean), sem = row.sem || 0;
-      const error = sem ? `<path d="M${px},${y(Math.min(max, row.mean + sem))}V${y(Math.max(0, row.mean - sem))}M${px - 3},${y(Math.min(max, row.mean + sem))}H${px + 3}M${px - 3},${y(Math.max(0, row.mean - sem))}H${px + 3}" stroke="#28768a" stroke-width="1"/>` : "";
-      return `${error}<circle cx="${px}" cy="${py}" r="3.2" fill="#28768a" data-tooltip="${escapeHTML(`${row.label}: mean sample ${DIVERSITY_LABEL} ${row.mean.toFixed(3)} ± ${sem.toFixed(3)} · effective classes ${row.effective_classes?.toFixed(2) ?? "—"} · n=${row.n}`)}"></circle>`;
-    }).join("");
-    const xLabels = labels.map((label, index) => ageTick(label, x(index), top + plotH + 22, keys.length > 3)).join("");
-    dom.shannonChart.innerHTML = `<svg viewBox="0 0 ${w} ${h}" data-plot-width="${plotW}" data-plot-height="${plotH}" data-y-max="${max}" role="img" aria-label="${DIVERSITY_LABEL}, mean ± SEM"><text class="axis-label" transform="translate(13 ${top + plotH / 2}) rotate(-90)" text-anchor="middle">${escapeHTML(DIVERSITY_LABEL)}</text>${grid}<line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="axis" x1="${left}" y1="${top + plotH}" x2="${w - right}" y2="${top + plotH}"/><polyline points="${samplePoints}" fill="none" stroke="#28768a" stroke-width="2.2" stroke-linejoin="round"/>${sampleMarks}${xLabels}</svg>`;
-    dom.shannonLegend.innerHTML = `<span class="legend-item"><i class="legend-swatch" style="background:#28768a"></i>Mean sample ${escapeHTML(DIVERSITY_LABEL)} ± SEM</span>`;
+    const xLabels = labels.map((label, index) => ageTick(label, x(index), top + plotH + 22, keys.length > 5)).join("");
+    const axisTitle = effective ? "Weighted glycan types" : "Shannon H";
+    dom.shannonChart.innerHTML = `<svg viewBox="0 0 ${w} ${h}" data-y-max="${max}" role="img" aria-label="${axisTitle} with age"><text class="axis-label" transform="translate(13 ${top + plotH / 2}) rotate(-90)" text-anchor="middle">${axisTitle}</text>${grid}<line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="axis" x1="${left}" y1="${top + plotH}" x2="${w - right}" y2="${top + plotH}"/><polyline points="${points}" fill="none" stroke="#28768a" stroke-width="2.2"/>${marks}${xLabels}<text class="axis-label" x="${left + plotW / 2}" y="${h - 4}" text-anchor="middle">${numeric ? "Age (months)" : "Age bin"}</text></svg>`;
+    dom.shannonLegend.innerHTML = `<span class="legend-item"><i class="legend-line" style="--legend-color:#28768a"></i>${pooled ? "Pooled PSMs (no SEM)" : "Mean across samples ± SEM"}</span>`;
   }
 
   function renderExactGrid(site) {
@@ -570,7 +617,7 @@
       dom.exactGrid.innerHTML = `<p class="empty-note">Individual glycan compositions and PSM counts are unavailable for this site.</p>`;
       return;
     }
-    const keys = AGE_MONTHS.map(String);
+    const keys = Object.keys(values).sort((a, b) => Number.parseFloat(a) - Number.parseFloat(b));
     const byAge = keys.map((key) => new Map((values[key] || []).map((row) => [row.name, row])));
     const names = [...new Set(byAge.flatMap((rows) => [...rows.keys()]))];
     const score = (name) => Math.max(0, ...byAge.map((rows) => rows.get(name)?.percent || 0));
@@ -579,119 +626,140 @@
       dom.exactGrid.innerHTML = `<p class="empty-note">No exact glycans detected.</p>`;
       return;
     }
-    const header = `<div class="exact-row exact-head"><span class="exact-name">Composition</span>${AGE_MONTHS.map((age) => `<span class="exact-header">${age}M</span>`).join("")}</div>`;
+    const maxPercent = Math.max(0, ...byAge.flatMap((rows) => [...rows.values()].map((row) => row.percent || 0)));
+    const scaleMax = Math.min(100, Math.max(5, Math.ceil(maxPercent / (maxPercent <= 20 ? 5 : 10)) * (maxPercent <= 20 ? 5 : 10)));
+    const scale = document.querySelector("[data-exact-scale]");
+    scale.innerHTML = `<span>0%</span><i></i><span>${scaleMax}%</span>`;
+    scale.setAttribute("aria-label", `Percent abundance: 0 to ${scaleMax} percent`);
+    const siteCoverage = new Map((site.shannon?.ages || []).map((row) => [String(row.key), row.n || 0]));
+    const header = `<div class="exact-age-heading">Age (months)</div><div class="exact-row exact-head"><span class="exact-name">Composition</span>${keys.map((key) => `<span class="exact-header">${escapeHTML(key)}</span>`).join("")}</div>`;
     const rows = names.map((name) => {
+      const type = byAge.map((rows) => rows.get(name)?.glycan_type).find(Boolean) || "undecorated";
       const cells = byAge.map((ageRows, index) => {
         const row = ageRows.get(name);
-        const detected = ageRows.size > 0;
+        const detected = (siteCoverage.get(keys[index]) || 0) > 0;
         const percent = row?.percent ?? 0;
         const psm = detected ? row?.psm ?? 0 : null;
-        const alpha = detected ? .05 + Math.min(100, Math.max(0, percent)) / 100 * .9 : 0;
-        const tooltip = `${name} · ${AGE_MONTHS[index]}M · ${psm === null ? "Not detected" : `PSM ${formatNumber(psm)}`}`;
-        return `<button type="button" class="exact-cell ${detected ? "" : "missing"}" style="background:rgba(8,127,120,${alpha})" aria-label="${escapeHTML(tooltip)}" data-tooltip="${escapeHTML(tooltip)}"><span class="exact-value" style="color:${percent > 45 ? "#d6dddc" : "#687977"}">${detected ? `${percent.toFixed(1)}%` : "—"}</span></button>`;
+        const alpha = detected ? .07 + Math.min(scaleMax, Math.max(0, percent)) / scaleMax * .9 : 0;
+        const ageText = `${keys[index]} ${keys[index] === "1" ? "month" : "months"}`;
+        const tooltip = `${name} · ${CLASS_LABELS[type] || type} · ${ageText} · ${psm === null ? "Site not detected" : `${percent.toFixed(1)}% mean abundance · ${formatNumber(psm)} ${psm === 1 ? "PSM" : "PSMs"}`}`;
+        return `<button type="button" class="exact-cell ${detected ? "" : "missing"}" style="background:rgba(65,104,185,${alpha})" aria-label="${escapeHTML(tooltip)}" data-tooltip="${escapeHTML(tooltip)}"><span class="exact-value" style="color:${percent > scaleMax * .55 ? "#fff" : "#40516f"}">${detected ? `${percent.toFixed(1)}%` : "—"}</span></button>`;
       }).join("");
       const shortName = name.replace(/HexNAc\((\d+)\)/g, "N$1 ").replace(/Hex\((\d+)\)/g, "H$1 ").replace(/Fuc\((\d+)\)/g, "F$1 ").replace(/NeuAc\((\d+)\)/g, "A$1 ").replace(/NeuGc\((\d+)\)/g, "G$1 ").replace(/Phospho\((\d+)\)/g, "P$1 ").trim();
-      return `<div class="exact-row"><span class="exact-name" title="${escapeHTML(name)}">${escapeHTML(shortName)}</span>${cells}</div>`;
+      return `<div class="exact-row"><span class="exact-name" title="${escapeHTML(name)}"><i class="legend-swatch" style="background:${classPaint(type)}"></i>${escapeHTML(shortName)}</span>${cells}</div>`;
     }).join("");
     dom.exactGrid.innerHTML = header + rows;
+    dom.exactGrid.style.setProperty("--exact-columns", keys.length);
     dom.exactGrid.classList.toggle("show-values", dom.exactGrid.querySelector(".exact-cell").clientWidth >= 48);
   }
 
   function renderPairwise(site) {
-    const rows = site ? (state.currentProtein.pairwise || []).filter((row) => row.site_id === site.id) : [];
-    const eligibleOrgans = ORGANS.filter((organ) => (state.currentProtein.organs[organ]?.glycosites || []).some((row) => row.id === site?.id && row.comparison_eligible));
-    if (!site || !site.comparison_eligible || eligibleOrgans.length < 2 || !rows.length) {
-      const reason = site && !site.comparison_eligible
-        ? "This low-confidence site remains visible in the atlas but is intentionally excluded from cross-organ comparison."
-        : "No second confidence-qualified organ is available for this glycosite.";
-      dom.pairwiseList.innerHTML = `<p class="pairwise-intro">Choose one covered site and two covered organs to compare their all-age glycan-class profiles.</p><p class="empty-note">${reason}</p>`;
-      return;
+    if (!site) { dom.pairwiseList.innerHTML = `<p class="empty-note">Select a glycosite to compare.</p>`; return; }
+    const siteFor = (organ, id) => (state.currentProtein.organs[organ]?.glycosites || []).find((row) => row.id === id);
+    const crossOrgans = ORGANS.filter((organ) => siteFor(organ, site.id)?.glycan_classes?.pooled?.length);
+    const sameOrganSites = state.currentProtein.organs[state.activeOrgan]?.glycosites || [];
+    state.pairOrganA = state.activeOrgan;
+    state.pairOrganB = crossOrgans.includes(state.pairOrganB) && state.pairOrganB !== state.pairOrganA ? state.pairOrganB : crossOrgans.find((organ) => organ !== state.pairOrganA);
+    state.pairSiteB = sameOrganSites.some((row) => row.id === state.pairSiteB && row.id !== site.id) ? state.pairSiteB : sameOrganSites.find((row) => row.id !== site.id)?.id;
+    const sameOrgan = state.pairMode === "between_sites";
+    const a = site;
+    const b = sameOrgan ? siteFor(state.activeOrgan, state.pairSiteB) : siteFor(state.pairOrganB, site.id);
+    const selector = `<div class="pairwise-controls"><label>Compare<select data-pair-mode><option value="between_organs" ${sameOrgan ? "" : "selected"}>Same site · different datasets</option><option value="between_sites" ${sameOrgan ? "selected" : ""}>Same dataset · different sites</option></select></label>${sameOrgan ? `<label>Second glycosite<select data-pair-site>${sameOrganSites.filter((row) => row.id !== site.id).map((row) => `<option value="${escapeHTML(row.id)}" ${row.id === state.pairSiteB ? "selected" : ""}>N${row.position}</option>`).join("")}</select></label>` : `<label>Second dataset<select data-pair-organ-b>${crossOrgans.filter((organ) => organ !== state.activeOrgan).map((organ) => `<option value="${organ}" ${organ === state.pairOrganB ? "selected" : ""}>${ORGAN_LABELS[organ]}</option>`).join("")}</select></label>`}</div>`;
+    if (!b) {
+      dom.pairwiseList.innerHTML = `${selector}<p class="empty-note">No second ${sameOrgan ? "site" : "dataset"} is available for this comparison.</p>`;
+    } else {
+      const vectorA = pooledClassVector(a), vectorB = pooledClassVector(b);
+      const labelA = `${ORGAN_LABELS[state.activeOrgan]} | N${a.position}`;
+      const labelB = sameOrgan ? `${ORGAN_LABELS[state.activeOrgan]} | N${b.position}` : `${ORGAN_LABELS[state.pairOrganB]} | N${b.position}`;
+      const classNames = orderedClasses([...new Set([...vectorA.keys(), ...vectorB.keys()])]);
+      const totalVariation = classNames.reduce((sum, name) => sum + Math.abs((vectorA.get(name) || 0) - (vectorB.get(name) || 0)), 0) / 2;
+      const bar = (vector, label) => `<div class="comparison-profile"><strong>${escapeHTML(label)}</strong><div class="composition-bar">${classNames.map((name) => `<i style="width:${vector.get(name) || 0}%;background:${classPaint(name)}"></i>`).join("")}</div></div>`;
+      const metric = (label, left, right) => `<div><span>${label}</span><strong>${left} / ${right}</strong></div>`;
+      const statsA = a.shannon?.pooled_all || {}, statsB = b.shannon?.pooled_all || {};
+      const fmt = (value, digits = 2) => Number.isFinite(value) ? value.toFixed(digits) : "—";
+      const dominant = (row) => row.dominant_class ? `${CLASS_LABELS[row.dominant_class.name]} ${fmt(row.dominant_class.percent, 1)}%` : "—";
+      const tableRows = classNames.map((name) => {
+        const valueA = vectorA.get(name) || 0, valueB = vectorB.get(name) || 0;
+        return `<tr><th><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</th><td>${fmt(valueA, 1)}%</td><td>${fmt(valueB, 1)}%</td><td>${valueB - valueA >= 0 ? "+" : ""}${fmt(valueB - valueA, 1)} pp</td></tr>`;
+      }).join("");
+      dom.pairwiseList.innerHTML = `${selector}<p class="pairwise-intro">All-age PSM-pooled composition. Difference is ${escapeHTML(labelB)} − ${escapeHTML(labelA)}.</p><div class="comparison-bars">${bar(vectorA, labelA)}${bar(vectorB, labelB)}</div><div class="comparison-metrics">${metric("Pooled glycan-type Shannon H", fmt(statsA.glycan_type_shannon_h), fmt(statsB.glycan_type_shannon_h))}${metric("Observed glycan types", formatNumber(statsA.observed_glycan_types), formatNumber(statsB.observed_glycan_types))}${metric("Weighted glycan types", fmt(statsA.effective_glycan_types), fmt(statsB.effective_glycan_types))}${metric("Dominant glycan type", dominant(a), dominant(b))}<div class="comparison-distance"><span>Composition percent difference (TVD)</span><strong>${fmt(totalVariation, 1)}%</strong><div class="distance-track"><i style="width:${Math.min(100, totalVariation)}%"></i></div></div></div><div class="comparison-table-wrap"><table><thead><tr><th>Glycan type</th><th>${escapeHTML(labelA)}</th><th>${escapeHTML(labelB)}</th><th>B − A</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
     }
-    const defaultRow = rows.slice().sort((a, b) => b.total_variation_pct - a.total_variation_pct)[0];
-    const preferredA = eligibleOrgans.includes(state.activeOrgan) ? state.activeOrgan : defaultRow.organ_a;
-    state.pairOrganA = eligibleOrgans.includes(state.pairOrganA) ? state.pairOrganA : preferredA;
-    const defaultB = defaultRow.organ_a === state.pairOrganA ? defaultRow.organ_b : defaultRow.organ_a;
-    state.pairOrganB = eligibleOrgans.includes(state.pairOrganB) && state.pairOrganB !== state.pairOrganA
-      ? state.pairOrganB
-      : (eligibleOrgans.includes(defaultB) && defaultB !== state.pairOrganA ? defaultB : eligibleOrgans.find((organ) => organ !== state.pairOrganA));
-    const pairRow = rows.find((row) => [row.organ_a, row.organ_b].includes(state.pairOrganA) && [row.organ_a, row.organ_b].includes(state.pairOrganB));
-    const siteFor = (organ) => (state.currentProtein.organs[organ]?.glycosites || []).find((row) => row.id === site.id);
-    const vectorA = pooledClassVector(siteFor(state.pairOrganA));
-    const vectorB = pooledClassVector(siteFor(state.pairOrganB));
-    const classNames = orderedClasses([...new Set([...vectorA.keys(), ...vectorB.keys()])]);
-    const statsA = compositionStats(vectorA);
-    const statsB = compositionStats(vectorB);
-    const vectorBar = (vector, organ) => `<div class="comparison-profile"><strong>${organ[0].toUpperCase()}${organ.slice(1)}</strong><div class="composition-bar">${classNames.map((name) => `<i style="width:${vector.get(name) || 0}%;background:${classPaint(name)}"></i>`).join("")}</div><p>${classNames.filter((name) => (vector.get(name) || 0) >= .1).map((name) => `${CLASS_LABELS[name] || name} ${(vector.get(name) || 0).toFixed(1)}%`).join(" · ")}</p></div>`;
-    const organOptions = (selected) => eligibleOrgans.map((organ) => `<option value="${organ}" ${organ === selected ? "selected" : ""}>${organ[0].toUpperCase()}${organ.slice(1)}</option>`).join("");
-    const metric = (label, value) => `<div><span>${label}</span><strong>${value}</strong></div>`;
-    const totalVariation = pairRow?.total_variation_pct ?? classNames.reduce((total, name) => total + Math.abs((vectorA.get(name) || 0) - (vectorB.get(name) || 0)), 0) / 2;
-    const jsDistance = pairRow?.js_distance;
-    const tableRows = classNames.map((name) => {
-      const a = vectorA.get(name) || 0, b = vectorB.get(name) || 0, difference = b - a;
-      return `<tr><th>${escapeHTML(CLASS_LABELS[name] || name)}</th><td>${a.toFixed(2)}%</td><td>${b.toFixed(2)}%</td><td>${difference >= 0 ? "+" : ""}${difference.toFixed(2)}%</td></tr>`;
-    }).join("");
-    dom.pairwiseList.innerHTML = `
-      <p class="pairwise-intro">Compare the same confidence-qualified glycosite between organs. Profiles reconstruct the sample-weighted all-age class vectors.</p>
-      <div class="pairwise-controls">
-        <label>Organ A<select data-pair-organ-a>${organOptions(state.pairOrganA)}</select></label>
-        <label>Organ B<select data-pair-organ-b>${organOptions(state.pairOrganB)}</select></label>
-      </div>
-      <div class="comparison-bars">${vectorBar(vectorA, state.pairOrganA)}${vectorBar(vectorB, state.pairOrganB)}</div>
-      <div class="comparison-metrics">
-        ${metric(`${state.pairOrganA} ${DIVERSITY_LABEL}`, statsA.shannon.toFixed(2))}
-        ${metric(`${state.pairOrganB} ${DIVERSITY_LABEL}`, statsB.shannon.toFixed(2))}
-        ${metric("Effective classes", statsA.effective.toFixed(2))}
-        ${metric("Effective classes", statsB.effective.toFixed(2))}
-        ${metric("Simpson diversity", statsA.simpson.toFixed(2))}
-        ${metric("Simpson diversity", statsB.simpson.toFixed(2))}
-        ${metric("Dominant class", `${escapeHTML(CLASS_LABELS[statsA.dominant] || statsA.dominant)} ${statsA.dominantPercent.toFixed(1)}%`)}
-        ${metric("Dominant class", `${escapeHTML(CLASS_LABELS[statsB.dominant] || statsB.dominant)} ${statsB.dominantPercent.toFixed(1)}%`)}
-        ${metric("Total variation", `${totalVariation.toFixed(2)}%`)}
-        ${metric("Jensen–Shannon distance", Number.isFinite(jsDistance) ? jsDistance.toFixed(3) : "—")}
-      </div>
-      <div class="comparison-table-wrap"><table><thead><tr><th>Class</th><th>${state.pairOrganA}</th><th>${state.pairOrganB}</th><th>B − A</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
-    dom.pairwiseList.querySelector("[data-pair-organ-a]").addEventListener("change", (event) => {
-      state.pairOrganA = event.target.value;
-      if (state.pairOrganA === state.pairOrganB) state.pairOrganB = eligibleOrgans.find((organ) => organ !== state.pairOrganA);
-      renderPairwise(site);
-    });
-    dom.pairwiseList.querySelector("[data-pair-organ-b]").addEventListener("change", (event) => {
-      state.pairOrganB = event.target.value;
-      if (state.pairOrganA === state.pairOrganB) state.pairOrganA = eligibleOrgans.find((organ) => organ !== state.pairOrganB);
-      renderPairwise(site);
-    });
+    dom.pairwiseList.querySelector("[data-pair-mode]")?.addEventListener("change", (event) => { state.pairMode = event.target.value; renderPairwise(site); });
+    dom.pairwiseList.querySelector("[data-pair-organ-b]")?.addEventListener("change", (event) => { state.pairOrganB = event.target.value; renderPairwise(site); });
+    dom.pairwiseList.querySelector("[data-pair-site]")?.addEventListener("change", (event) => { state.pairSiteB = event.target.value; renderPairwise(site); });
   }
 
   function pooledClassVector(site) {
-    const totals = new Map();
-    let totalWeight = 0;
-    const sampleCounts = new Map((site?.shannon?.ages || []).map((row) => [String(row.key), row.n || 0]));
-    AGE_MONTHS.map(String).forEach((key) => {
-      const rows = site?.glycan_classes?.ages?.[key] || [];
-      const weight = sampleCounts.get(key) || 0;
-      if (!rows.length || !weight) return;
-      totalWeight += weight;
-      rows.forEach((row) => totals.set(row.name, (totals.get(row.name) || 0) + row.percent * weight));
-    });
-    if (!totalWeight) return totals;
-    totals.forEach((value, key) => totals.set(key, value / totalWeight));
-    const sum = [...totals.values()].reduce((total, value) => total + value, 0);
-    if (sum > 0) totals.forEach((value, key) => totals.set(key, value / sum * 100));
-    return totals;
+    return new Map((site?.glycan_classes?.pooled || []).map((row) => [row.name, row.percent]));
   }
 
-  function compositionStats(vector) {
-    const entries = [...vector.entries()].filter(([, percent]) => percent > 0);
-    const proportions = entries.map(([, percent]) => percent / 100);
-    const shannon = -proportions.reduce((total, value) => total + value * Math.log(value), 0);
-    const [dominant = "—", dominantPercent = 0] = entries.sort((a, b) => b[1] - a[1])[0] || [];
-    return {
-      shannon,
-      effective: Math.exp(shannon),
-      simpson: 1 - proportions.reduce((total, value) => total + value ** 2, 0),
-      dominant,
-      dominantPercent,
-    };
+  async function loadTVD() {
+    if (!state.tvdManifest) {
+      state.tvdManifest = await fetchJSON("data/tvd/index.json");
+      const comparisons = state.tvdManifest.comparisons;
+      const datasets = [...new Set(comparisons.map((row) => row.dataset))];
+      dom.tvdDataset.innerHTML = datasets.map((dataset) => `<option value="${dataset}">${ORGAN_LABELS[dataset.replace(/^atlas_/, "")] || dataset}</option>`).join("");
+      [dom.tvdDataset, dom.tvdFamily, dom.tvdComparison].forEach((select) => select.addEventListener("change", updateTVDControls));
+      dom.tvdSearch.addEventListener("input", renderTVDPlot);
+      document.querySelectorAll("[data-tvd-zoom]").forEach((button) => button.addEventListener("click", () => {
+        state.tvdZoom = button.dataset.tvdZoom === "reset" ? 1 : Math.max(1, Math.min(8, (state.tvdZoom || 1) * Number(button.dataset.tvdZoom)));
+        renderTVDPlot();
+      }));
+    }
+    updateTVDControls();
+  }
+
+  async function updateTVDControls(event) {
+    const comparisons = state.tvdManifest.comparisons.filter((row) => row.dataset === dom.tvdDataset.value);
+    const families = [...new Set(comparisons.map((row) => row.family))];
+    if (!families.includes(dom.tvdFamily.value)) dom.tvdFamily.value = families[0];
+    dom.tvdFamily.innerHTML = families.map((family) => `<option value="${family}" ${family === dom.tvdFamily.value ? "selected" : ""}>${family === "age_bins" ? "Age bins" : "Individual ages"}</option>`).join("");
+    const available = comparisons.filter((row) => row.family === dom.tvdFamily.value);
+    const selected = available.some((row) => row.comparison === dom.tvdComparison.value) ? dom.tvdComparison.value : available[0]?.comparison;
+    dom.tvdComparison.innerHTML = available.map((row) => `<option value="${escapeHTML(row.comparison)}" ${row.comparison === selected ? "selected" : ""}>${escapeHTML(row.comparison.replaceAll("_", " "))} (${formatNumber(row.n)} sites)</option>`).join("");
+    const record = available.find((row) => row.comparison === selected);
+    if (!record) return;
+    dom.tvdPlot.innerHTML = `<p class="empty-note">Loading ${formatNumber(record.n)} tested sites…</p>`;
+    state.tvdRows = await fetchJSON(`data/tvd/${record.file}`);
+    state.tvdZoom = event?.target === dom.tvdComparison ? state.tvdZoom || 1 : 1;
+    renderTVDPlot();
+  }
+
+  function renderTVDPlot() {
+    if (!state.tvdRows) return;
+    const query = normalize(dom.tvdSearch.value);
+    const rows = state.tvdRows.filter((row) => {
+      const gene = state.byProtein.get(row.protein_id)?.gene || "";
+      return !query || normalize(`${row.protein_id} ${row.glycosite} ${gene}`).includes(query);
+    });
+    const w = Math.max(640, dom.tvdPlot.clientWidth), h = 480, left = 68, right = 26, top = 25, bottom = 58;
+    const width = w - left - right, height = h - top - bottom;
+    const zoom = state.tvdZoom || 1;
+    const maxX = Math.max(5, Math.ceil(Math.max(0, ...state.tvdRows.map((row) => row.percent_difference)) / 5) * 5) / zoom;
+    const maxY = Math.max(2, Math.ceil(Math.max(0, ...state.tvdRows.map((row) => row.neg_log10_p_value)))) / zoom;
+    const x = (value) => left + value / maxX * width;
+    const y = (value) => top + height - value / maxY * height;
+    const dots = rows.filter((row) => row.percent_difference <= maxX && row.neg_log10_p_value <= maxY).map((row) => {
+      const gene = state.byProtein.get(row.protein_id)?.gene || row.protein_id;
+      const tooltip = `${gene} · ${row.glycosite} · ${row.percent_difference.toFixed(1)}% difference · p=${Number(row.p_value).toExponential(2)} · n=${row.n_a}/${row.n_b} detected samples`;
+      return `<circle cx="${x(row.percent_difference)}" cy="${y(row.neg_log10_p_value)}" r="5" fill="${row.p_value < .05 ? "#CD4D2C" : "#78909b"}" fill-opacity=".72" data-tvd-protein="${escapeHTML(row.protein_id)}" data-tvd-site="${escapeHTML(row.site_key)}" data-tvd-dataset="${dom.tvdDataset.value.replace(/^atlas_/, "")}" data-tooltip="${escapeHTML(tooltip)}" tabindex="0" role="button"></circle>`;
+    }).join("");
+    const xTicks = axisTicks(maxX, maxX <= 20 ? 5 : 10).map((tick) => `<text x="${x(tick)}" y="${top + height + 20}" text-anchor="middle">${tick}</text>`).join("");
+    const yTicks = axisTicks(maxY, maxY <= 6 ? 1 : 2).map((tick) => `<text x="${left - 9}" y="${y(tick) + 4}" text-anchor="end">${tick}</text>`).join("");
+    dom.tvdPlot.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="TVD site percent difference versus negative log10 raw p value"><line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + height}"/><line class="axis" x1="${left}" y1="${top + height}" x2="${left + width}" y2="${top + height}"/><line class="tvd-threshold" x1="${left}" y1="${y(-Math.log10(.05))}" x2="${left + width}" y2="${y(-Math.log10(.05))}"/>${dots}${xTicks}${yTicks}<text class="axis-label" x="${left + width / 2}" y="${h - 9}" text-anchor="middle">Glycan-type composition percent difference (TVD)</text><text class="axis-label" transform="translate(18 ${top + height / 2}) rotate(-90)" text-anchor="middle">−log₁₀(raw p value)</text></svg><p class="tvd-count">${formatNumber(rows.length)} tested sites · orange: raw p &lt; 0.05 · click a point to open its glycosite.</p>`;
+    dom.tvdPlot.querySelectorAll("[data-tvd-protein]").forEach((dot) => {
+      const open = async () => {
+        const row = state.byProtein.get(dot.dataset.tvdProtein);
+        if (!row) return;
+        await openProtein(row);
+        state.activeOrgan = dot.dataset.tvdDataset;
+        state.selectedSites[state.activeOrgan] = dot.dataset.tvdSite;
+        renderSegmentOverlay();
+        renderDetail();
+      };
+      dot.addEventListener("click", open);
+      dot.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); open(); } });
+    });
   }
 
   function selectedSite(organ) {
@@ -807,6 +875,10 @@
     updateNavigation(pageName);
     closeAllSearchResults();
     if (updateHistory) history.pushState({}, "", `${location.pathname}#${pageName}`);
+    if (pageName === "tvd") loadTVD().catch((error) => {
+      console.error(error);
+      dom.tvdPlot.innerHTML = `<p class="empty-note">Age-comparison data could not be loaded.</p>`;
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -845,7 +917,7 @@
   function closeAllSearchResults() { document.querySelectorAll("[data-search-results]").forEach((node) => { node.hidden = true; }); }
   function announce(message) { dom.live.textContent = message; }
   function normalize(value) { return String(value || "").trim().toLowerCase(); }
-  function formatNumber(value) { return Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: 1 }); }
+  function formatNumber(value) { return value == null || !Number.isFinite(Number(value)) ? "—" : Number(value).toLocaleString("en-US", { maximumFractionDigits: 1 }); }
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
   }
