@@ -8,7 +8,9 @@
   <link rel="icon" href="assets/glycan-5.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/styles.css?v=2026-09-30-review-r18">
   <script src="assets/theme.js?v=2026-09-30-review-r1" defer></script>
-  <script src="assets/app.js?v=2026-09-30-review-r20" defer></script>
+  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-24">
+  <script src="assets/comparisons.js?v=2026-10-24" defer></script>
+  <script src="assets/app.js?v=2026-10-24-comparisons" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -21,10 +23,8 @@
       <a href="#overview" data-page-link="overview">Overview</a>
       <a href="#explore" data-explore-link>Explore</a>
       <a href="#tvd" data-page-link="tvd">Age comparisons</a>
+      <a href="#inter-organ" data-page-link="inter-organ">Inter-organ comparisons</a>
       <a href="#methods" data-page-link="methods">Methods</a>
-      <a href="#learning" data-page-link="learning">Learning</a>
-      <a href="#publications" data-page-link="publications">Publications</a>
-      <a href="#raw-data" data-page-link="raw-data">Raw data</a>
       <a href="#contact" data-page-link="contact">Contact</a>
     </nav>
   </header>
@@ -73,10 +73,8 @@
             <a href="#overview" data-page-link="overview">Overview</a>
             <a href="#explore" data-explore-link aria-current="page">Explore</a>
             <a href="#tvd" data-page-link="tvd">Age comparisons</a>
+            <a href="#inter-organ" data-page-link="inter-organ">Inter-organ comparisons</a>
             <a href="#methods" data-page-link="methods">Methods</a>
-            <a href="#learning" data-page-link="learning">Learning</a>
-            <a href="#publications" data-page-link="publications">Publications</a>
-            <a href="#raw-data" data-page-link="raw-data">Raw data</a>
             <a href="#contact" data-page-link="contact">Contact</a>
           </nav>
         </div>
@@ -189,7 +187,8 @@
       </div>
     </section>
 
-    <section class="content-page" id="tvd" data-page="tvd" aria-label="Age comparisons" hidden>
+    <section class="content-page comparison-page" id="tvd" data-page="tvd" aria-label="Age comparisons" hidden>
+      <div class="comparison-intro"><span class="comparison-kicker">Lifespan atlas</span><h2>Age comparisons</h2><p>Find age-remodeled glycosites, follow the glycan types they lose and gain, and open each site in the explorer.</p></div>
       <div class="tvd-controls">
         <label>Dataset<select data-tvd-dataset></select></label>
         <label>Comparison<select data-tvd-comparison></select></label>
@@ -197,19 +196,36 @@
         <div class="tvd-zoom"><span>Zoom</span><button type="button" data-tvd-zoom="1.5">+</button><button type="button" data-tvd-zoom="0.666667">−</button><button type="button" data-tvd-zoom="reset">Reset</button></div>
       </div>
       <div class="tvd-plot" data-tvd-plot><p class="empty-note">Loading age-comparison data…</p></div>
+      <p class="comparison-note">TVD measures the fraction of glycan-type composition redistributed (0–100%). Hits use raw permutation p &lt;0.05, without multiple-testing adjustment. Young (Y): 1–6 months; middle-aged (MA): 9–16 months; old (O): 19–28 months in atlas organs. Myelin uses cohort-specific ages.</p>
+      <div class="comparison-grid">
+        <article class="comparison-card"><h3>Dominant glycan gains and losses</h3><p class="comparison-note">Choose a cell for a loss/gain pair, or a row or column label for all losses or gains of that type. A dominant type contributes ≥60% of the change in that direction; otherwise it is mixed.</p><div class="comparison-scroll" data-age-matrix></div></article>
+        <article class="comparison-card"><div class="comparison-heading"><h3>Browse age hits</h3><strong data-age-hit-count></strong></div><p class="comparison-note" data-age-active-filter>All glycan changes</p><button class="comparison-reset" type="button" data-age-clear>Clear glycan filter</button><div class="comparison-hit-scroll" tabindex="0" role="region" aria-label="All matching age-comparison hits" data-age-hits></div></article>
+      </div>
+      <article class="comparison-card"><h3>Aging and organ identity</h3><div class="comparison-boxes" data-age-context></div></article>
     </section>
 
-    <section class="content-page" id="overview" data-page="overview" aria-label="Overview" hidden></section>
+    <section class="content-page comparison-page" id="inter-organ" data-page="inter-organ" aria-label="Inter-organ comparisons" hidden>
+      <div class="comparison-intro"><span class="comparison-kicker">Across tissues</span><h2>Inter-organ comparisons</h2><p>Compare site composition and heterogeneity across atlas organs, or between whole brain and male and female myelin. Browse every eligible glycosite.</p></div>
+      <div data-inter-content></div>
+    </section>
+    <section class="content-page comparison-page" id="overview" data-page="overview" aria-label="Overview" hidden>
+      <div class="comparison-intro"><span class="comparison-kicker">The Glycoprotein Atlas</span><h2>A lifespan view of N-glycosylation</h2><p>Explore site-resolved N-glycan composition alongside protein abundance across mouse brain, spleen, liver, kidney, and plasma, with male and female myelin datasets.</p></div>
+      <div class="summary-copy"><h3>From protein to glycosite</h3><p>The explorer shows where N-glycosites fall on a protein, the glycan types found at each site, age trajectories, exact glycan composition, and pairwise differences between sites or datasets.</p><h3>Find compositional changes</h3><p><a href="#tvd" data-page-link="tvd">Age comparisons</a> combine TVD and permutation tests with browsable glycan gains and losses. <a href="#inter-organ" data-page-link="inter-organ">Inter-organ comparisons</a> show composition differences and glycan-type heterogeneity at shared sites.</p><h3>Read composition in context</h3><p>Glycan percentages describe the distribution within a glycosite; they do not measure total site abundance. Protein abundance is displayed separately. Missing measurements are not treated as zero.</p></div>
+    </section>
 
-    <section class="content-page" id="methods" data-page="methods" aria-label="Methods" hidden></section>
+    <section class="content-page comparison-page" id="methods" data-page="methods" aria-label="Methods" hidden>
+      <div class="comparison-intro"><span class="comparison-kicker">Reading the atlas</span><h2>Methods summary</h2><p>This summary explains the calculations used in the browser. Full experimental methods will accompany the manuscript.</p></div>
+      <div class="summary-copy"><h3>Cohorts and measurements</h3><p>The five-organ atlas samples male C57BL/6JN mice at nine ages from 1 to 28 months, with six animals per age. TMT proteomics measures protein abundance; enriched glycopeptide LC-MS/MS measures N-glycan composition. Male and female myelin are separate cohorts with their own sampled ages.</p><h3>Within-site composition and TVD</h3><p>Glycan-type percentages use eight composition-based classes. Pooled profiles divide each class’s glyco-PSMs by all glyco-PSMs at that site. TVD (%) = ½ × Σ|Aᵢ − Bᵢ| when A and B are percentages. Identical profiles have TVD 0%; non-overlapping profiles have TVD 100%. Signed class differences are reported in percentage points.</p><h3>Age comparisons</h3><p>The browser preserves TVD and raw permutation p-values from the versioned tested-site exports. Atlas age comparisons require Tier 2+ coverage, at least nine detected animals, and at least 18 glyco-PSMs in each compared bin. Myelin uses cohort-specific eligibility in its source exports. Age gains and losses use differences of per-animal mean percentages. A type is dominant when it accounts for at least 60% of total gain or total loss; all other directions are mixed. Hits use raw p &lt;0.05 and are exploratory.</p><h3>Inter-organ comparisons and heterogeneity</h3><p>Site profiles pool glyco-PSMs across all detected ages and samples in each dataset. Comparisons require at least five PSMs at the shared site in both datasets (Tier 1+ in atlas organs). Conserved: TVD &lt;20%; partially shifted: 20% to &lt;50%; strongly remodeled: ≥50%. Young-only reference comparisons pool young-bin PSMs and require Tier 2+, nine detected animals, and 18 PSMs in each young bin.</p><p>Shannon H = −Σpᵢ ln(pᵢ), with p expressed as proportions. Effective glycan types = exp(H). Low diversity is &lt;1.5 effective types, intermediate is 1.5 to &lt;2.5, and high is ≥2.5. Box plots show every site, medians and interquartile ranges; whiskers extend to the most extreme point within 1.5 times the interquartile range.</p></div>
+    </section>
 
-    <section class="content-page" id="learning" data-page="learning" aria-label="Learning" hidden></section>
-
-    <section class="content-page" id="publications" data-page="publications" aria-label="Publications" hidden></section>
-
-    <section class="content-page" id="raw-data" data-page="raw-data" aria-label="Raw data" hidden></section>
-
-    <section class="content-page" id="contact" data-page="contact" aria-label="Contact" hidden></section>
+    <section class="content-page comparison-page" id="contact" data-page="contact" aria-label="Contact" hidden>
+      <div class="comparison-intro"><h2>Contact</h2><p>For questions about the atlas and the study, contact:</p></div>
+      <div class="contact-grid">
+        <article><h3>Michael Schoof</h3><a href="mailto:mlschoof@stanford.edu">mlschoof@stanford.edu</a></article>
+        <article><h3>Tony Wyss-Coray</h3><a href="mailto:twc@stanford.edu">twc@stanford.edu</a></article>
+        <article><h3>Carolyn Bertozzi</h3><a href="mailto:bertozzi@stanford.edu">bertozzi@stanford.edu</a></article>
+      </div>
+    </section>
   </main>
 
   <footer aria-label="Page footer"></footer>
