@@ -108,6 +108,12 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(total,5266)
         self.assertEqual(dict(counts),dict(conserved=2994,partially_shifted=1070,strongly_remodeled=1202))
 
+    def test_derived_scores_have_portable_export_precision(self):
+        for group in self.manifest['pairs'] + self.manifest['young_pairs']:
+            for row in json.loads((self.data/group['file']).read_text()):
+                for field in ('h_a', 'h_b', 'effective_a', 'effective_b'):
+                    self.assertEqual(row[field], round(row[field], 8))
+
     def test_pair_counts_match_figure_2b_and_myelin_is_separate(self):
         expected={'brain__spleen':798,'brain__liver':663,'brain__kidney':739,'brain__plasma':112,
                   'spleen__liver':856,'spleen__kidney':814,'spleen__plasma':167,

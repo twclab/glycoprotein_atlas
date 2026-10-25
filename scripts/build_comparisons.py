@@ -97,7 +97,7 @@ def build(root, output):
                     record = dict(protein_id=protein['protein_id'], site_key=site_key,
                                   glycosite=a['label'], position=a['position'],
                                   tvd=round(d, 8), h_a=round(ha, 8), h_b=round(hb, 8),
-                                  effective_a=ea, effective_b=eb,
+                                  effective_a=round(ea, 8), effective_b=round(eb, 8),
                                   psm_a=a['total_psm'], psm_b=b['total_psm'],
                                   state=remodeling_state(d),
                                   diversity='-'.join(sorted([diversity_band(ea), diversity_band(eb)],
@@ -118,8 +118,8 @@ def build(root, output):
                             dy = round(tvd(ya, yb), 8)
                             young_pairs[key].append(dict(protein_id=protein['protein_id'], site_key=site_key,
                                                         glycosite=a['label'], position=a['position'],
-                                                        tvd=round(dy, 8), h_a=hy_a, h_b=hy_b,
-                                                        effective_a=ey_a, effective_b=ey_b,
+                                                        tvd=round(dy, 8), h_a=round(hy_a, 8), h_b=round(hy_b, 8),
+                                                        effective_a=round(ey_a, 8), effective_b=round(ey_b, 8),
                                                         state=remodeling_state(dy),
                                                         diversity='-'.join(sorted([diversity_band(ey_a), diversity_band(ey_b)],
                                                                                   key=['low', 'intermediate', 'high'].index))))
