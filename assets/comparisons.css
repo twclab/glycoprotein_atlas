@@ -48,12 +48,21 @@
 .box-hit-area { fill: transparent; }
 .box-choice { cursor: pointer; }
 .box-choice:hover .box-hit-area, .box-choice:focus .box-hit-area, .box-choice.selected .box-hit-area { fill: var(--teal-700); fill-opacity: .07; stroke: var(--teal-700); }
-.box-point { cursor: pointer; }
-.box-point:hover circle, .box-point:focus circle { r: 4; fill-opacity: 1; }
-.box-point.selected circle { r: 5; fill-opacity: 1; stroke: var(--teal-900); stroke-width: 1.5; }
+.box-point { cursor: pointer; stroke: transparent; stroke-width: 8; pointer-events: all; }
+.box-point:hover, .box-point:focus { r: 4; fill-opacity: 1; }
+.box-point.selected { r: 5; fill-opacity: 1; stroke: var(--teal-900); stroke-width: 1.5; }
+.comparison-hover { position: fixed; z-index: 100; pointer-events: none; max-width: 290px; padding: 9px 12px; border-radius: 7px; background: var(--teal-900); color: white; box-shadow: 0 3px 14px #0002; font-size: 12px; line-height: 1.5; }
+.comparison-hover[hidden] { display: none; }
 .hit-table tr.selected-site > * { background: var(--teal-050); border-top: 2px solid var(--teal-700); border-bottom: 2px solid var(--teal-700); }
 .hit-table tr.selected-site:focus { outline: 2px solid var(--teal-700); outline-offset: -2px; }
 .inter-hit-table { min-width: 480px; }
+.inter-hit-scroll { height: 500px; overflow-anchor: none; scrollbar-gutter: stable; }
+.inter-hit-table { table-layout: fixed; }
+.inter-hit-table tr.site-row { height: var(--comparison-row-height); }
+.inter-hit-table tr.site-row > th > a { display: block; max-height: 32px; overflow: hidden; line-height: 16px; overflow-wrap: anywhere; }
+.inter-hit-table tr.site-row > th > small { max-height: 26px; overflow: hidden; line-height: 13px; }
+.inter-hit-table .window-spacer, .inter-hit-table .window-spacer td { padding: 0; border: 0; line-height: 0; }
+.comparison-window-note { margin: 12px 0 0; color: var(--ink-soft); font-size: 11px; }
 .inter-hit-table td:last-child { min-width: 130px; }
 .composition-bar-row { display: grid; grid-template-columns: 12px minmax(0,1fr); align-items: center; gap: 5px; margin: 4px 0 9px; font-size: 10px; }
 .comparison-composition-bar { display: flex; height: 12px; overflow: hidden; border-radius: 3px; background: var(--gray-100); outline: 1px solid var(--gray-100); }

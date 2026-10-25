@@ -14,6 +14,7 @@
   };
   const { CLASS_ORDER, CLASS_LABELS, CLASS_COLORS, ORGAN_COLORS, DIVERSITY_LABEL } = window.ATLAS_THEME;
   const EXPLORER_BUILD = "2026-10-24-comparisons";
+  const PROFILE_COMPARISONS = new URLSearchParams(location.search).has('profileComparisons');
   const chooseCatPhoto = (paths) => paths[Math.floor(Math.random() * paths.length)];
   const catPhotos = {
     composition: chooseCatPhoto(["assets/cat-test.jpg", "assets/cats/IMG_7679.JPG"]),
@@ -45,6 +46,10 @@
     diversityMetric: "effective",
     diversityGrouping: "sample",
     tvdManifest: null,
+    indexReady: false,
+    proteinRequest: 0,
+    shardKey: null,
+    shardPromise: null,
   };
 
   const dom = {
@@ -115,11 +120,13 @@
       state.searchIndex = searchIndex;
       state.sequenceLengths = sequenceMetadata.lengths;
       state.byProtein = new Map(searchIndex.map((row) => [row.protein_id, row]));
+      state.indexReady = true;
       document.querySelectorAll("[data-stat='proteins']").forEach((node) => { node.textContent = formatNumber(manifest.n_proteins); });
       bindSearch();
-      if (initialProteinId && state.byProtein.has(initialProteinId)) {
-        await openProtein(state.byProtein.get(initialProteinId), false);
-      } else if (initialProteinId) {
+      const pendingProteinId = proteinFromHash();
+      if (pendingProteinId && state.byProtein.has(pendingProteinId)) {
+        await openProtein(state.byProtein.get(pendingProteinId), false);
+      } else if (pendingProteinId) {
         dom.loading.innerHTML = `<p>This protein is not present in the current atlas release. Please choose another result.</p>`;
         announce("Protein is not present in this atlas release.");
       }
@@ -254,11 +261,20 @@
 
   async function openProtein(indexRow, updateHistory = true) {
     if (!indexRow) return;
+    const request = ++state.proteinRequest;
+    const profileStart = performance.now(), reusedShard = !!state.shardPromise && state.shardKey === indexRow.shard;
     showProteinLoading(indexRow.gene || indexRow.protein_id);
     closeAllSearchResults();
     document.querySelectorAll("[data-search-input]").forEach((input) => { input.value = indexRow.gene || indexRow.protein_id; });
     try {
-      const shard = await fetchJSON(`data/shards/${indexRow.shard}.json`);
+      // Retain only the latest shard; repeated site visits avoid downloading and parsing it again.
+      if (!state.shardPromise || state.shardKey !== indexRow.shard) {
+        state.shardKey = indexRow.shard;
+        state.shardPromise = fetchJSON(`data/shards/${indexRow.shard}.json`);
+      }
+      const shard = await state.shardPromise;
+      if (request !== state.proteinRequest) return;
+      const dataMilliseconds = performance.now() - profileStart;
       const protein = shard[indexRow.protein_id];
       if (!protein) throw new Error(`Protein ${indexRow.protein_id} is absent from shard ${indexRow.shard}`);
       state.currentProtein = protein;
@@ -289,11 +305,14 @@
       dom.loading.hidden = true;
       dom.dashboard.hidden = false;
       renderProtein();
+      if (PROFILE_COMPARISONS) console.info('ATLAS_PROFILE '+JSON.stringify({operation:'explorer-open',milliseconds:+(performance.now()-profileStart).toFixed(2),dataMilliseconds:+dataMilliseconds.toFixed(2),reusedShard}));
       if (updateHistory) history.pushState({}, "", `#explore/${encodeURIComponent(protein.protein_id)}`);
       document.title = `${protein.gene || protein.protein_id} · The Glycoprotein Atlas`;
       announce(`Loaded ${protein.gene || protein.protein_id}.`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
+      if (request !== state.proteinRequest) return;
+      state.shardPromise = null;
       console.error(error);
       dom.loading.innerHTML = `<p>Could not load this protein. Please choose another result.</p>`;
       announce("Protein data could not be loaded.");
@@ -1120,6 +1139,7 @@
   }
 
   function showHome(updateHistory = true) {
+    ++state.proteinRequest;
     document.body.classList.remove("exploring");
     document.body.classList.remove("contenting");
     dom.home.hidden = false;
@@ -1132,6 +1152,7 @@
   }
 
   function showPage(pageName, updateHistory = true) {
+    ++state.proteinRequest;
     const page = dom.pages.find((node) => node.dataset.page === pageName);
     if (!page) return showHome(updateHistory);
     document.body.classList.remove("exploring");
@@ -1156,6 +1177,7 @@
     if (proteinId) {
       const result = state.byProtein.get(proteinId);
       if (result) await openProtein(result, false);
+      else if (!state.indexReady) showProteinLoading();
       else showExplore(false);
       return;
     }
