@@ -195,13 +195,18 @@
         <label>Find a protein or site<input type="search" data-tvd-search placeholder="Gene, UniProt ID, or site"></label>
         <div class="tvd-zoom"><span>Zoom</span><button type="button" data-tvd-zoom="1.5">+</button><button type="button" data-tvd-zoom="0.666667">−</button><button type="button" data-tvd-zoom="reset">Reset</button></div>
       </div>
+      <div class="age-selection"><strong data-age-selection>Loading comparison…</strong><span>All three plots follow this selection.</span></div>
+      <h3 class="age-plot-heading">Age-related composition changes</h3>
       <div class="tvd-plot" data-tvd-plot><p class="empty-note">Loading age-comparison data…</p></div>
       <p class="comparison-note">TVD measures the fraction of glycan-type composition redistributed (0–100%). Hits use raw permutation p &lt;0.05, without multiple-testing adjustment. Young (Y): 1–6 months; middle-aged (MA): 9–16 months; old (O): 19–28 months in atlas organs. Myelin uses cohort-specific ages.</p>
       <div class="comparison-grid">
-        <article class="comparison-card"><h3>Dominant glycan gains and losses</h3><p class="comparison-note">Choose a cell for a loss/gain pair, or a row or column label for all losses or gains of that type. A dominant type contributes ≥60% of the change in that direction; otherwise it is mixed.</p><div class="comparison-scroll" data-age-matrix></div></article>
+        <article class="comparison-card"><h3 data-age-context-title>Aging and organ identity</h3><div class="comparison-boxes age-reference-boxes" data-age-context></div></article>
+        <article class="comparison-card"><div class="comparison-heading"><h3>Browse plotted glycosites</h3><strong data-age-reference-count aria-live="polite"></strong></div><p class="comparison-note" data-age-reference-label></p><p class="comparison-note">Choose a box to show its full list here. The age box includes all tested sites; the gain/loss list below includes hits with raw p &lt;0.05.</p><div class="comparison-hit-scroll" tabindex="0" role="region" aria-label="Glycosites in the selected distribution" data-age-reference-hits></div></article>
+      </div>
+      <div class="comparison-grid">
+        <article class="comparison-card"><h3 data-age-matrix-title>Glycan gains and losses</h3><p class="comparison-note">Choose a cell for a loss/gain pair, or a row or column label for all losses or gains of that type. A dominant type contributes ≥60% of the change in that direction; otherwise it is mixed.</p><div class="comparison-scroll" data-age-matrix></div></article>
         <article class="comparison-card"><div class="comparison-heading"><h3>Browse age hits</h3><strong data-age-hit-count></strong></div><p class="comparison-note" data-age-active-filter>All glycan changes</p><button class="comparison-reset" type="button" data-age-clear>Clear glycan filter</button><div class="comparison-hit-scroll" tabindex="0" role="region" aria-label="All matching age-comparison hits" data-age-hits></div></article>
       </div>
-      <article class="comparison-card"><h3>Aging and organ identity</h3><div class="comparison-boxes" data-age-context></div></article>
     </section>
 
     <section class="content-page comparison-page" id="inter-organ" data-page="inter-organ" aria-label="Inter-organ comparisons" hidden>

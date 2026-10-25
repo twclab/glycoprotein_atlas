@@ -89,7 +89,6 @@
         history.pushState({}, "", href);
         await routeFromLocation();
       },
-      showInterPage: () => showPage("inter-organ"),
     });
     bindNavigation();
     bindControls();

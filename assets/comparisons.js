@@ -3,6 +3,7 @@
   "use strict";
   const { CLASS_ORDER, CLASS_LABELS, CLASS_COLORS, ORGAN_COLORS } = window.ATLAS_THEME;
   const labels = { brain: "Brain", spleen: "Spleen", liver: "Liver", kidney: "Kidney", plasma: "Plasma", myelin_male: "Male myelin", myelin_female: "Female myelin" };
+  const ageLabels = { O_vs_Y: 'Old versus young', O_vs_MA: 'Old versus middle-aged', MA_vs_Y: 'Middle-aged versus young' };
   const classes = [...CLASS_ORDER, "mixed"];
   const classLabel = (name) => CLASS_LABELS[name] || (name === "mixed" ? "Mixed" : name);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -36,11 +37,12 @@
       hooks.openSite(link.getAttribute('href'));
     }));
   }
-  function hitTable(rows, { organ, other, ageHits = false } = {}) {
+  function hitTable(rows, { organ, other, ageHits = false, ageTested = false } = {}) {
     if (!rows.length) return '<p class="empty-note">No glycosites match these filters. Clear a filter or try another search.</p>';
-    return `<table class="hit-table"><thead><tr><th scope="col">Glycosite</th><th scope="col">TVD (%)</th>${ageHits ? '<th scope="col">Raw p</th><th scope="col">Loss → gain</th>' : '<th scope="col">Heterogeneity A / B</th>'}</tr></thead><tbody>${rows.map(row => {
+    const ageComparison = ageHits || ageTested;
+    return `<table class="hit-table"><thead><tr><th scope="col">Glycosite</th><th scope="col">TVD (%)</th>${ageComparison ? `<th scope="col">Raw p</th>${ageHits ? '<th scope="col">Loss → gain</th>' : ''}` : '<th scope="col">Heterogeneity A / B</th>'}</tr></thead><tbody>${rows.map(row => {
       const a = organ || row.organs[0], b = other || row.organs?.[1];
-      return `<tr><th scope="row"><a data-comparison-site href="${esc(siteHref(row, a, b))}">${esc(row.glycosite)}</a><small>${esc(row.protein_id)}${row.organs ? ` · ${esc(row.organs.map(x => labels[x]).join(' / '))}` : ''}</small></th><td>${fmt(ageHits ? row.percent_difference : row.tvd)}</td>${ageHits ? `<td>${Number(row.p_value).toExponential(2)}</td><td>${esc(classLabel(row.loss))} → ${esc(classLabel(row.gain))}</td>` : `<td>${Number(row.effective_a).toFixed(2)} / ${Number(row.effective_b).toFixed(2)}<small>Shannon H: ${Number(row.h_a).toFixed(2)} / ${Number(row.h_b).toFixed(2)}</small></td>`}</tr>`;
+      return `<tr><th scope="row"><a data-comparison-site href="${esc(siteHref(row, a, b))}">${esc(row.glycosite)}</a><small>${esc(row.protein_id)}${row.organs ? ` · ${esc(row.organs.map(x => labels[x]).join(' / '))}` : ''}</small></th><td>${fmt(ageComparison ? row.percent_difference : row.tvd)}</td>${ageComparison ? `<td>${Number(row.p_value).toExponential(2)}</td>${ageHits ? `<td>${esc(classLabel(row.loss))} → ${esc(classLabel(row.gain))}</td>` : ''}` : `<td>${Number(row.effective_a).toFixed(2)} / ${Number(row.effective_b).toFixed(2)}<small>Shannon H: ${Number(row.h_a).toFixed(2)} / ${Number(row.h_b).toFixed(2)}</small></td>`}</tr>`;
     }).join('')}</tbody></table>`;
   }
   function quantile(sorted, p) {
@@ -68,7 +70,7 @@
         const q1=quantile(vals,.25), median=quantile(vals,.5), q3=quantile(vals,.75), iqr=q3-q1;
         const low=vals.find(v=>v>=q1-1.5*iqr), high=[...vals].reverse().find(v=>v<=q3+1.5*iqr);
         const color = g.color || '#087f78';
-        svg += `<g class="box-choice ${selected===g.key?'selected':''}" data-box="${esc(g.key)}" tabindex="0" role="button" aria-label="${esc(`Browse ${g.label}, ${num(vals.length)} glycosites`)}"><title>${esc(g.label)}: n=${num(vals.length)}; median ${fmt(median)}</title><rect class="box-hit-area" x="${x-step/2+2}" y="${top}" width="${step-4}" height="${height+12}"/><line stroke="${color}" x1="${x}" x2="${x}" y1="${y(low)}" y2="${y(high)}"/><line stroke="${color}" x1="${x-10}" x2="${x+10}" y1="${y(low)}" y2="${y(low)}"/><line stroke="${color}" x1="${x-10}" x2="${x+10}" y1="${y(high)}" y2="${y(high)}"/><rect x="${x-16}" y="${y(q3)}" width="32" height="${Math.max(1,y(q1)-y(q3))}" fill="${color}" fill-opacity=".24" stroke="${color}"/><line stroke="${color}" stroke-width="3" x1="${x-16}" x2="${x+16}" y1="${y(median)}" y2="${y(median)}"/><text x="${x}" y="20" text-anchor="middle">${num(vals.length)}</text></g>`;
+        svg += `<g class="box-choice ${selected===g.key?'selected':''}" data-box="${esc(g.key)}" tabindex="0" role="button" aria-pressed="${selected===g.key}" aria-label="${esc(`Browse ${g.label}, ${num(vals.length)} glycosites`)}"><title>${esc(g.label)}: n=${num(vals.length)}; median ${fmt(median)}</title><rect class="box-hit-area" x="${x-step/2+2}" y="${top}" width="${step-4}" height="${height+12}"/><line stroke="${color}" x1="${x}" x2="${x}" y1="${y(low)}" y2="${y(high)}"/><line stroke="${color}" x1="${x-10}" x2="${x+10}" y1="${y(low)}" y2="${y(low)}"/><line stroke="${color}" x1="${x-10}" x2="${x+10}" y1="${y(high)}" y2="${y(high)}"/><rect x="${x-16}" y="${y(q3)}" width="32" height="${Math.max(1,y(q1)-y(q3))}" fill="${color}" fill-opacity=".24" stroke="${color}"/><line stroke="${color}" stroke-width="3" x1="${x-16}" x2="${x+16}" y1="${y(median)}" y2="${y(median)}"/><text x="${x}" y="20" text-anchor="middle">${num(vals.length)}</text></g>`;
         // Every site contributes a point. Deterministic jitter avoids layout drift.
         svg += g.rows.map((r,j) => {
           const v = metric === 'tvd' ? r.tvd : r[`${metric}_b`]-r[`${metric}_a`];
@@ -91,20 +93,25 @@
   function resetAge() {
     ++ageRequest;
     age = {};
-    for (const selector of ['[data-age-matrix]', '[data-age-hits]', '[data-age-context]']) document.querySelector(selector).innerHTML = '<p class="empty-note">Loading comparison…</p>';
-    document.querySelector('[data-age-hit-count]').textContent = '';
-    document.querySelector('[data-age-active-filter]').textContent = '';
+    for (const selector of ['[data-age-matrix]', '[data-age-hits]', '[data-age-context]', '[data-age-reference-hits]']) document.querySelector(selector).innerHTML = '<p class="empty-note">Loading comparison…</p>';
+    for (const selector of ['[data-age-hit-count]', '[data-age-active-filter]', '[data-age-reference-count]', '[data-age-reference-label]']) document.querySelector(selector).textContent = '';
+    document.querySelector('[data-age-selection]').textContent = 'Loading comparison…';
   }
   async function renderAge({ dataset, comparison, rows, query }) {
     const request = ++ageRequest;
     const matrix = document.querySelector('[data-age-matrix]');
     if (age.dataset !== dataset || age.comparison !== comparison) {
-      age = { dataset, comparison, query, loss: null, gain: null, rows };
+      age = { dataset, comparison, query, loss: null, gain: null, rows, referenceKey: 'age' };
       matrix.innerHTML = '<p class="empty-note">Loading glycan gains and losses…</p>';
       document.querySelector('[data-age-hits]').innerHTML = '';
       document.querySelector('[data-age-context]').innerHTML = '<p class="empty-note">Loading distributions…</p>';
+      document.querySelector('[data-age-reference-hits]').innerHTML = '<p class="empty-note">Loading glycosites…</p>';
     }
     age.query = query;
+    const organLabel = labels[dataset.replace(/^atlas_/, '')];
+    document.querySelector('[data-age-selection]').textContent = `${organLabel} · ${ageLabels[comparison] || comparison.replaceAll('_', ' ')}`;
+    document.querySelector('[data-age-context-title]').textContent = `${organLabel}: aging and organ identity`;
+    document.querySelector('[data-age-matrix-title]').textContent = `${organLabel}: glycan gains and losses`;
     try {
       const manifest = await get('manifest.json');
       const record = manifest.age.find(r => r.dataset===dataset && r.comparison===comparison);
@@ -113,7 +120,13 @@
       age.hits = hits;
       drawAge();
       await drawAgeContext(manifest, request);
-    } catch(error) { if (request === ageRequest) errorMessage(matrix, () => renderAge({ dataset, comparison, rows, query })); }
+    } catch(error) {
+      if (request !== ageRequest) return;
+      const retry = () => renderAge({ dataset, comparison, rows, query });
+      errorMessage(matrix, retry);
+      errorMessage(document.querySelector('[data-age-context]'), retry);
+      document.querySelector('[data-age-reference-hits]').innerHTML = '<p class="empty-note">Retry the comparison to load its glycosites.</p>';
+    }
   }
   function drawAge() {
     if (!age.hits) return;
@@ -135,17 +148,30 @@
     document.querySelector('[data-age-clear]').onclick = () => { age.loss=null; age.gain=null; drawAge(); };
   }
   async function drawAgeContext(manifest, request) {
-    const organ=age.dataset.replace(/^atlas_/,''), node=document.querySelector('[data-age-context]');
+    const organ=age.dataset.replace(/^atlas_/,'');
     const records = manifest.young_pairs.filter(r=>r.organs.includes(organ));
     const pairRows = await Promise.all(records.map(r=>get(r.file)));
     if (request !== ageRequest) return;
-    const groups = [{ key:'age', label:age.comparison.replaceAll('_',' '), color:ORGAN_COLORS[organ], organs:[organ], rows:age.rows.map(r=>({...r,tvd:r.percent_difference})) }, ...records.map((r,i)=>({ ...r,label:`vs ${labels[r.organs.find(x=>x!==organ)]} (Y)`,color:ORGAN_COLORS[r.organs.find(x=>x!==organ)],rows:pairRows[i] }))];
-    node.innerHTML = boxPlot(groups,{caption:'Aging versus young inter-organ TVD distributions'})+`<p class="comparison-note">${records.length?'The first box uses the selected age comparison. Other boxes use pooled young-bin composition across organs (≥9 detected animals and ≥18 PSMs in each young bin). Click a box to browse its full list.':'Young inter-organ reference distributions are available for the five atlas organs.'} All points are shown; boxes mark median and IQR, whiskers extend to 1.5 × IQR.</p>`;
-    bindBoxes(node, key=>{
-      if (key==='age') { document.querySelector('[data-age-hits]').scrollIntoView({behavior:'smooth',block:'center'}); return; }
-      Object.assign(inter,{scope:'young',pair:key,state:'all',diversity:'all',query:'',metric:'tvd'});
-      hooks.showInterPage();
-    });
+    age.referenceGroups = [{ key:'age', label:age.comparison.replaceAll('_',' '), description:`${labels[organ]} · ${ageLabels[age.comparison] || age.comparison.replaceAll('_',' ')}`, color:ORGAN_COLORS[organ], organs:[organ], rows:age.rows.map(r=>({...r,tvd:r.percent_difference})) }, ...records.map((r,i)=>{
+      const other = r.organs.find(x=>x!==organ), organs = [organ,other], reverse = r.organs[0]!==organ;
+      // Keep the selected organ first in explorer links and the A / B scores.
+      const rows = pairRows[i].map(row=>({...row,h_a:row[reverse?'h_b':'h_a'],h_b:row[reverse?'h_a':'h_b'],effective_a:row[reverse?'effective_b':'effective_a'],effective_b:row[reverse?'effective_a':'effective_b']}));
+      return {...r,organs,label:`vs ${labels[other]} (Y)`,description:`${organs.map(x=>labels[x]).join(' / ')} · Young only`,color:ORGAN_COLORS[other],rows};
+    })];
+    drawAgeReference();
+  }
+  function drawAgeReference() {
+    const groups = age.referenceGroups, node = document.querySelector('[data-age-context]');
+    const group = groups.find(g=>g.key===age.referenceKey) || groups[0];
+    age.referenceKey = group.key;
+    node.innerHTML = boxPlot(groups,{caption:`${labels[age.dataset.replace(/^atlas_/,'')]}: aging versus young inter-organ TVD distributions`,selected:group.key})+`<p class="comparison-note">${groups.length>1?'The first box uses the selected age comparison. Other boxes compare this organ with each other organ using pooled young-bin composition (≥9 detected animals and ≥18 PSMs in each young bin).':'Young inter-organ reference distributions are available for the five atlas organs.'} Click a box to browse its sites in the list alongside it. All points are shown; boxes mark median and IQR, whiskers extend to 1.5 × IQR.</p>`;
+    const rows = group.rows.filter(r=>queryMatch(r,age.query)).sort((a,b)=>b.tvd-a.tvd || a.site_key.localeCompare(b.site_key));
+    document.querySelector('[data-age-reference-label]').textContent = group.description;
+    document.querySelector('[data-age-reference-count]').textContent = `${num(rows.length)} of ${num(group.rows.length)} sites`;
+    const list = document.querySelector('[data-age-reference-hits]');
+    list.innerHTML = hitTable(rows,{organ:group.organs[0],other:group.organs[1],ageTested:group.key==='age'});
+    bindSites(list);
+    bindBoxes(node,key=>{age.referenceKey=key;drawAgeReference();node.querySelector('.box-choice.selected')?.focus({preventScroll:true});});
   }
   async function loadInter() {
     const request=++interRequest, page=document.querySelector('[data-inter-content]');

@@ -10,13 +10,15 @@ The feedback called the gain/loss panel Figure 3B. In the supplied October draft
 | --- | --- | --- |
 | 3A | Age comparisons: existing TVD vs raw permutation p | Select a dataset/comparison, search, zoom, open the precise glycosite |
 | 3C and S15D | Dominant loss/gain matrix | Cell selects both directions; row/column labels and margins select one direction; full hit list is scrollable |
-| 3B | Aging and organ identity | Selected age comparison plus young-only inter-organ distributions; boxes open the corresponding full site list |
+| 3B | Aging and organ identity | Selected organ's age comparison plus its young-only organ references; boxes update the adjacent full site list in place |
 | 2B | Inter-organ: atlas organs, TVD | All ten organ pairs, every shared eligible site, clickable box and point |
 | 2C and S10 | Remodeling and glycan-type heterogeneity | All three remodeling states, six diversity relationships; click a segment to filter the site list |
 | 4H | Inter-organ: brain and myelin | Brain/male myelin, brain/female myelin, male/female myelin distributions and complete site lists |
 | 1R and S3 | Methods and pairwise detail | TVD definition, percentage-point differences, Shannon H and effective glycan types |
 
 The inter-organ metric selector also exposes signed differences in effective glycan types and Shannon H (dataset B minus A). Every table row reports both organ-specific scores. Pair order is always A / B. Inter-organ rows are descriptive comparisons, not hypothesis-test hits.
+
+Age comparisons display one linked organ column from Figures 3A, 3B and 3C. The dataset and age-comparison selectors update the TVD plot, the selected organ's reference box-plot panel, and its gain/loss matrix together. Each companion panel has its own scrollable list. Selecting a reference box stays on Age comparisons and updates only the neighboring distribution list; selecting a gain/loss category filters the neighboring significant-hit list independently. The age box lists every tested site with its original raw p value, whereas the matrix list contains only raw-p <0.05 hits. The shared protein/site search filters both lists and the gain/loss matrix, and highlights matches in the TVD plot. Selecting a different dataset or age comparison resets both panel selections.
 
 ## Calculations and thresholds
 
