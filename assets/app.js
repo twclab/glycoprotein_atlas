@@ -8,14 +8,12 @@
   const PAGE_TITLES = {
     overview: "Overview",
     methods: "Methods",
-    learning: "Learning",
-    publications: "Publications",
-    "raw-data": "Raw data",
     contact: "Contact",
     tvd: "Age comparisons",
+    "inter-organ": "Inter-organ comparisons",
   };
   const { CLASS_ORDER, CLASS_LABELS, CLASS_COLORS, ORGAN_COLORS, DIVERSITY_LABEL } = window.ATLAS_THEME;
-  const EXPLORER_BUILD = "2026-09-30-review-r20";
+  const EXPLORER_BUILD = "2026-10-24-comparisons";
   const chooseCatPhoto = (paths) => paths[Math.floor(Math.random() * paths.length)];
   const catPhotos = {
     composition: chooseCatPhoto(["assets/cat-test.jpg", "assets/cats/IMG_7679.JPG"]),
@@ -86,6 +84,12 @@
 
   async function init() {
     dom.home.dataset.shape = ["circle", "square", "diamond", "triangle"][Math.floor(Math.random() * 4)];
+    window.ATLAS_COMPARISONS.configure({
+      openSite: async (href) => {
+        history.pushState({}, "", href);
+        await routeFromLocation();
+      },
+    });
     bindNavigation();
     bindControls();
     bindTooltip();
@@ -270,6 +274,17 @@
         state.selectedSites[organ] = (sites.find((site) => site.comparison_eligible) || sites[0] || {}).id || null;
       });
       state.activeOrgan = ORGANS.find((organ) => protein.organs[organ]?.glycosites?.length) || ORGANS.find((organ) => protein.organs[organ]?.proteome) || "brain";
+      const params = new URLSearchParams(location.hash.split("?")[1] || "");
+      const organ = params.get("organ"), siteId = params.get("site");
+      if (!updateHistory && ORGANS.includes(organ) && protein.organs[organ]?.glycosites?.some(site => site.id === siteId)) {
+        state.activeOrgan = organ;
+        state.selectedSites[organ] = siteId;
+        const other = params.get("compare");
+        if (other !== organ && ORGANS.includes(other) && protein.organs[other]?.glycosites?.some(site => site.id === siteId && site.total_psm >= 5)) {
+          state.pairMode = "between_organs";
+          state.pairOrganB = other;
+        }
+      }
       setSiteDefaults(selectedSite(state.activeOrgan));
       dom.loading.hidden = true;
       dom.dashboard.hidden = false;
@@ -857,7 +872,7 @@
         const valueA = vectorA.get(name) || 0, valueB = vectorB.get(name) || 0;
         return `<tr><th><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</th><td>${fmt(valueA, 1)}%</td><td>${fmt(valueB, 1)}%</td><td>${valueB - valueA >= 0 ? "+" : ""}${fmt(valueB - valueA, 1)} pp</td></tr>`;
       }).join("");
-      dom.pairwiseList.innerHTML = `${selector}<div class="comparison-columns">${profile(a, statsA, vectorA, labelA)}${profile(b, statsB, vectorB, labelB)}</div><div class="comparison-distance">${metric("Composition percent difference (TVD)", `${fmt(totalVariation, 1)}%`)}<div class="distance-track"><i style="width:${Math.min(100, totalVariation)}%"></i></div></div><div class="comparison-table-wrap"><table><thead><tr><th>Glycan type</th><th>${sameOrgan ? "Glycosite A" : "Dataset A"}</th><th>${sameOrgan ? "Glycosite B" : "Dataset B"}</th><th>${sameOrgan ? "Glycosite B − A" : "Dataset B − A"}</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+      dom.pairwiseList.innerHTML = `${selector}<div class="comparison-columns">${profile(a, statsA, vectorA, labelA)}${profile(b, statsB, vectorB, labelB)}</div><div class="comparison-distance">${metric("Total variation distance (TVD)", `${fmt(totalVariation, 1)}%`)}<div class="distance-track"><i style="width:${Math.min(100, totalVariation)}%"></i></div></div><div class="comparison-table-wrap"><table><thead><tr><th>Glycan type</th><th>${sameOrgan ? "Glycosite A" : "Dataset A"}</th><th>${sameOrgan ? "Glycosite B" : "Dataset B"}</th><th>${sameOrgan ? "Glycosite B − A" : "Dataset B − A"}</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
     }
     bindMode();
     dom.pairwiseList.querySelector("[data-pair-shared-site]")?.addEventListener("change", (event) => {
@@ -888,15 +903,18 @@
       state.tvdManifest.comparisons = comparisons;
       const datasets = [...new Set(comparisons.map((row) => row.dataset))];
       dom.tvdDataset.innerHTML = datasets.map((dataset) => `<option value="${dataset}">${ORGAN_LABELS[dataset.replace(/^atlas_/, "")] || dataset}</option>`).join("");
-      [dom.tvdDataset, dom.tvdComparison].forEach((select) => select.addEventListener("change", updateTVDControls));
-      dom.tvdSearch.addEventListener("input", renderTVDPlot);
+      [dom.tvdDataset, dom.tvdComparison].forEach((select) => select.addEventListener("change", (event) => updateTVDControls(event).catch((error) => {
+        console.error(error);
+        dom.tvdPlot.innerHTML = `<p class="empty-note">Age-comparison data could not be loaded. Choose a comparison to retry.</p>`;
+      })));
+      dom.tvdSearch.addEventListener("input", () => { renderTVDPlot(); renderAgeComparisons(); });
       document.querySelectorAll("[data-tvd-zoom]").forEach((button) => button.addEventListener("click", () => {
         state.tvdZoom = button.dataset.tvdZoom === "reset" ? 1 : Math.max(1, Math.min(8, (state.tvdZoom || 1) * Number(button.dataset.tvdZoom)));
         renderTVDPlot();
       }));
     }
-    dom.tvdDataset.value = "atlas_brain";
-    updateTVDControls(null, "O_vs_Y");
+    if (!dom.tvdDataset.value) dom.tvdDataset.value = "atlas_brain";
+    await updateTVDControls(null, dom.tvdComparison.value || "O_vs_Y");
   }
 
   async function updateTVDControls(event, preferredComparison) {
@@ -908,9 +926,20 @@
     const record = available.find((row) => row.comparison === selected);
     if (!record) return;
     dom.tvdPlot.innerHTML = `<p class="empty-note">Loading ${formatNumber(record.n)} tested sites…</p>`;
-    state.tvdRows = await fetchJSON(`data/tvd/${record.file}`);
+    state.tvdRows = null;
+    window.ATLAS_COMPARISONS.resetAge();
+    const request = (state.tvdRequest || 0) + 1;
+    state.tvdRequest = request;
+    const rows = await fetchJSON(`data/tvd/${record.file}`);
+    if (request !== state.tvdRequest) return;
+    state.tvdRows = rows;
     state.tvdZoom = event?.target === dom.tvdComparison ? state.tvdZoom || 1 : 1;
     renderTVDPlot();
+    renderAgeComparisons();
+  }
+
+  function renderAgeComparisons() {
+    if (state.tvdRows) window.ATLAS_COMPARISONS.renderAge({ dataset: dom.tvdDataset.value, comparison: dom.tvdComparison.value, rows: state.tvdRows, query: dom.tvdSearch.value });
   }
 
   function renderTVDPlot() {
@@ -953,13 +982,14 @@
     const yTicks = axisMarks(maxY, maxY <= 6 ? 1 : 2, y, false);
     const matchCount = state.tvdRows.filter(matches).length;
     const count = query ? `${formatNumber(matchCount)} matching site${matchCount === 1 ? "" : "s"}` : `${formatNumber(state.tvdRows.length)} tested sites`;
-    dom.tvdPlot.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Glycan type composition percent difference versus negative log10 p value"><line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + height}"/><line class="axis" x1="${left}" y1="${top + height}" x2="${left + width}" y2="${top + height}"/><line class="tvd-threshold" x1="${left}" y1="${y(-Math.log10(.05))}" x2="${left + width}" y2="${y(-Math.log10(.05))}"/>${dots}${xTicks}${yTicks}<text class="axis-label" x="${left + width / 2}" y="${h - 8}" text-anchor="middle">Glycan type composition percent difference</text><text class="axis-label" transform="translate(24 ${top + height / 2}) rotate(-90)" text-anchor="middle">−log₁₀(p value)</text></svg><p class="tvd-count">${count} · click a point to open its glycosite.</p>`;
+    dom.tvdPlot.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="TVD (%) versus negative log10 raw permutation p value"><line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + height}"/><line class="axis" x1="${left}" y1="${top + height}" x2="${left + width}" y2="${top + height}"/><line class="tvd-threshold" x1="${left}" y1="${y(-Math.log10(.05))}" x2="${left + width}" y2="${y(-Math.log10(.05))}"/>${dots}${xTicks}${yTicks}<text class="axis-label" x="${left + width / 2}" y="${h - 8}" text-anchor="middle">Total variation distance (TVD, %)</text><text class="axis-label" transform="translate(24 ${top + height / 2}) rotate(-90)" text-anchor="middle">−log₁₀(raw permutation p)</text></svg><p class="tvd-count">${count} · click a point to open its glycosite.</p>`;
     dom.tvdPlot.querySelectorAll("[data-tvd-protein]").forEach((dot) => {
       const open = async () => {
         const row = state.byProtein.get(dot.dataset.tvdProtein);
         if (!row) return;
-        await openProtein(row);
-        selectSiteEverywhere(dot.dataset.tvdDataset, dot.dataset.tvdSite);
+        const params = new URLSearchParams({ organ: dot.dataset.tvdDataset, site: dot.dataset.tvdSite });
+        history.pushState({}, "", `#explore/${encodeURIComponent(row.protein_id)}?${params}`);
+        await openProtein(row, false);
         const panel = document.querySelector("[data-class-chart]")?.closest(".chart-panel");
         if (panel) {
           const headerHeight = document.querySelector(".explore-topbar")?.getBoundingClientRect().height || 0;
@@ -988,7 +1018,7 @@
       header.className = "tooltip-header";
       header.textContent = target.dataset.tvdTitle;
       dom.tooltip.append(header);
-      [["Composition difference", target.dataset.tvdDifference], ["Raw p value", target.dataset.tvdP], [target.dataset.tvdSampleLabel0, target.dataset.tvdSampleValue0], [target.dataset.tvdSampleLabel1, target.dataset.tvdSampleValue1]].forEach(([label, value]) => {
+      [["TVD", target.dataset.tvdDifference], ["Raw p value", target.dataset.tvdP], [target.dataset.tvdSampleLabel0, target.dataset.tvdSampleValue0], [target.dataset.tvdSampleLabel1, target.dataset.tvdSampleValue1]].forEach(([label, value]) => {
         const row = document.createElement("div");
         row.className = "tooltip-tvd-row";
         const name = document.createElement("span");
@@ -1113,6 +1143,7 @@
     updateNavigation(pageName);
     closeAllSearchResults();
     if (updateHistory) history.pushState({}, "", `${location.pathname}#${pageName}`);
+    if (pageName === "inter-organ") window.ATLAS_COMPARISONS.loadInter();
     if (pageName === "tvd") loadTVD().catch((error) => {
       console.error(error);
       dom.tvdPlot.innerHTML = `<p class="empty-note">Age-comparison data could not be loaded.</p>`;

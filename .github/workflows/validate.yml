@@ -1,0 +1,19 @@
+name: Validate atlas comparisons
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check JavaScript syntax
+        run: |
+          node --check assets/app.js
+          node --check assets/comparisons.js
+      - name: Check calculations and release regressions
+        run: python3 -m unittest discover -s tests -v
+      - name: Verify deterministic derived exports
+        run: |
+          python3 scripts/build_comparisons.py
+          git diff --exit-code --stat -- data/comparisons
