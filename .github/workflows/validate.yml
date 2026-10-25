@@ -11,6 +11,9 @@ jobs:
         run: |
           node --check assets/app.js
           node --check assets/comparisons.js
+          node --check assets/comparison-layout.js
+      - name: Check list navigation and matrix layout
+        run: node --test tests/comparison-layout.test.cjs
       - name: Check calculations and release regressions
         run: python3 -m unittest discover -s tests -v
       - name: Verify deterministic derived exports

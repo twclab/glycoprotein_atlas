@@ -20,8 +20,11 @@ python3 scripts/build_comparisons.py
 python3 -m unittest discover -s tests -v
 node --check assets/app.js
 node --check assets/comparisons.js
+node --test tests/comparison-layout.test.cjs
 ```
 
 See [comparison provenance and panel crosswalk](docs/comparison-views.md) for estimators, thresholds, source hashes and manuscript count checks. The young-only reference view uses the author's recalled rule (≥9 detected animals and ≥18 PSMs per young organ). Its visual pattern has been compared with Figure 3B; exact dot-count equivalence remains unverified because the supplied panel is a raster image with overlapping points and no n labels.
 
 Develop on a feature branch and open a pull request for review. Preview locally over HTTP before merging; pushing `main` publishes to the production domain.
+
+Comparison tables keep a moving window of rows while preserving the complete searchable, sortable list. Box and point selection updates the list without rebuilding the plot; hover and keyboard-focus labels appear immediately. Age change details are built on expansion, and Explore retains only the latest protein shard for reuse. See [comparison performance checks](docs/comparison-performance.md) for local before/after timings and the opt-in profiler.
