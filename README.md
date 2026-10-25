@@ -22,6 +22,6 @@ node --check assets/app.js
 node --check assets/comparisons.js
 ```
 
-See [comparison provenance and panel crosswalk](docs/comparison-views.md) for estimators, thresholds, source hashes and manuscript count checks. The young-only reference view has an explicitly documented provisional coverage rule pending confirmation of the manuscript's Figure 3B source export.
+See [comparison provenance and panel crosswalk](docs/comparison-views.md) for estimators, thresholds, source hashes and manuscript count checks. The young-only reference view uses the author's recalled rule (≥9 detected animals and ≥18 PSMs per young organ). Its visual pattern has been compared with Figure 3B; exact dot-count equivalence remains unverified because the supplied panel is a raster image with overlapping points and no n labels.
 
 Develop on a feature branch and open a pull request for review. Preview locally over HTTP before merging; pushing `main` publishes to the production domain.

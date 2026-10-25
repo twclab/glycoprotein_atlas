@@ -1,0 +1,11 @@
+organ_pair,previous_tier2_n,recalled_9_animals_18_psms_n,added_sites,pooled_tvd_median_percent,mean_animal_tvd_median_percent
+brain__spleen,493,493,0,15.09057971,13.97076779
+brain__liver,388,388,0,9.15156469,8.1282327
+brain__kidney,436,437,1,11.94029851,10.80031177
+brain__plasma,46,48,2,31.97826496,32.3391125
+spleen__liver,499,499,0,10.72519389,10.15171557
+spleen__kidney,502,504,2,13.28357692,13.19782207
+spleen__plasma,79,80,1,26.37761943,26.5839947
+liver__kidney,414,414,0,9.26391352,8.87153235
+liver__plasma,154,156,2,91.88446506,93.32536676
+kidney__plasma,58,59,1,30.29772329,29.79613622

@@ -44,6 +44,14 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(metrics.dominant_change(old, young), ('high_mannose', 'mixed'))
         self.assertEqual(metrics.dominant_change(young, young), ('mixed', 'mixed'))
 
+    def test_young_coverage_has_no_unrecalled_whole_lifespan_tier_cutoff(self):
+        def site(n, psm):
+            return {'total_psm': psm, 'shannon': {'age_bins': [
+                {'key': 'Y', 'pooled': {'n_samples_detected': n, 'glycosite_psms': psm}}]}}
+        self.assertTrue(metrics.young_eligible(site(9, 18)))
+        self.assertFalse(metrics.young_eligible(site(8, 18)))
+        self.assertFalse(metrics.young_eligible(site(9, 17)))
+
     def test_missing_profile_is_not_zero_profile(self):
         self.assertIsNone(metrics.vector([]))
         with self.assertRaises(ValueError):
@@ -126,7 +134,11 @@ class ReleaseTests(unittest.TestCase):
             'myelin_male__myelin_female':716})
 
     def test_young_pairs_have_complete_diversity_fields(self):
-        self.assertEqual(len(self.manifest['young_pairs']),10)
+        self.assertEqual({r['key']: r['n'] for r in self.manifest['young_pairs']}, {
+            'brain__spleen':493, 'brain__liver':388, 'brain__kidney':437,
+            'brain__plasma':48, 'spleen__liver':499, 'spleen__kidney':504,
+            'spleen__plasma':80, 'liver__kidney':414, 'liver__plasma':156,
+            'kidney__plasma':59})
         for group in self.manifest['young_pairs']:
             rows=json.loads((self.data/group['file']).read_text())
             self.assertEqual(len(rows),group['n'])

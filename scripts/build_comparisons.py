@@ -60,6 +60,14 @@ def dominant_change(a, b):
     return direction(-1), direction(1)
 
 
+def young_eligible(site):
+    """Author-recalled Figure 3B coverage, independently in each young organ."""
+    young = next((row for row in site['shannon']['age_bins'] if row['key'] == 'Y'), {})
+    pooled = young.get('pooled', {})
+    return (pooled.get('n_samples_detected', 0) >= 9 and
+            pooled.get('glycosite_psms', 0) >= 18)
+
+
 def build(root, output):
     data = root / 'data'
     sources = {}
@@ -104,13 +112,7 @@ def build(root, output):
                                                             key=['low', 'intermediate', 'high'].index)))
                     rows.append(record)
                     if key in young_pairs:
-                        def eligible_y(s):
-                            y = next((x for x in s['shannon']['age_bins'] if x['key'] == 'Y'), {})
-                            pooled = y.get('pooled', {})
-                            return (s['total_psm'] >= 27 and
-                                    pooled.get('n_samples_detected', 0) >= 9 and
-                                    pooled.get('glycosite_psms', 0) >= 18)
-                        if eligible_y(a) and eligible_y(b):
+                        if young_eligible(a) and young_eligible(b):
                             ya = vector(a['glycan_classes']['age_bins']['Y'], 'pooled_percent')
                             yb = vector(b['glycan_classes']['age_bins']['Y'], 'pooled_percent')
                             hy_a, ey_a = diversity(ya)
@@ -129,12 +131,13 @@ def build(root, output):
     manifest = dict(data_version=release['data_version'], classes=CLASSES,
                     age=[], pairs=[], young_pairs=[],
                     rules=dict(inter_organ='Pooled site PSM composition; at least 5 total PSMs in both datasets (Tier 1+ for atlas organs).',
-                               young_inter_organ='Pooled young-bin PSM composition; Tier 2+ and at least 9 detected animals and 18 PSMs per young bin in both atlas organs.',
+                               young_inter_organ='Pooled young-bin PSM composition; at least 9 detected animals and 18 PSMs per young bin in both atlas organs; author-recalled rule, without an additional whole-lifespan Tier cutoff.',
                                age_direction='Difference of per-animal mean glycan-type percentages, group A minus group B; dominant if >=60% of total directional change.',
                                age_hits='Existing tested-site export, raw permutation p <0.05; p values and TVD preserved.',
                                diversity='exp(-sum(p*ln(p))) from pooled glycan-type proportions; low <1.5, intermediate <2.5, high >=2.5.',
                                remodeling='Conserved TVD <20%; partially shifted 20% to <50%; strongly remodeled >=50%.'),
-                    manuscript_reference='Figures 2B/2C, 3B/3C and 4H; figure numbering follows the supplied October 2026 draft.')
+                    manuscript_reference='Figures 2B/2C, 3B/3C and 4H; figure numbering follows the supplied October 2026 draft.',
+                    young_reference_status='Coverage follows author recollection. Visual distributions are broadly consistent; exact manuscript dot counts cannot be recovered from the overlapping raster points.')
     for key, rows in pairs.items():
         rows.sort(key=lambda x: (-x['tvd'], x['site_key']))
         filename = f'pooled_{key}.json'

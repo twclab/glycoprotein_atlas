@@ -25,7 +25,7 @@ The inter-organ metric selector also exposes signed differences in effective gly
 - Age gain/loss vectors use per-animal mean percentages (`glycan_classes.age_bins[].percent`), A minus B. The builder checks their recomputed TVD against the original exported TVD (absolute tolerance 1e-5 percentage points) before assigning direction. Pooled percentages are not substituted for these means.
 - Dominance is evaluated separately for gain and loss: the largest changing class must account for at least 60% of that side's total. Otherwise the direction is `mixed`.
 - All-age inter-organ vectors use `glycan_classes.pooled[].percent`, requiring at least 5 total PSMs at that site in each dataset. This is Tier 1+ in atlas organs. Male/female myelin are separate datasets and are never pooled into the five-organ atlas comparison total.
-- Young-only inter-organ reference vectors use `pooled_percent` in Y. They require Tier 2+ (at least 27 total site PSMs), at least 9 detected young animals, and 18 young-bin PSMs per organ. These rules are explicitly displayed; this reconstructed reference view is not claimed to reproduce an unavailable authoritative Figure 3B export.
+- Young-only inter-organ reference vectors use `pooled_percent` in Y. They require at least 9 detected young animals and 18 young-bin PSMs in each organ, following the author's recollection. There is no additional whole-lifespan Tier cutoff. These rules are explicitly displayed; exact Figure 3B dot-count equivalence has not been established from the supplied raster panel.
 - Derived entropy and effective-type scores are rounded to eight decimal places for byte-stable exports across Linux and macOS libm implementations. Original age-test statistics are preserved without rounding.
 - TVD is stored at eight decimal places and classified at that same precision to prevent a displayed 50% from retaining a <50% state through floating-point roundoff.
 - Effective types are exp(Shannon H), calculated on pooled class proportions. Diversity cutoffs: low <1.5; intermediate 1.5 to <2.5; high >=2.5. Remodeling cutoffs: conserved <20%; partially shifted 20% to <50%; strongly remodeled >=50%.
@@ -61,3 +61,12 @@ git diff --exit-code -- data/comparisons
 ```
 
 Use a feature branch and PR for review. GitHub Pages deploys the repository root on `main`; pushing this feature branch does not publish it to the production domain. Preview over HTTP, not `file://`.
+
+
+## Figure 3B visual and coverage check
+
+The author recalled a minimum of nine animals in each condition and 18 total PSMs. For young-organ comparisons these conditions are applied independently to each organ's young bin. The earlier reconstruction additionally required whole-lifespan Tier 2+; removing that extra condition changes the plotted count by only 0–2 sites per pair. The coverage audit is in [figure3b-coverage-check.csv](figure3b-coverage-check.csv).
+
+The original panel and reconstructed plots were compared at matched 0–100% TVD scales. The broad tissue-specific distribution pattern is similar, but some medians and quartiles differ. The supplied panel is one embedded 2,231 × 3,469-pixel figure image, rather than separately recoverable vector point objects. Figure 3B has no n labels and many points overlap, so an exact source dot count cannot be inferred reliably from pixels. This remains a documented approximation suitable for review, rather than an assertion of exact manuscript reproduction.
+
+A local visual audit also compared pooled PSM proportions with mean animal-level proportions. Neither visual similarity nor the recalled coverage rule establishes the original estimator. The website retains its explicitly labeled pooled-PSM young-organ calculation. All-age inter-organ and original age-screen statistics remain unchanged. No manuscript image is added to this public repository.
