@@ -11,7 +11,7 @@ To preview local edits, run `python3 -m http.server 8765` from the repository di
 
 ## Comparison views
 
-Age comparisons combine the existing TVD screen with a dominant glycan loss/gain matrix, complete linked hit lists, and age-versus-young-organ distribution plots. Inter-organ comparisons expose all atlas pairs and brain/myelin pairs, pooled or young-only profiles, TVD and heterogeneity, and clickable remodeling/diversity summaries. Site links preserve the precise glycosite, dataset and comparison partner on reload.
+Age comparisons pair the existing TVD screen with a dominant glycan loss/gain matrix and a complete scrollable hit list. Hit details show mean percentage-point changes and shares of total gain or loss. Inter-organ comparisons pair atlas or brain/myelin box plots with a scrollable list: boxes filter the pair, dots select a row, and site names open Explore. Rows show TVD, Shannon H, explicitly labeled effective glycan types, and paired composition color bars. Site links preserve the precise glycosite, dataset and comparison partner on reload.
 
 The compact derived files use only existing public JSON and can be rebuilt with Python's standard library:
 

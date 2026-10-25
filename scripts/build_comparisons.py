@@ -106,6 +106,8 @@ def build(root, output):
                                   glycosite=a['label'], position=a['position'],
                                   tvd=round(d, 8), h_a=round(ha, 8), h_b=round(hb, 8),
                                   effective_a=round(ea, 8), effective_b=round(eb, 8),
+                                  composition_a=[round(x, 8) for x in va],
+                                  composition_b=[round(x, 8) for x in vb],
                                   psm_a=a['total_psm'], psm_b=b['total_psm'],
                                   state=remodeling_state(d),
                                   diversity='-'.join(sorted([diversity_band(ea), diversity_band(eb)],
@@ -122,6 +124,8 @@ def build(root, output):
                                                         glycosite=a['label'], position=a['position'],
                                                         tvd=round(dy, 8), h_a=round(hy_a, 8), h_b=round(hy_b, 8),
                                                         effective_a=round(ey_a, 8), effective_b=round(ey_b, 8),
+                                                        composition_a=[round(x, 8) for x in ya],
+                                                        composition_b=[round(x, 8) for x in yb],
                                                         state=remodeling_state(dy),
                                                         diversity='-'.join(sorted([diversity_band(ey_a), diversity_band(ey_b)],
                                                                                   key=['low', 'intermediate', 'high'].index))))
@@ -132,7 +136,8 @@ def build(root, output):
                     age=[], pairs=[], young_pairs=[],
                     rules=dict(inter_organ='Pooled site PSM composition; at least 5 total PSMs in both datasets (Tier 1+ for atlas organs).',
                                young_inter_organ='Pooled young-bin PSM composition; at least 9 detected animals and 18 PSMs per young bin in both atlas organs; author-recalled rule, without an additional whole-lifespan Tier cutoff.',
-                               age_direction='Difference of per-animal mean glycan-type percentages, group A minus group B; dominant if >=60% of total directional change.',
+                               age_direction='Difference of per-animal mean glycan-type percentages, group A minus group B (old minus young for O_vs_Y); dominant if >=60% of summed gains or absolute losses, separately. Dominance describes change, not abundance.',
+                               composition_vectors='Composition percentages and signed age changes follow the manifest classes order; inter-organ composition uses the same pooled estimator as its TVD and heterogeneity.',
                                age_hits='Existing tested-site export, raw permutation p <0.05; p values and TVD preserved.',
                                diversity='exp(-sum(p*ln(p))) from pooled glycan-type proportions; low <1.5, intermediate <2.5, high >=2.5.',
                                remodeling='Conserved TVD <20%; partially shifted 20% to <50%; strongly remodeled >=50%.'),
@@ -161,14 +166,15 @@ def build(root, output):
             bins = site['glycan_classes']['age_bins'] if site else {}
             va, vb = vector(bins.get(a_key, [])), vector(bins.get(b_key, []))
             if va is None or vb is None:
-                hits.append(dict(row, loss='unavailable', gain='unavailable'))
+                hits.append(dict(row, loss='unavailable', gain='unavailable', changes=None))
                 unavailable += 1
                 continue
             # Direction and reported TVD must describe the same composition estimator.
             if not math.isclose(tvd(va, vb), row['percent_difference'], abs_tol=1e-5):
                 raise ValueError(f'Age TVD estimator mismatch: {dataset} {name} {row["site_key"]}')
             loss, gain = dominant_change(va, vb)
-            hits.append(dict(row, loss=loss, gain=gain))
+            hits.append(dict(row, loss=loss, gain=gain,
+                             changes=[round(x-y, 8) for x, y in zip(va, vb)]))
         filename = f'{dataset}_{name}_hits.json'
         write(filename, hits)
         manifest['age'].append(dict(dataset=dataset, comparison=name, n_tested=len(tested),

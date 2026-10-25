@@ -4,21 +4,23 @@ These views use only JSON already published in this repository's E330-2026-09-29
 
 ## Panel crosswalk
 
-The feedback called the gain/loss panel Figure 3B. In the supplied October draft it is **Figure 3C**; **Figure 3B** is the age-versus-young-inter-organ TVD distribution. Both are implemented.
+The gain/loss panel is **Figure 3C** in the supplied October draft. Age comparisons now pair Figures **3A and 3C** with a hit list. The age-versus-young-organ Figure 3B companion has been removed from that page following author feedback; the young-only comparison scope remains available on Inter-organ comparisons.
 
 | Draft panel | Website view | Interaction |
 | --- | --- | --- |
 | 3A | Age comparisons: existing TVD vs raw permutation p | Select a dataset/comparison, search, zoom, open the precise glycosite |
-| 3C and S15D | Dominant loss/gain matrix | Cell selects both directions; row/column labels and margins select one direction; full hit list is scrollable |
-| 3B | Aging and organ identity | Selected organ's age comparison plus its young-only organ references; boxes update the adjacent full site list in place |
-| 2B | Inter-organ: atlas organs, TVD | All ten organ pairs, every shared eligible site, clickable box and point |
+| 3C and S15D | Dominant loss/gain matrix | Cell selects both directions; colored row/column labels and margins select one direction; full hit list includes expandable mean changes and directional shares |
+| 3B reference calculations | Inter-organ: young-only scope | Optional young-organ distributions; no Figure 3B companion on Age comparisons |
+| 2B | Inter-organ: atlas organs, TVD | All ten organ pairs; boxes filter the list, dots select and scroll to a list row, and its site link opens Explore |
 | 2C and S10 | Remodeling and glycan-type heterogeneity | All three remodeling states, six diversity relationships; click a segment to filter the site list |
 | 4H | Inter-organ: brain and myelin | Brain/male myelin, brain/female myelin, male/female myelin distributions and complete site lists |
 | 1R and S3 | Methods and pairwise detail | TVD definition, percentage-point differences, Shannon H and effective glycan types |
 
-The inter-organ metric selector also exposes signed differences in effective glycan types and Shannon H (dataset B minus A). Every table row reports both organ-specific scores. Pair order is always A / B. Inter-organ rows are descriptive comparisons, not hypothesis-test hits.
+The inter-organ metric selector also exposes signed differences in effective glycan types and Shannon H (dataset B minus A). The list leads with **Shannon H** under heterogeneity and labels **effective (weighted) glycan types = exp(H)** as a secondary score. The fourth column shows paired composition color bars using the same eight-type percentages as the row's TVD and heterogeneity. Bar and score order is A / B, matching the organ pair shown in that row. Inter-organ rows are descriptive comparisons, not hypothesis-test hits.
 
-Age comparisons display one linked organ column from Figures 3A, 3B and 3C. The dataset and age-comparison selectors update the TVD plot, the selected organ's reference box-plot panel, and its gain/loss matrix together. Each companion panel has its own scrollable list. Selecting a reference box stays on Age comparisons and updates only the neighboring distribution list; selecting a gain/loss category filters the neighboring significant-hit list independently. The age box lists every tested site with its original raw p value, whereas the matrix list contains only raw-p <0.05 hits. The shared protein/site search filters both lists and the gain/loss matrix, and highlights matches in the TVD plot. Selecting a different dataset or age comparison resets both panel selections.
+Age comparisons display the selected organ's TVD screen above its gain/loss matrix and neighboring scrollable significant-hit list. Dataset and age-comparison controls update both plots and the list together. Every colored gain/loss header and matrix cell selects the relevant group of raw-p <0.05 hits. The protein/site search filters the matrix and list and highlights TVD matches. Expanding a hit's mean-change details shows all eight signed percentage-point changes and their shares of the separate directional totals. Site names open the exact glycosite in Explore.
+
+On Inter-organ comparisons, selecting a box resets list filters and shows all eligible sites for that pair. Selecting a dot also clears conflicting filters, highlights the corresponding row, scrolls it into the list viewport and moves keyboard focus there. Only clicking the row's glycosite name opens Explore. Mouse and keyboard selection follow the same path.
 
 ## Calculations and thresholds
 
@@ -26,6 +28,7 @@ Age comparisons display one linked organ column from Figures 3A, 3B and 3C. The 
 - The age screen preserves **all original tested-site TVD and p values**. Hits use raw permutation p <0.05, as in the draft. No FDR-adjusted significance is implied.
 - Age gain/loss vectors use per-animal mean percentages (`glycan_classes.age_bins[].percent`), A minus B. The builder checks their recomputed TVD against the original exported TVD (absolute tolerance 1e-5 percentage points) before assigning direction. Pooled percentages are not substituted for these means.
 - Dominance is evaluated separately for gain and loss: the largest changing class must account for at least 60% of that side's total. Otherwise the direction is `mixed`.
+- For O versus Y, signed class changes are old mean percentage minus young mean percentage. Positive changes are summed as gains; absolute negative changes are summed as losses. Dominance refers to the share of the compositional change, not the site's most abundant glycan type. Other age contrasts follow their displayed A-minus-B order.
 - All-age inter-organ vectors use `glycan_classes.pooled[].percent`, requiring at least 5 total PSMs at that site in each dataset. This is Tier 1+ in atlas organs. Male/female myelin are separate datasets and are never pooled into the five-organ atlas comparison total.
 - Young-only inter-organ reference vectors use `pooled_percent` in Y. They require at least 9 detected young animals and 18 young-bin PSMs in each organ, following the author's recollection. There is no additional whole-lifespan Tier cutoff. These rules are explicitly displayed; exact Figure 3B dot-count equivalence has not been established from the supplied raster panel.
 - Derived entropy and effective-type scores are rounded to eight decimal places for byte-stable exports across Linux and macOS libm implementations. Original age-test statistics are preserved without rounding.
@@ -37,6 +40,8 @@ Age comparisons display one linked organ column from Figures 3A, 3B and 3C. The 
 ## Release regression checks
 
 The derived data reproduce the supplied manuscript's five O-versus-Y counts: brain 158, spleen 187, liver 90, kidney 126, plasma 68. Brain has 26 dominant paucimannose gains and one dominant paucimannose loss.
+
+The author's Mog N59 example is reproduced numerically: paucimannose gains 8.15 percentage points (56.9% of total gains, hence mixed gain); fucosylated glycans lose 12.07 points (84.2% of total losses, hence dominant fucosylated loss). The hit is in fucosylated loss / mixed gain. Regression tests cover these values, directional-total consistency for every age hit, and composition-bar consistency with TVD and entropy for every inter-organ row.
 
 The ten pooled atlas pairs reproduce **5,266 comparisons** and every Figure 2B pair count. They reproduce **2,994 conserved, 1,070 partially shifted and 1,202 strongly remodeled** comparisons. The Figure 4H counts also match exactly: brain/myelin use 792, 748 and 716 shared eligible sites for brain/male, brain/female and male/female respectively.
 

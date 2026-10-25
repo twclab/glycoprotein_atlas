@@ -122,6 +122,41 @@ class ReleaseTests(unittest.TestCase):
                 for field in ('h_a', 'h_b', 'effective_a', 'effective_b'):
                     self.assertEqual(row[field], round(row[field], 8))
 
+    def test_composition_bars_reproduce_the_displayed_pair_metrics(self):
+        self.assertEqual(tuple(self.manifest['classes']), metrics.CLASSES)
+        for group in self.manifest['pairs'] + self.manifest['young_pairs']:
+            for row in json.loads((self.data/group['file']).read_text()):
+                for organ in ('a', 'b'):
+                    values = row[f'composition_{organ}']
+                    self.assertEqual(len(values), 8)
+                    self.assertGreaterEqual(min(values), 0)
+                    self.assertAlmostEqual(sum(values), 100, places=5)
+                    h, effective = metrics.diversity(values)
+                    self.assertAlmostEqual(h, row[f'h_{organ}'], places=6)
+                    self.assertAlmostEqual(effective, row[f'effective_{organ}'], places=6)
+                self.assertAlmostEqual(metrics.tvd(row['composition_a'], row['composition_b']), row['tvd'], places=6)
+
+    def test_age_change_details_match_tvd_and_directional_totals(self):
+        for group in self.manifest['age']:
+            for row in json.loads((self.data/group['file']).read_text()):
+                changes = row['changes']
+                self.assertEqual(len(changes), 8)
+                self.assertAlmostEqual(sum(changes), 0, places=5)
+                self.assertAlmostEqual(sum(max(x, 0) for x in changes), row['percent_difference'], places=5)
+                self.assertAlmostEqual(sum(max(-x, 0) for x in changes), row['percent_difference'], places=5)
+
+    def test_mog_n59_explains_mixed_gain_and_dominant_loss(self):
+        brain = json.loads((self.data/'atlas_brain_O_vs_Y_hits.json').read_text())
+        mog = next(row for row in brain if row['glycosite'] == 'Mog N59')
+        changes = dict(zip(metrics.CLASSES, mog['changes']))
+        gains = sum(max(x, 0) for x in changes.values())
+        losses = sum(max(-x, 0) for x in changes.values())
+        self.assertEqual((mog['loss'], mog['gain']), ('fucosylated', 'mixed'))
+        self.assertEqual(round(changes['paucimannose'], 2), 8.15)
+        self.assertEqual(round(100*changes['paucimannose']/gains, 1), 56.9)
+        self.assertEqual(round(changes['fucosylated'], 2), -12.07)
+        self.assertEqual(round(-100*changes['fucosylated']/losses, 1), 84.2)
+
     def test_pair_counts_match_figure_2b_and_myelin_is_separate(self):
         expected={'brain__spleen':798,'brain__liver':663,'brain__kidney':739,'brain__plasma':112,
                   'spleen__liver':856,'spleen__kidney':814,'spleen__plasma':167,
