@@ -1,0 +1,99 @@
+{
+  "description": "Unmodified panel artwork exported from the supplied Methods PDFs; master PDF supplies section order; DOCX supplies prose.",
+  "sources": {
+    "website_methods_cohort_overview.pdf": "82622d2f46dbd46ce0625122ac92975400541af0c31fdc867d25268019f76a0c",
+    "website_methods_ms_methods.pdf": "9fa516bda0700fc185e3bd67bc6ec62c36dc884a9e110faba8e829258af2ef9a",
+    "website_methods_glycosite_tiering.pdf": "a770e84ffebbaf8230617280ea8b5caa397ce3cbcd8f46017383f7d320452344",
+    "website_methodsglycan_types_horizontal_1.pdf": "8ebf8fbe6381651bce13360bb6a8fc518816a37addf79b71e9a868a712ef63a9",
+    "website_methodsglycan_types_horizontal_2.pdf": "b462cce7b55fd396c2926656b8c49fe967e4e3a6696e0989e8c84b3bff35ea88",
+    "website_methodsglycan_types_horizontal_3.pdf": "ec2b12520a6e3bd1d9fd318427efb156d5c06d1445f246b26ec65e18ef07c928",
+    "website_methods_glycan_type_logic.pdf": "d97eb716bc37b550a984268c8f822625f01b419e710988f6fe85a9cbd274e5b7",
+    "website_methods_shannon_calculations.pdf": "794a0676546c2741c1dc215c6fdf00ca113829f1751e9b9248301a3bbe1b3857",
+    "website_methods_TVD_calc.pdf": "1f288c1bf76172d2ab68b26ca631f4c7eed7f016d8c6e5609bfdea0809035385",
+    "website_methods_glycosite_stats_overview.pdf": "8db2da997cd16a22c7082ebd8f12801fc7fe8d46fce3ebc07c73dc66f35d878c",
+    "website_methods.pdf": "a770189fc94bce82a2bba69e8d142278f6f4a9358930c87d31418399690f48c0",
+    "website_methods_figure_text_v3.docx": "5ce102442461b08ec333a39c953f1cc6ff38517b1271f6cd62b82ae36d756259"
+  },
+  "panels": [
+    {
+      "source": "website_methods_cohort_overview.pdf",
+      "vector": "cohorts.svg",
+      "preview": "cohorts.png",
+      "preview_bytes": 233743,
+      "vector_sha256": "8f87b3de4d36cb39c958efa4c5c248bfd71da0a53acc1c659d9e845e444a6228",
+      "preview_sha256": "4269a5a139be3f2258d5312d13307eb44bab1f45ddb5dca33f3ace3358a6a41c"
+    },
+    {
+      "source": "website_methods_ms_methods.pdf",
+      "vector": "workflow.svg",
+      "preview": "workflow.png",
+      "preview_bytes": 226959,
+      "vector_sha256": "6904e71f54f354f97c49ac7175144d286e4e6b1a4b23220f58a4adc9087405c0",
+      "preview_sha256": "1910c304cc558660c789ed2986303e3d8adeae819cd681cb9b57f1a84adecdf7"
+    },
+    {
+      "source": "website_methods_glycosite_tiering.pdf",
+      "vector": "coverage-tiers.svg",
+      "preview": "coverage-tiers.svg",
+      "preview_bytes": 225380,
+      "vector_sha256": "6a292d71ec39a200a6a08a4e0354edd55c2d88b716b7ffcb0677dbbfc6160187",
+      "preview_sha256": "6a292d71ec39a200a6a08a4e0354edd55c2d88b716b7ffcb0677dbbfc6160187"
+    },
+    {
+      "source": "website_methodsglycan_types_horizontal_1.pdf",
+      "vector": "glycan-types-1.svg",
+      "preview": "glycan-types-1.svg",
+      "preview_bytes": 94598,
+      "vector_sha256": "a1307ce5315ab648f48b5f75d79b47fa40d086a028c81d9dc155f3c05f592a0a",
+      "preview_sha256": "a1307ce5315ab648f48b5f75d79b47fa40d086a028c81d9dc155f3c05f592a0a"
+    },
+    {
+      "source": "website_methodsglycan_types_horizontal_2.pdf",
+      "vector": "glycan-types-2.svg",
+      "preview": "glycan-types-2.svg",
+      "preview_bytes": 99022,
+      "vector_sha256": "0e98c7e6bc120294e7ba6493143abdda4b18d0c7ffebb623b9f3de342f04270d",
+      "preview_sha256": "0e98c7e6bc120294e7ba6493143abdda4b18d0c7ffebb623b9f3de342f04270d"
+    },
+    {
+      "source": "website_methodsglycan_types_horizontal_3.pdf",
+      "vector": "glycan-types-3.svg",
+      "preview": "glycan-types-3.svg",
+      "preview_bytes": 99359,
+      "vector_sha256": "9630f4ee5e9fbfa6c4f2bdeaf14405eb1209f996f47d93b6745a8f7050a688d8",
+      "preview_sha256": "9630f4ee5e9fbfa6c4f2bdeaf14405eb1209f996f47d93b6745a8f7050a688d8"
+    },
+    {
+      "source": "website_methods_glycan_type_logic.pdf",
+      "vector": "assignment-logic.svg",
+      "preview": "assignment-logic.svg",
+      "preview_bytes": 119916,
+      "vector_sha256": "48a074ab80320fcc6c300c23a81cfb25cba51eb0003d6cbcd3c29ec7bffa59e6",
+      "preview_sha256": "48a074ab80320fcc6c300c23a81cfb25cba51eb0003d6cbcd3c29ec7bffa59e6"
+    },
+    {
+      "source": "website_methods_shannon_calculations.pdf",
+      "vector": "heterogeneity.svg",
+      "preview": "heterogeneity.svg",
+      "preview_bytes": 109753,
+      "vector_sha256": "11304533315e69b8655e63f79fb0a224d6575ae4cac242711aa1aca9570c742a",
+      "preview_sha256": "11304533315e69b8655e63f79fb0a224d6575ae4cac242711aa1aca9570c742a"
+    },
+    {
+      "source": "website_methods_TVD_calc.pdf",
+      "vector": "tvd.svg",
+      "preview": "tvd.svg",
+      "preview_bytes": 83112,
+      "vector_sha256": "d0cddf216da6b0fbc813ed3d7b3d0b68875116967f8f6f3db445e0ecc1f14721",
+      "preview_sha256": "d0cddf216da6b0fbc813ed3d7b3d0b68875116967f8f6f3db445e0ecc1f14721"
+    },
+    {
+      "source": "website_methods_glycosite_stats_overview.pdf",
+      "vector": "site-summary.svg",
+      "preview": "site-summary.svg",
+      "preview_bytes": 99867,
+      "vector_sha256": "c76b631e2d064eb74fef133d5c91a547ba7d55368d4f941fa03c0587d08b2da1",
+      "preview_sha256": "c76b631e2d064eb74fef133d5c91a547ba7d55368d4f941fa03c0587d08b2da1"
+    }
+  ]
+}
