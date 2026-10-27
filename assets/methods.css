@@ -1,5 +1,4 @@
 /* Supplied Methods artwork keeps its original colors and proportions. */
-.methods-page { max-width: 1240px; }
 .methods-page .comparison-intro { max-width: 900px; }
 .methods-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 36px; }
 .methods-nav button { border: 1px solid var(--gray-300); border-radius: 7px; background: white; padding: 10px 13px; color: var(--teal-900); font-size: 12px; cursor: pointer; }
