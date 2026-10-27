@@ -12,6 +12,7 @@ jobs:
           node --check assets/app.js
           node --check assets/comparisons.js
           node --check assets/comparison-layout.js
+          node --check assets/methods.js
       - name: Check list navigation and matrix layout
         run: node --test tests/comparison-layout.test.cjs
       - name: Check calculations and release regressions

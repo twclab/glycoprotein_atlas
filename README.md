@@ -28,3 +28,5 @@ See [comparison provenance and panel crosswalk](docs/comparison-views.md) for es
 Develop on a feature branch and open a pull request for review. Preview locally over HTTP before merging; pushing `main` publishes to the production domain.
 
 Comparison tables keep a moving window of rows while preserving the complete searchable, sortable list. Box and point selection updates the list without rebuilding the plot; hover and keyboard-focus labels appear immediately. Age change details are built on expansion, and Explore retains only the latest protein shard for reuse. See [comparison performance checks](docs/comparison-performance.md) for local before/after timings and the opt-in profiler.
+
+Methods artwork, source provenance, section order and carousel behavior are documented in [docs/methods-page.md](docs/methods-page.md).
