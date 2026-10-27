@@ -39,9 +39,6 @@
 .methods-carousel-controls > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .methods-carousel-counter { color: var(--ink-soft); font-size: 12px; }
 .methods-page button:focus-visible, .methods-page a:focus-visible { outline: 2px solid var(--teal-700); outline-offset: 3px; }
-.methods-browser-notes { margin: 44px 0 10px; padding: 0 4px; }
-.methods-browser-notes > summary { font-size: 18px; }
-.methods-browser-notes h4 { margin: 28px 0 8px; color: var(--ink); font-size: 16px; }
 @media (max-width: 700px) {
   .methods-section { padding: 20px 16px; margin-bottom: 20px; }
   .methods-section h3 { gap: 10px; margin-bottom: 22px; }

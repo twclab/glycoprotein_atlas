@@ -42,10 +42,8 @@ also have selectable text equivalents. Equations are repeated as text. On narrow
 screens the decision tree stacks above its explanation. Figures can be opened at
 full size without losing the Methods page.
 
-The existing browser-comparison rules remain in an expandable note at the end,
-including raw permutation p-values, coverage, TVD categories, and young-only
-thresholds. A short clarification distinguishes the most abundant glycan type at
-a site from the ≥60% dominant gain/loss definition used in Age comparisons.
+A short clarification distinguishes the most abundant glycan type at a site
+from the ≥60% dominant gain/loss definition used in Age comparisons.
 
 ## Regenerate artwork
 
