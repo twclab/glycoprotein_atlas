@@ -18,7 +18,8 @@ The last section uses the three supplied permutation plots and the prose from
 `website_methods_permutation_test_text.docx`. The prose is unchanged; the final
 paragraph is split at its three glycosite examples. At widths of at least 760px, the plot stays
 beside the text and changes from Lamc1 N574 to Nfasc N1047 to Thy1 N94 as each
-example's text reaches the reading area. Plot and text change together, including
+example's text reaches the reading area. The plot is capped at 680px and sized
+for the viewport with room for the sticky section title. Plot and text change together, including
 when scrolling back or jumping through the page. All three images preload before
 scroll changes begin. On small screens and with reduced motion, each plot remains
 inline with its corresponding text. No timer or manual controls are used for this
