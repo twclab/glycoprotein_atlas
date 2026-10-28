@@ -22,3 +22,7 @@ jobs:
         run: |
           python3 scripts/build_comparisons.py
           git diff --exit-code --stat -- data/comparisons
+      - name: Verify deterministic expanded aliases
+        run: |
+          python3 scripts/build_uniprot_aliases.py
+          git diff --exit-code -- data/protein-aliases-uniprot.json data/protein-aliases-uniprot.provenance.json

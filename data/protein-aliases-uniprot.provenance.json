@@ -1,0 +1,47 @@
+{
+  "retrieved": "2026-10-28",
+  "release": "2026_03",
+  "source": {
+    "retrieved": "2026-10-28",
+    "api": "https://rest.uniprot.org",
+    "from": "UniProtKB_AC-ID",
+    "to": "UniProtKB",
+    "fields": [
+      "accession",
+      "id",
+      "protein_name",
+      "gene_names",
+      "organism_id"
+    ],
+    "job_id": "4x8M9oWOyC",
+    "result_url": "https://rest.uniprot.org/idmapping/uniprotkb/results/stream/4x8M9oWOyC?format=json&fields=accession%2Cid%2Cprotein_name%2Cgene_names%2Corganism_id",
+    "release": "2026_03",
+    "raw_sha256": "a959d350e9b3954050ee3e549c8414f76dcfb4e6bab0217cdca1cc874489fd49"
+  },
+  "reference_sha256": "ce667d360a7c84c31882b06f3a8e31426251de86846c87ce196bd9ff3423a289",
+  "previous_aliases_sha256": "e6d7b36e7a6da9d1768ed4b11a5b7d2148c619574cb638e411f92e2ab32ba030",
+  "search_index_sha256": "845e2a11af71dd64dceeef3a1545d8b9fa7b4c691745d2c960cc67f29e5c54eb",
+  "indexed_proteins": 12280,
+  "proteins_with_uniprot_names": 12280,
+  "previous_alias_count": 33282,
+  "alias_count": 87944,
+  "output_bytes": 1881769,
+  "output_sha256": "d74677dc806373fb330058c3e6b8dbd0f810e984fbda822b4670249b4dbd29b7",
+  "mapping": "Exact atlas accessions; one mouse UniProt primary record per atlas protein. Shared names retain every matching protein.",
+  "name_fields": [
+    "recommended full names",
+    "alternative full names",
+    "short names",
+    "CD antigen names",
+    "component protein names",
+    "gene symbols and synonyms",
+    "ORF/locus names",
+    "UniProt entry names"
+  ],
+  "excluded_fields": [
+    "EC numbers",
+    "evidence identifiers",
+    "free-text annotation comments"
+  ],
+  "rollback": "The previous data/protein-aliases.json is unchanged. Use ?aliases=previous or ?aliases=off; change DEFAULT_ALIAS_MODE for a site-wide rollback."
+}

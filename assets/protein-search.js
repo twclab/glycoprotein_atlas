@@ -1,5 +1,11 @@
 (function (root) {
   "use strict";
+  // Change to "previous" or "off" for a site-wide rollback of this expansion.
+  const DEFAULT_ALIAS_MODE = "uniprot";
+  const ALIAS_FILES = {
+    previous: "data/protein-aliases.json?v=2026-10-28",
+    uniprot: "data/protein-aliases-uniprot.json?v=2026-10-28-full",
+  };
   const normalize = value => String(value || "").normalize("NFKC").toLowerCase()
     .replace(/α/g, "alpha").replace(/β/g, "beta").replace(/γ/g, "gamma")
     .replace(/[^\p{L}\p{N}]/gu, "");
@@ -13,6 +19,16 @@
       aliases: [...new Set([...(aliases[row.protein_id] || []), ...(Array.isArray(row.aliases) ? row.aliases : String(row.aliases || "").split(/[,;|]/))].map(normalize).filter(Boolean))],
     }));
     const byProtein = new Map(records.map(record => [record.row.protein_id, record]));
+    const canonical = new Map(), alternate = new Map();
+    for (const record of records) {
+      for (const [lookup, names] of [[canonical, [record.gene, record.protein]], [alternate, record.aliases]]) {
+        for (const name of names) {
+          if (!name) continue;
+          if (!lookup.has(name)) lookup.set(name, new Set());
+          lookup.get(name).add(record.row.protein_id);
+        }
+      }
+    }
     let lastQuery, exactProteinIds;
     function score(record, query) {
       if (record.gene === query || record.protein === query) return 0;
@@ -38,8 +54,8 @@
       findExact(query) {
         const q = normalize(query);
         if (!q) return undefined;
-        return records.find(record => record.gene === q || record.protein === q)?.row
-          || records.find(record => record.aliases.includes(q))?.row;
+        const id = canonical.get(q)?.values().next().value || alternate.get(q)?.values().next().value;
+        return byProtein.get(id)?.row;
       },
       matchesProtein(proteinId, query, siteText = "") {
         if (!String(query || "").trim()) return true;
@@ -47,18 +63,27 @@
         if (!q) return false;
         if (q !== lastQuery) {
           lastQuery = q;
-          const exact = records.filter(candidate => candidate.gene === q || candidate.protein === q || candidate.aliases.includes(q));
-          exactProteinIds = exact.length ? new Set(exact.map(candidate => candidate.row.protein_id)) : null;
+          const exact = [...(canonical.get(q) || []), ...(alternate.get(q) || [])];
+          exactProteinIds = exact.length ? new Set(exact) : null;
         }
         return exactProteinIds ? exactProteinIds.has(proteinId) : !!record && Number.isFinite(score(record, q)) || normalize(siteText).includes(q);
       },
     };
   }
-  function loadAliases(fetchJSON) {
-    return fetchJSON("data/protein-aliases.json?v=2026-10-28").catch(error => {
-      console.warn("Protein aliases could not be loaded.", error);
-      return {};
-    });
+  async function loadAliases(fetchJSON, mode = new URLSearchParams(root.location?.search || "").get("aliases") || DEFAULT_ALIAS_MODE) {
+    if (mode !== "off" && !Object.hasOwn(ALIAS_FILES, mode)) mode = DEFAULT_ALIAS_MODE;
+    if (mode === "off") return {};
+    const releases = mode === "uniprot" ? ["uniprot", "previous"] : ["previous"];
+    let failure;
+    for (const release of releases) {
+      try {
+        const aliases = await fetchJSON(ALIAS_FILES[release]);
+        if (release !== mode) console.warn("Expanded protein aliases are unavailable; using the previous aliases.");
+        return aliases;
+      } catch (error) { failure = error; }
+    }
+    console.warn("Protein aliases could not be loaded.", failure);
+    return {};
   }
   const api = { normalize, create, loadAliases };
   if (typeof module === "object" && module.exports) module.exports = api;
