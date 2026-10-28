@@ -46,3 +46,20 @@ node --check assets/app.js
 node --check assets/comparisons.js
 node --check assets/comparison-layout.js
 ```
+
+## October 28 styling and alias check
+
+The paper-style plot retains all 5,266 atlas points and a 24-row table window.
+At the desktop preview size, both cards were 891px tall; SVG text stayed at 18px
+and all ten pairs fit the plot. Narrow layouts keep scrolling inside the plot
+and table. Row height remains 104px.
+
+Local scripting samples after the changes were 61.3ms for the initial atlas
+render, 7.5ms for a box selection, and 9.4ms for a point selection. A same-session
+point selection before these edits was 8.7ms. These samples include no network
+or paint timings and are not a hardware-independent benchmark.
+
+The new alias supplement is a single 469,512-byte local file loaded alongside
+the existing index. Exact gene, accession or alias matches take precedence in
+comparison filters. Autocomplete shows at most 50 ranked suggestions and asks
+for a narrower search when more match. The full index remains searchable.

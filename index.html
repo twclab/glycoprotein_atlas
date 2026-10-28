@@ -6,14 +6,15 @@
   <meta name="description" content="Explore age-associated protein abundance and site-resolved N-glycosylation across five mouse atlas organs and male and female myelin.">
   <title>The Glycoprotein Atlas</title>
   <link rel="icon" href="assets/glycan-5.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/styles.css?v=2026-09-30-review-r18">
+  <link rel="stylesheet" href="assets/styles.css?v=2026-10-28-explorer">
   <script src="assets/theme.js?v=2026-09-30-review-r1" defer></script>
-  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-28-weighted">
-  <script src="assets/comparison-layout.js?v=2026-10-24-performance" defer></script>
-  <script src="assets/comparisons.js?v=2026-10-28-weighted" defer></script>
+  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-28-paper">
+  <script src="assets/comparison-layout.js?v=2026-10-28-paper" defer></script>
+  <script src="assets/comparisons.js?v=2026-10-28-paper" defer></script>
   <link rel="stylesheet" href="assets/methods.css?v=2026-10-28-cleanup">
   <script src="assets/methods.js?v=2026-10-28-cleanup" defer></script>
-  <script src="assets/app.js?v=2026-10-24-performance" defer></script>
+  <script src="assets/protein-search.js?v=2026-10-28-aliases" defer></script>
+  <script src="assets/app.js?v=2026-10-28-aliases" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -45,7 +46,7 @@
         <form class="protein-search hero-search" role="search" autocomplete="off" data-search-form>
           <label class="sr-only" for="hero-search-input">Search proteins</label>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
-          <input id="hero-search-input" type="search" placeholder="Search a protein or UniProt ID" data-search-input aria-autocomplete="list" aria-controls="hero-search-results">
+          <input id="hero-search-input" type="search" placeholder="Search a protein, alias, or UniProt ID" data-search-input aria-autocomplete="list" aria-controls="hero-search-results">
           <button type="submit">Explore</button>
           <div class="search-results" id="hero-search-results" role="listbox" data-search-results hidden></div>
         </form>
@@ -68,7 +69,7 @@
         <form class="protein-search compact-search" role="search" autocomplete="off" data-search-form>
           <label class="sr-only" for="explore-search-input">Search proteins</label>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
-          <input id="explore-search-input" type="search" placeholder="Search protein or UniProt" data-search-input aria-autocomplete="list" aria-controls="explore-search-results">
+          <input id="explore-search-input" type="search" placeholder="Protein, alias, or UniProt ID" data-search-input aria-autocomplete="list" aria-controls="explore-search-results">
           <div class="search-results" id="explore-search-results" role="listbox" data-search-results hidden></div>
         </form>
         <div class="explore-top-actions">
@@ -96,14 +97,14 @@
             <p data-description></p>
           </div>
           <div class="protein-heading-side">
-            <div class="protein-class-legend" data-segment-legend aria-label="Glycan class legend"></div>
+            <div class="protein-class-legend" data-segment-legend aria-label="Glycan type legend"></div>
           </div>
         </section>
 
         <section class="protein-map" aria-labelledby="protein-map-title">
           <div class="section-label-row overlay-heading">
             <div>
-              <h3 id="protein-map-title">N-glycosite Composition Overview</h3>
+              <h3 id="protein-map-title">N-glycosite composition overview</h3>
             </div>
           </div>
           <div class="segment-scroll" data-segment-overlay></div>
@@ -195,21 +196,21 @@
       <div class="tvd-controls">
         <label>Dataset<select data-tvd-dataset></select></label>
         <label>Comparison<select data-tvd-comparison></select></label>
-        <label>Find a protein or site<input type="search" data-tvd-search placeholder="Gene, UniProt ID, or site"></label>
+        <label>Find a protein or site<input type="search" data-tvd-search placeholder="Gene, alias, UniProt ID, or site"></label>
         <div class="tvd-zoom"><span>Zoom</span><button type="button" data-tvd-zoom="1.5">+</button><button type="button" data-tvd-zoom="0.666667">−</button><button type="button" data-tvd-zoom="reset">Reset</button></div>
       </div>
-      <div class="age-selection"><strong data-age-selection>Loading comparison…</strong><span>The TVD plot, glycan-change matrix and hit list follow this selection.</span></div>
+      <div class="age-selection"><strong data-age-selection>Loading comparison…</strong></div>
       <h3 class="age-plot-heading">Age-related composition changes</h3>
       <div class="tvd-plot" data-tvd-plot><p class="empty-note">Loading age-comparison data…</p></div>
       <p class="comparison-note">TVD measures the fraction of glycan-type composition redistributed (0–100%). Hits use raw permutation p &lt;0.05, without multiple-testing adjustment. Young (Y): 1–6 months; middle-aged (MA): 9–16 months; old (O): 19–28 months in atlas organs. Myelin uses cohort-specific ages.</p>
       <div class="comparison-grid">
-        <article class="comparison-card"><h3 data-age-matrix-title>Glycan gains and losses</h3><p class="comparison-note">Choose any colored gain or loss label to browse all changes in that direction, or choose a cell for a specific loss/gain pair.</p><p class="comparison-note" data-age-direction-note></p><div class="comparison-scroll" data-age-matrix></div><details class="dominance-example"><summary>Example: Mog N59 in brain, old versus young</summary><p>Paucimannose increases by 8.15 percentage points, accounting for 56.9% of total gains. This is below 60%, so the gain is mixed. Fucosylated glycans decrease by 12.07 points and account for 84.2% of total losses, giving a dominant fucosylated loss. Mog N59 therefore belongs to fucosylated loss / mixed gain.</p></details></article>
-        <article class="comparison-card"><div class="comparison-heading"><h3>Browse age hits</h3><strong data-age-hit-count aria-live="polite"></strong></div><p class="comparison-note" data-age-active-filter>All glycan changes</p><p class="comparison-note">TVD and raw p describe the selected age comparison. Expand “Mean changes and shares” for all eight glycan types; changes are percentage points and shares use separate gain and loss totals. Click a glycosite name to open Explore.</p><button class="comparison-reset" type="button" data-age-clear>Clear glycan filter</button><div class="comparison-hit-scroll" tabindex="0" role="region" aria-label="All matching age-comparison hits" data-age-hits></div></article>
+        <article class="comparison-card"><h3 data-age-matrix-title>Glycan gains and losses</h3><p class="comparison-note">Select a label or cell to filter the hits.</p><p class="comparison-note" data-age-direction-note></p><div class="comparison-scroll" data-age-matrix></div><details class="dominance-example"><summary>Example: Mog N59 in brain, old versus young</summary><p>Paucimannose increases by 8.15 percentage points, accounting for 56.9% of total gains. This is below 60%, so the gain is mixed. Fucosylated glycans decrease by 12.07 points and account for 84.2% of total losses, giving a dominant fucosylated loss. Mog N59 therefore belongs to fucosylated loss / mixed gain.</p></details></article>
+        <article class="comparison-card"><div class="comparison-heading"><h3>Browse age hits</h3><strong data-age-hit-count aria-live="polite"></strong></div><p class="comparison-note" data-age-active-filter>All glycan changes</p><p class="comparison-note">Mean changes are in percentage points. Shares use separate gain and loss totals.</p><button class="comparison-reset" type="button" data-age-clear>Clear glycan filter</button><div class="comparison-hit-scroll" tabindex="0" role="region" aria-label="All matching age-comparison hits" data-age-hits></div></article>
       </div>
     </section>
 
     <section class="content-page comparison-page" id="inter-organ" data-page="inter-organ" aria-label="Inter-organ comparisons" hidden>
-      <div class="comparison-intro"><span class="comparison-kicker">Across tissues</span><h2>Inter-organ comparisons</h2><p>Compare site composition and heterogeneity across atlas organs, or between whole brain and male and female myelin. Browse every eligible glycosite.</p></div>
+      <div class="comparison-intro"><h2>Inter-organ comparisons</h2><p>Compare glycosite composition and heterogeneity across organs, or between whole brain and male and female myelin.</p></div>
       <div data-inter-content></div>
     </section>
     <section class="content-page comparison-page" id="overview" data-page="overview" aria-label="Overview" hidden>

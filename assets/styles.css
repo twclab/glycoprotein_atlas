@@ -652,7 +652,7 @@ body.exploring .content-page { display: none; }
 
 /* Readable scientific labels at every breakpoint. */
 .legend-item { font-size: var(--text-base); gap: 7px; line-height: 1.35; }
-.legend-swatch { width: 20px; height: 20px; flex: 0 0 20px; }
+.legend-swatch { display: inline-block; width: 20px; height: 20px; flex: 0 0 20px; aspect-ratio: 1; }
 .protein-class-legend { gap: 8px 16px; }
 .scientific-chart text { font-size: var(--text-axis); fill: var(--axis-ink); }
 .scientific-chart .axis-label { font-size: var(--text-axis); fill: var(--axis-ink); }
