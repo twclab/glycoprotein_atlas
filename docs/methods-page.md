@@ -5,7 +5,8 @@ paragraphs in `website_methods_figure_text_v3.docx` are preserved verbatim.
 
 Methods uses unnumbered headings, plain figures and 18px body text across each
 card. It has no figure captions, full-size links, duplicate disclosures or manual
-image controls. Section navigation remains available.
+image controls or section-navigation buttons. Assignment-logic text sits beside
+the tall figure on desktop and below it on small screens.
 
 The three glycan examples change every four seconds. The exporter aligns their
 eight type labels and gives all frames the same canvas. It preserves the drawing
@@ -13,11 +14,27 @@ paths; its small scale/position corrections remove differences between the PDF
 artboards. The page loads all frames before starting. Reduced-motion preferences
 keep the first image static. Hidden or off-screen views do not advance.
 
-TVD significance follows the TVD composition paragraph. Its source is Figure 3A
-and the Figure S15 legend: fixed-size animal-label permutation, Tier 2+ atlas
-coverage, at least nine detected animals and 18 glycoPSMs per compared age bin,
-and raw p <0.05 without multiple-testing adjustment. No permutation count or
-unprovided p-value estimator is assumed.
+The last section uses the three supplied permutation plots and the prose from
+`website_methods_permutation_test_text.docx`. The prose is unchanged; the final
+paragraph is split at its three glycosite examples. At widths of at least 760px, the plot stays
+beside the text and changes from Lamc1 N574 to Nfasc N1047 to Thy1 N94 as each
+example's text reaches the reading area. Plot and text change together, including
+when scrolling back or jumping through the page. All three images preload before
+scroll changes begin. On small screens and with reduced motion, each plot remains
+inline with its corresponding text. No timer or manual controls are used for this
+sequence. The earlier glycan-type carousel retains its four-second interval.
+
+The two agent-created schematics and their builder are removed. The earlier
+added significance paragraph is also replaced by the author's supplied section.
+No age-test values or scientific data were recalculated.
+
+`scripts/build_permutation_assets.py` exports the three PDFs to SVG without
+redrawing them. `assets/methods/permutation-manifest.json` records source and
+export hashes and the shared 468 × 774 canvas. Regenerate them with:
+
+```sh
+python3 scripts/build_permutation_assets.py --source-dir /path/to/new/supplied/folder
+```
 
 All visible exp(H) labels use **Weighted glycan types**. Existing data-field names
 are retained for compatibility.

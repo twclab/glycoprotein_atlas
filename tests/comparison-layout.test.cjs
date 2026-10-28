@@ -99,8 +99,8 @@ test('rendered matrix labels its loss rows and gain columns with correct margina
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8'), context);
   await context.window.ATLAS_COMPARISONS.renderAge({ dataset: 'atlas_brain', comparison: 'O_vs_Y', query: '' });
   const html = node('[data-age-matrix]').innerHTML;
-  assert.match(html, /<thead>.*<th scope="col">All losses<\/th>/);
-  assert.match(html, /<tfoot><tr><th scope="row">All gains<\/th>/);
+  assert.match(html, /<tfoot>.*<th scope="col">All losses<\/th>/);
+  assert.match(html, /<tr><th scope="row">All gains<\/th>/);
   assert.match(html, /aria-label="All Paucimannose gains"[^>]*>26<\/button>/);
   assert.match(html, /aria-label="All Paucimannose losses"[^>]*>1<\/button>/);
   const rows = [...html.matchAll(/<th scope="row"><button[^>]*data-loss="([^"]+)"/g)].map(match => match[1]);

@@ -1,0 +1,32 @@
+{
+  "description": "Author-supplied permutation plots and text; Lamc1, Nfasc, Thy1 scroll order.",
+  "sources": {
+    "permutation_test_Lamc1_N574.pdf": "c99eba112997ef2063a88158d2b746ee6e68bf65e86f973a1cd14e4765975f84",
+    "permutation_test_Nfasc_N1047.pdf": "850d24f22a683815644f574623bb28e12fa7eba8376cf2931c6e8a22d8b0a1ec",
+    "permutation_test_Thy1_N94.pdf": "ae9dc63482a54214335c89fabea5d3d90a1cc2e1e66dcf7ca776933a81048986",
+    "website_methods_permutation_test_text.docx": "7b6864ef246a03faa281a03fcf67627259638d986ae4d1cd661ddb45794eb947"
+  },
+  "panels": [
+    {
+      "source": "permutation_test_Lamc1_N574.pdf",
+      "vector": "permutation-lamc1.svg",
+      "viewBox": "0 0 468 774",
+      "bytes": 193645,
+      "sha256": "9162c6f84125a1e9f250c5d4e4f56cca2a5d9a8aac796c928ca1f9b1bb350905"
+    },
+    {
+      "source": "permutation_test_Nfasc_N1047.pdf",
+      "vector": "permutation-nfasc.svg",
+      "viewBox": "0 0 468 774",
+      "bytes": 242867,
+      "sha256": "a6c3282fe492e52af5a23b0e27506a92af8f81e3bc672f4914279f5189d7090a"
+    },
+    {
+      "source": "permutation_test_Thy1_N94.pdf",
+      "vector": "permutation-thy1.svg",
+      "viewBox": "0 0 468 774",
+      "bytes": 384333,
+      "sha256": "d2e7a2ec680853638d910b5d76d9b3c4064d84ac81be5740097af8c63d2acc00"
+    }
+  ]
+}
