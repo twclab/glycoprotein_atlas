@@ -110,7 +110,8 @@ test('rendered matrix labels its loss rows and gain columns with correct margina
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8'), context);
   await context.window.ATLAS_COMPARISONS.renderAge({ dataset: 'atlas_brain', comparison: 'O_vs_Y', query: '' });
   const html = node('[data-age-matrix]').innerHTML;
-  assert.match(html, /<tfoot><tr class="matrix-gain-labels"><th colspan="2" class="matrix-loss-end">All losses<\/th>/);
+  assert.match(html, /<thead>.*<th scope="col" class="matrix-loss-end"><span>All losses<\/span><\/th>/);
+  assert.match(html, /<tfoot><tr class="matrix-gain-labels"><td colspan="3" aria-hidden="true"><\/td>/);
   assert.match(html, /<th class="matrix-gain-end" scope="row">All gains<\/th>/);
   assert.match(html, /aria-label="All Paucimannose gains: 26 hits"[^>]*class="matrix-margin-button"[^>]*><span>26<\/span><\/button>/);
   assert.match(html, /aria-label="All Paucimannose losses: 1 hit"[^>]*class="matrix-margin-button"[^>]*><span>1<\/span><\/button>/);

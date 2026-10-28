@@ -21,18 +21,23 @@
 .comparison-toolbar label { display: grid; gap: 6px; min-width: 0; color: var(--ink-soft); font-size: 15px; font-weight: 600; }
 .comparison-toolbar input, .comparison-toolbar select { min-width: 140px; max-width: 100%; height: 40px; padding: 0 9px; border: 1px solid var(--gray-300); border-radius: 7px; background: white; color: var(--ink); font-size: 14px; }
 .comparison-reset { padding: 6px 10px; border: 1px solid var(--gray-300); border-radius: 6px; background: white; color: var(--teal-900); cursor: pointer; }
-.gain-loss-matrix { --matrix-label: clamp(112px,28cqi,148px); --matrix-cell: clamp(24px,min(calc((100cqi - var(--matrix-label) - 82px)/10),calc((100svh - 240px)/10)),48px); width: 100%; min-width: calc(var(--matrix-label) + 10 * var(--matrix-cell) + 82px); border-collapse: separate; border-spacing: 2px; text-align: center; table-layout: fixed; font-size: 12px; margin: 0; }
+.gain-loss-matrix { --matrix-label: clamp(112px,28cqi,148px); --matrix-cell: clamp(24px,min(calc((100cqi - var(--matrix-label) - 96px)/10),calc((100svh - 240px)/10)),48px); width: 100%; min-width: calc(var(--matrix-label) + 10 * var(--matrix-cell) + 96px); border-collapse: separate; border-spacing: 2px; text-align: center; table-layout: fixed; font-size: 12px; margin: 0; }
 .gain-loss-matrix caption { caption-side: bottom; padding: 10px 0 0; color: var(--ink-soft); font-size: 12px; }
 .gain-loss-matrix .matrix-loss-label { width: var(--matrix-label); }
 .gain-loss-matrix .matrix-cell { width: var(--matrix-cell); }
 .gain-loss-matrix .matrix-axis-label { width: 56px; }
+.gain-loss-matrix .matrix-separation { width: 12px; }
 .gain-loss-matrix th { font-size: 12px; font-weight: 600; }
 .gain-loss-matrix th, .gain-loss-matrix td { padding: 0; height: var(--matrix-cell); }
 .gain-loss-matrix button { display: block; width: 100%; height: var(--matrix-cell); min-height: 0; padding: 0; border: 0; border-radius: 0; cursor: pointer; color: var(--ink); font-size: min(15px,calc(var(--matrix-cell)*.52)); line-height: 1.1; }
 .gain-loss-matrix .matrix-type-label { background: transparent; padding-right: 6px; text-align: right; font-size: min(13px,calc(var(--matrix-cell)/2.1)); line-height: 1.05; }
 .gain-loss-matrix .matrix-margin-button { font-weight: 600; }
 .gain-loss-matrix .matrix-pattern-count { padding: 0 2px; background: #ffffffe0; border-radius: 2px; color: #122d2a; }
-.gain-loss-matrix .matrix-loss-end { text-align: right; padding-right: 2px; }
+.gain-loss-matrix thead th { height: auto; padding-bottom: 10px; vertical-align: bottom; }
+.gain-loss-matrix .matrix-loss-end { text-align: center; }
+.gain-loss-matrix .matrix-loss-end span { position: relative; left: 50%; display: block; width: max-content; white-space: nowrap; transform: translateX(-50%); }
+.age-grid .matrix-key-cell .matrix-count-key { margin: 0; justify-content: flex-end; gap: 6px; font-weight: 400; }
+.gain-loss-matrix tfoot th { padding-top: 14px; }
 .gain-loss-matrix .matrix-gain-end { text-align: left; padding-left: 6px; }
 .gain-loss-matrix button[aria-pressed="true"] { outline: 2px solid var(--teal-900); outline-offset: -2px; }
 .gain-loss-matrix button:hover, .gain-loss-matrix button:focus-visible { outline: 2px solid var(--teal-700); outline-offset: -2px; }

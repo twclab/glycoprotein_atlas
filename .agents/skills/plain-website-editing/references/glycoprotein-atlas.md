@@ -18,7 +18,9 @@
 - Overview is removed for now. Keep Methods as the explanatory page.
 - Keep the permutation section title and full plot visible together. The age
   matrix fills its card; totals belong inside the colored margin swatches,
-  with labels at the ends. Do not restore the Mog example disclosure.
+  with All losses above the left column and All gains at the right end of the
+  bottom row. Keep the colored totals clearly separated from the heatmap.
+  Do not restore the Mog example disclosure.
 - Use **Weighted glycan types** for exp(Shannon H) in visible labels and tooltips.
   Keep existing `effective_*` data keys compatible; label changes do not require
   rewriting scientific data.
