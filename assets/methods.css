@@ -1,53 +1,22 @@
-/* Supplied Methods artwork keeps its original colors and proportions. */
-.methods-page .comparison-intro { max-width: 900px; }
 .methods-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 36px; }
 .methods-nav button { border: 1px solid var(--gray-300); border-radius: 7px; background: white; padding: 10px 13px; color: var(--teal-900); font-size: 12px; cursor: pointer; }
 .methods-section { margin: 0 0 32px; padding: clamp(20px, 3.5vw, 42px); border: 1px solid var(--gray-300); border-radius: 16px; background: white; }
-.methods-section h3 { display: flex; align-items: baseline; gap: 16px; margin: 0 0 28px; font-size: clamp(21px, 2.3vw, 28px); font-weight: 500; line-height: 1.3; letter-spacing: -.02em; scroll-margin-top: 100px; }
-.methods-section h3 > span { color: var(--teal-700); font-size: 13px; font-weight: 600; letter-spacing: .06em; }
+.methods-section h3 { margin: 0 0 28px; font-size: clamp(23px, 2.3vw, 28px); font-weight: 500; line-height: 1.3; letter-spacing: -.02em; scroll-margin-top: 100px; }
 .methods-section h3:focus { outline: none; }
 .methods-section h3:focus-visible { outline: 2px solid var(--teal-700); outline-offset: 8px; }
-.methods-section figure { margin: 0 0 24px; }
+.methods-section figure { margin: 0 0 28px; }
 .methods-section[aria-labelledby="methods-site-summary"] figure { max-width: 680px; margin-left: auto; margin-right: auto; }
-.methods-figure-link { display: block; border-radius: 5px; }
+.methods-section[aria-labelledby="methods-assignment-logic"] figure { max-width: 410px; margin-left: auto; margin-right: auto; }
 .methods-section img { display: block; width: 100%; height: auto; }
-.methods-section figcaption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; margin-top: 18px; color: var(--ink-soft); font-size: 12px; line-height: 1.5; }
-.methods-section figcaption a { color: var(--teal-900); text-underline-offset: 3px; }
-.methods-copy { max-width: 900px; }
-.methods-copy p { margin: 14px 0 0; color: var(--ink-soft); font-size: 16px; line-height: 1.75; }
+.methods-copy p { margin: 18px 0 0; color: var(--ink-soft); font-size: 18px; line-height: 1.7; }
 .methods-copy p:first-child { margin-top: 0; }
-.methods-copy strong { color: var(--ink); font-weight: 600; }
-.methods-logic { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 36px; }
-.methods-logic figure { max-width: 410px; margin: 0 auto; }
-.methods-details { margin-top: 22px; font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
-.methods-details summary { color: var(--teal-900); cursor: pointer; text-underline-offset: 3px; }
-.methods-details p { font-size: 14px; }
-.methods-details ol { padding-left: 22px; }
-.methods-details li { margin: 8px 0; }
-.methods-table-scroll { overflow-x: auto; margin-top: 14px; }
-.methods-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-.methods-table th, .methods-table td { padding: 10px 14px; border-bottom: 1px solid var(--gray-100); font-variant-numeric: tabular-nums; }
-.methods-table thead { color: var(--ink); background: var(--teal-050); }
-.methods-table caption { padding-bottom: 12px; text-align: left; }
-.methods-carousel-stage { display: grid; align-items: center; aspect-ratio: 3.65; }
-.methods-carousel-stage figure { margin-bottom: 0; }
-.methods-carousel-stage img { aspect-ratio: 3.65; object-fit: contain; }
-.methods-carousel-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin: 22px 0 24px; }
-.methods-carousel-controls button { border: 1px solid var(--gray-300); border-radius: 6px; padding: 8px 12px; min-height: 36px; background: white; color: var(--teal-900); font-size: 12px; cursor: pointer; }
-.methods-carousel-controls button[aria-pressed="true"] { border-color: var(--teal-700); background: var(--teal-050); font-weight: 700; }
-.methods-carousel-controls > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.methods-carousel-counter { color: var(--ink-soft); font-size: 12px; }
-.methods-page button:focus-visible, .methods-page a:focus-visible { outline: 2px solid var(--teal-700); outline-offset: 3px; }
+.methods-carousel-stage { position: relative; aspect-ratio: 369.6468 / 99.1584; margin-bottom: 28px; }
+.methods-carousel-stage figure { position: absolute; inset: 0; margin: 0; }
+.methods-carousel-stage img { width: 100%; height: 100%; }
+.methods-page button:focus-visible { outline: 2px solid var(--teal-700); outline-offset: 3px; }
 @media (max-width: 700px) {
   .methods-section { padding: 20px 16px; margin-bottom: 20px; }
-  .methods-section h3 { gap: 10px; margin-bottom: 22px; }
-  .methods-copy p { font-size: 15px; }
-  .methods-logic { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .methods-logic figure { width: min(100%, 340px); }
+  .methods-section h3 { margin-bottom: 22px; }
   .methods-nav { gap: 6px; }
   .methods-nav button { padding: 9px 10px; }
-  .methods-carousel-controls { gap: 10px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .methods-page { scroll-behavior: auto; }
 }

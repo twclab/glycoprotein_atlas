@@ -1,58 +1,41 @@
 # Methods page
 
-The Methods tab uses Michael's `website_methods_figure_text_v3.docx` and the ten
-individual PDFs supplied alongside `website_methods.pdf`. The master PDF defines
-the section order. The Word draft's eight prose paragraphs are preserved verbatim;
-the two metric explanations precede the final summary, as in the master.
+The master `website_methods.pdf` defines the figure order. The eight prose
+paragraphs in `website_methods_figure_text_v3.docx` are preserved verbatim.
 
-1. Animal cohorts and sampled tissues: primary atlas plus the supplied male and
-   female myelin cohort drawings, including myelinating oligodendrocytes.
-2. Glycoproteomics and proteomics workflow, followed by the preparation/QC text.
-3. Glycosite coverage tiers: coverage curves and the threshold table.
-4. Reducing glycan complexity: one of the three supplied examples at a time.
-5. Glycan type assignment logic.
-6. Glycosite heterogeneity: Shannon H and exp(H), weighted/effective glycan types.
-7. Quantifying composition differences: TVD and pooled versus animal-mean profiles.
-8. Site-level composition and summary metrics: the shared Site A/B example.
+Methods uses unnumbered headings, plain figures and 18px body text across each
+card. It has no figure captions, full-size links, duplicate disclosures or manual
+image controls. Section navigation remains available.
 
-The three glycan examples rotate every **4 seconds**, as requested. Previous,
-next, direct selection and pause/play controls remain available. Rotation pauses
-while the panel is hovered or contains keyboard focus, while outside the viewport,
-when Methods is hidden, or while the browser document is hidden. Reduced-motion
-preferences start the panel paused; readers can still select or play examples.
-Only manual changes are announced to screen readers. The first figure and all
-Methods prose remain available without JavaScript.
+The three glycan examples change every four seconds. The exporter aligns their
+eight type labels and gives all frames the same canvas. It preserves the drawing
+paths; its small scale/position corrections remove differences between the PDF
+artboards. The page loads all frames before starting. Reduced-motion preferences
+keep the first image static. Hidden or off-screen views do not advance.
 
-## Source fidelity and presentation
+TVD significance follows the TVD composition paragraph. Its source is Figure 3A
+and the Figure S15 legend: fixed-size animal-label permutation, Tier 2+ atlas
+coverage, at least nine detected animals and 18 glycoPSMs per compared age bin,
+and raw p <0.05 without multiple-testing adjustment. No permutation count or
+unprovided p-value estimator is assumed.
 
-`scripts/build_methods_assets.py` exports each supplied PDF with Poppler; it does
-not redraw, recolor, recompute, or crop any panel. The source SHA-256 values and
-export hashes are recorded in `assets/methods/manifest.json`. The master PDF and
-DOCX remain local source documents; only their hashes and the panel artwork are
-committed. There is no new scientific-data processing or change to the shards.
+All visible exp(H) labels use **Weighted glycan types**. Existing data-field names
+are retained for compatibility.
 
-The two illustration-heavy panels use 2600px PNG previews (about 450KB combined)
-instead of loading their 4.7MB combined SVGs. Other panels use their smaller SVG
-exports. Images load lazily; full vector figures open on request. All image sizes
-are reserved to avoid layout shifts. The carousel preloads its three small images
-when it enters view and holds a fixed aspect ratio.
+## Artwork
 
-Figures have descriptive alternatives; the coverage table and assignment tree
-also have selectable text equivalents. Equations are repeated as text. On narrow
-screens the decision tree stacks above its explanation. Figures can be opened at
-full size without losing the Methods page.
-
-A short clarification distinguishes the most abundant glycan type at a site
-from the ≥60% dominant gain/loss definition used in Age comparisons.
-
-## Regenerate artwork
-
-Install Poppler, then run from the repository root:
+`scripts/build_methods_assets.py` exports the ten author-supplied PDFs with
+Poppler. `assets/methods/manifest.json` records source hashes, export hashes and
+the glycan alignment transforms. The master PDF and DOCX remain local sources.
+The two illustration-heavy panels use 2600px PNG previews; other panels use SVG.
+Figures retain descriptive alternative text and load lazily.
 
 ```sh
 python3 scripts/build_methods_assets.py --source-dir /path/to/supplied/folder
 ```
 
-The folder must include all ten panel PDFs, the master `website_methods.pdf`, and
-`website_methods_figure_text_v3.docx`. These are the author-supplied website panels,
-not panels reconstructed from earlier manuscript drafts.
+The source folder must contain the ten panel PDFs, `website_methods.pdf`, and
+`website_methods_figure_text_v3.docx`.
+
+For copy and interface edits, follow
+[plain-website-editing](../.agents/skills/plain-website-editing/SKILL.md).

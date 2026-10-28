@@ -1,5 +1,5 @@
 {
-  "description": "Unmodified panel artwork exported from the supplied Methods PDFs; master PDF supplies section order; DOCX supplies prose.",
+  "description": "Author-supplied Methods artwork; glycan examples share an aligned canvas. Master PDF supplies section order; DOCX supplies prose.",
   "sources": {
     "website_methods_cohort_overview.pdf": "82622d2f46dbd46ce0625122ac92975400541af0c31fdc867d25268019f76a0c",
     "website_methods_ms_methods.pdf": "9fa516bda0700fc185e3bd67bc6ec62c36dc884a9e110faba8e829258af2ef9a",
@@ -43,25 +43,25 @@
       "source": "website_methodsglycan_types_horizontal_1.pdf",
       "vector": "glycan-types-1.svg",
       "preview": "glycan-types-1.svg",
-      "preview_bytes": 94598,
-      "vector_sha256": "a1307ce5315ab648f48b5f75d79b47fa40d086a028c81d9dc155f3c05f592a0a",
-      "preview_sha256": "a1307ce5315ab648f48b5f75d79b47fa40d086a028c81d9dc155f3c05f592a0a"
+      "preview_bytes": 94992,
+      "vector_sha256": "391a1f2c5e17d22923f131231874dea555cb50e3c34134360180ab3b55a506ac",
+      "preview_sha256": "391a1f2c5e17d22923f131231874dea555cb50e3c34134360180ab3b55a506ac"
     },
     {
       "source": "website_methodsglycan_types_horizontal_2.pdf",
       "vector": "glycan-types-2.svg",
       "preview": "glycan-types-2.svg",
-      "preview_bytes": 99022,
-      "vector_sha256": "0e98c7e6bc120294e7ba6493143abdda4b18d0c7ffebb623b9f3de342f04270d",
-      "preview_sha256": "0e98c7e6bc120294e7ba6493143abdda4b18d0c7ffebb623b9f3de342f04270d"
+      "preview_bytes": 99428,
+      "vector_sha256": "073904b30e5cf31a465621fd3d113e606c9d703e9917fa11ef4d0b9582995d60",
+      "preview_sha256": "073904b30e5cf31a465621fd3d113e606c9d703e9917fa11ef4d0b9582995d60"
     },
     {
       "source": "website_methodsglycan_types_horizontal_3.pdf",
       "vector": "glycan-types-3.svg",
       "preview": "glycan-types-3.svg",
-      "preview_bytes": 99359,
-      "vector_sha256": "9630f4ee5e9fbfa6c4f2bdeaf14405eb1209f996f47d93b6745a8f7050a688d8",
-      "preview_sha256": "9630f4ee5e9fbfa6c4f2bdeaf14405eb1209f996f47d93b6745a8f7050a688d8"
+      "preview_bytes": 99765,
+      "vector_sha256": "a50f407daf38c4d1bc0a41cda2b2c3a898ecd4a4e601a8d26d550717245d4989",
+      "preview_sha256": "a50f407daf38c4d1bc0a41cda2b2c3a898ecd4a4e601a8d26d550717245d4989"
     },
     {
       "source": "website_methods_glycan_type_logic.pdf",
@@ -95,5 +95,31 @@
       "vector_sha256": "c76b631e2d064eb74fef133d5c91a547ba7d55368d4f941fa03c0587d08b2da1",
       "preview_sha256": "c76b631e2d064eb74fef133d5c91a547ba7d55368d4f941fa03c0587d08b2da1"
     }
-  ]
+  ],
+  "glycan_alignment": {
+    "canvas": [
+      369.6468,
+      99.1584
+    ],
+    "transforms": [
+      [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.000044772,
+        1.00000007,
+        5.175504621,
+        0.890618853
+      ],
+      [
+        1.001109366,
+        1.001359417,
+        4.292938437,
+        2.186380547
+      ]
+    ]
+  }
 }

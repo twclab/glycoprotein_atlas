@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plain Website Editing"
+  short_description: "Keep website copy concise and source-faithful"
+  default_prompt: "Use $plain-website-editing to revise this website without added filler or duplicate explanations."
