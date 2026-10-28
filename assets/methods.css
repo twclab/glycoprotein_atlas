@@ -21,3 +21,15 @@
 @media (max-width: 760px) {
   .methods-logic-layout { grid-template-columns: minmax(0,1fr); gap: 24px; }
 }
+
+.permutation-step { margin: 0 0 36px; }
+.permutation-step:last-child { margin-bottom: 0; }
+.permutation-step figure { max-width: 580px; margin: 0 auto 28px; }
+.permutation-story.is-scroll-story { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.1fr); align-items: start; gap: 36px; }
+.is-scroll-story .permutation-stage { position: sticky; top: 92px; height: calc(100svh - 120px); }
+.is-scroll-story .permutation-stage figure { height: 100%; margin: 0; }
+.is-scroll-story .permutation-stage img { height: 100%; object-fit: contain; }
+.is-scroll-story .permutation-step { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 120px); margin: 0; padding: 56px 0; }
+.is-scroll-story .permutation-step:first-child { padding-top: 0; }
+.is-scroll-story .permutation-step:last-child { padding-bottom: 0; }
+.is-scroll-story .permutation-step:not(.is-active) .methods-copy { opacity: 0; }

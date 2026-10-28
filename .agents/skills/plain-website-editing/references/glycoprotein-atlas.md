@@ -10,8 +10,11 @@
 - The three glycan examples change automatically every four seconds. There are
   no manual image controls. Use the same canvas, label positions and scale in all
   frames. Respect reduced motion and stop work while the view is hidden.
-- Keep TVD significance information with the TVD explanation. Do not add a second
-  browser-rules panel or a second explanation of the same equation.
+- The final Methods section uses the supplied permutation-test text and the
+  Lamc1 N574, Nfasc N1047 and Thy1 N94 plots. Keep the plot and matching text
+  synchronized as the reader scrolls on desktop; use inline pairs on small
+  screens and with reduced motion. Do not replace author artwork or prose with
+  agent-created explanations. Do not add a second browser-rules panel.
 - Use **Weighted glycan types** for exp(Shannon H) in visible labels and tooltips.
   Keep existing `effective_*` data keys compatible; label changes do not require
   rewriting scientific data.

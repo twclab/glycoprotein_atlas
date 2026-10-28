@@ -14,23 +14,27 @@ paths; its small scale/position corrections remove differences between the PDF
 artboards. The page loads all frames before starting. Reduced-motion preferences
 keep the first image static. Hidden or off-screen views do not advance.
 
-TVD significance follows the TVD composition paragraph. The two added SVGs are
-schematics, not measured distributions. They show fixed-size animal-label
-permutation and the estimator `p = (k + 1) / (B + 1)`, where `k` counts permuted
-TVDs greater than or equal to observed TVD. Atlas tests use 99,999,999 permutations;
-myelin tests use 9,999. The source is the v8 manuscript Methods paragraph beginning
-“For comparisons between ages or experimental conditions.” Its local DOCX is
-`glycoproteomics_paper_collated_manuscript_v8.docx`, SHA-256
-`2544e9b1cc1392b8a818adda2f08988cf024d63d3ca3da25ef8e20b7966e4e7a`.
+The last section uses the three supplied permutation plots and the prose from
+`website_methods_permutation_test_text.docx`. The prose is unchanged; the final
+paragraph is split at its three glycosite examples. On desktop, the plot stays
+beside the text and changes from Lamc1 N574 to Nfasc N1047 to Thy1 N94 as each
+example's text reaches the reading area. Plot and text change together, including
+when scrolling back or jumping through the page. All three images preload before
+scroll changes begin. On small screens and with reduced motion, each plot remains
+inline with its corresponding text. No timer or manual controls are used for this
+sequence. The earlier glycan-type carousel retains its four-second interval.
 
-Regenerate these schematics with:
+The two agent-created schematics and their builder are removed. The earlier
+added significance paragraph is also replaced by the author's supplied section.
+No age-test values or scientific data were recalculated.
+
+`scripts/build_permutation_assets.py` exports the three PDFs to SVG without
+redrawing them. `assets/methods/permutation-manifest.json` records source and
+export hashes and the shared 468 × 774 canvas. Regenerate them with:
 
 ```sh
-python3 scripts/build_tvd_explainers.py
+python3 scripts/build_permutation_assets.py --source-dir /path/to/new/supplied/folder
 ```
-
-The existing significance paragraph retains the atlas eligibility rule and raw
-p <0.05 interpretation. No age-test values or scientific data were recalculated.
 
 All visible exp(H) labels use **Weighted glycan types**. Existing data-field names
 are retained for compatibility.
