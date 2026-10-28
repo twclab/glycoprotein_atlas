@@ -1,18 +1,81 @@
 # Protein aliases
 
-Search uses a local supplement from NCBI Gene mouse synonyms and UniProt protein names. It maps to the atlas's existing protein identifiers. It adds no proteins and does not change the published search index or protein shards.
+All four protein search fields use one alias index: Home, Explore, Age comparisons
+(the TVD plot and gain/loss list), and the Inter-organ glycosite list. The expansion
+adds no proteins and changes no search-index entries, protein shards or test values.
 
-The supplement has 33,282 aliases for 11,053 atlas proteins. NCBI symbols match 11,847 of 12,280 indexed proteins. Proteins without a symbol match still support their existing symbol, accession and description searches. UniProt names add CD133 and CD279. Existing IRE1 shortcuts are retained.
+UniProt release 2026_03 returned one current mouse primary record for each of the
+12,280 atlas accessions, with no unavailable, redirected or ambiguous mappings.
+The expanded supplement has 87,944 names and aliases, including all 33,282 aliases
+in the previous release. The import includes recommended and alternative full
+names, short names, CD antigen labels, component names, gene synonyms, ORF/locus
+names, and UniProt entry names. It reads named JSON fields rather than parsing
+parentheses or extracting CD numbers from arbitrary descriptions. EC numbers,
+evidence identifiers and free-text comments are excluded.
 
-Search ignores case, spaces and punctuation. Exact symbols and accessions rank first, followed by exact aliases. Shared aliases return each matching protein. Comparison filters use exact symbols, accessions or aliases when available, so PD-1 does not also select Entpd1. The same lookup serves Explore, the age screen and comparison lists. The dropdown shows the first 50 ranked matches and reports when more matches exist. Refining the query searches all proteins. All data load locally; there are no external requests while searching. If the alias supplement cannot load, canonical searches still work.
+Search ignores case, spaces and punctuation, and normalizes alpha/beta/gamma
+letters. Exact symbols and accessions rank first, then exact aliases. Shared names
+retain every matching protein. Exact comparison matches take precedence over
+partial names, so PD-1 does not select Entpd1. The autocomplete shows at most 50
+rows and reports the full match count. The largest exact-name group in this
+snapshot contains 11 proteins. Searching makes no external requests.
 
-Source URLs, retrieval date, hashes and coverage are in `data/protein-aliases.provenance.json`. To rebuild, download the public mouse gene table, then run:
+## Saved version and rollback
+
+The existing `data/protein-aliases.json` and its provenance file are unchanged.
+Their previous source builder and two-protein UniProt extract are also retained.
+The complete prior website is saved as Git tag
+`pre-uniprot-alias-expansion-2026-10-28`. The old matcher is saved under
+`tests/fixtures/protein-search-before-uniprot.js` for compatibility checks.
+
+Use these modes with a fresh page load, followed by any normal page navigation:
+
+- `?aliases=previous#home`: use only the saved previous alias release.
+- `?aliases=off#home`: use symbols, accessions and existing descriptions without an alias supplement.
+- `?aliases=uniprot#home`: use the full import (the default).
+
+The mode remains in the URL through navigation. There are no added interface
+controls. All search fields use the selected release. If the expanded file cannot
+load, the previous release is tried automatically; if both fail, canonical search
+still works.
+
+For a site-wide rollback, change `DEFAULT_ALIAS_MODE` in
+`assets/protein-search.js` to `"previous"` or `"off"`, and change that script's
+version token in `index.html` so existing browsers load the switch. Reverting the
+isolated alias PR is another option. These approaches preserve later layout work;
+restoring the whole tagged website is unnecessary for an alias-only rollback.
+
+## Sources and reproduction
+
+The previous release combines NCBI Gene mouse synonyms and the earlier UniProt
+extract. The full name snapshot is in
+`scripts/reference/uniprot-protein-names.json`; its source metadata records the
+[official UniProt ID Mapping API](https://www.uniprot.org/help/api_idmapping),
+selected fields, mapping job, release and raw-response hash. The expanded data
+and its input/output hashes are recorded in
+`data/protein-aliases-uniprot.provenance.json`.
+
+Rebuild the expanded supplement offline from the saved snapshot:
 
 ```sh
-curl --fail --location https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Mus_musculus.gene_info.gz --output /tmp/Mus_musculus.gene_info.gz
-python3 scripts/build_protein_aliases.py --gene-info /tmp/Mus_musculus.gene_info.gz --retrieved YYYY-MM-DD
-node --test tests/protein-search.test.cjs
+python3 scripts/build_uniprot_aliases.py
+node --test tests/*.test.cjs
+python3 -m unittest discover -s tests -v
 ```
 
-The small UniProt name extract is retained in `scripts/reference/protein-name-aliases.tsv`. The downloaded NCBI table is not shipped to the browser. The static supplement is 469,512 bytes. Local measurements on October 28, 2026: preparation took 37.4 ms; searches for CD133, PD-1, CD279 and CD45 averaged 2.6 ms over 40 calls. These are scripting times, not network or rendering times.
+Refresh the official snapshot, then rebuild:
 
+```sh
+python3 scripts/download_uniprot_names.py --out /tmp/uniprot-mapping.json --retrieved YYYY-MM-DD
+python3 scripts/build_uniprot_aliases.py --mapping /tmp/uniprot-mapping.json
+```
+
+Downloads use the atlas accessions, not gene-name guesses. Refresh stops for
+missing, redirected, non-mouse or multiply mapped entries so those cases can be
+reviewed before replacing the reference.
+
+The browser supplement is 1,881,769 bytes (608,121 bytes when gzip-compressed).
+On the local reference run, preparation took about 119 ms; example searches took
+2–24 ms. These are scripting measurements, not network or rendering timings.
+Tests verify every imported name, previous-alias retention, all four search fields,
+previous/off modes, fallback loading and behavior against the saved old matcher.

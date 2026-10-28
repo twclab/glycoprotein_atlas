@@ -1110,7 +1110,7 @@
     dom.pages.forEach((page) => { page.hidden = true; });
     document.title = "Explore · The Glycoprotein Atlas";
     updateNavigation("explore");
-    if (updateHistory) history.pushState({}, "", `${location.pathname}#explore`);
+    if (updateHistory) history.pushState({}, "", `${location.pathname}${location.search}#explore`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1123,7 +1123,7 @@
     dom.pages.forEach((page) => { page.hidden = true; });
     document.title = "The Glycoprotein Atlas";
     updateNavigation(null);
-    if (updateHistory) history.pushState({}, "", `${location.pathname}#home`);
+    if (updateHistory) history.pushState({}, "", `${location.pathname}${location.search}#home`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1139,7 +1139,7 @@
     document.title = `${PAGE_TITLES[pageName]} · The Glycoprotein Atlas`;
     updateNavigation(pageName);
     closeAllSearchResults();
-    if (updateHistory) history.pushState({}, "", `${location.pathname}#${pageName}`);
+    if (updateHistory) history.pushState({}, "", `${location.pathname}${location.search}#${pageName}`);
     if (pageName === "inter-organ") window.ATLAS_COMPARISONS.loadInter();
     if (pageName === "tvd") loadTVD().catch((error) => {
       console.error(error);
