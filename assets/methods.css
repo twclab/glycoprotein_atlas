@@ -1,5 +1,3 @@
-.methods-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 36px; }
-.methods-nav button { border: 1px solid var(--gray-300); border-radius: 7px; background: white; padding: 10px 13px; color: var(--teal-900); font-size: 12px; cursor: pointer; }
 .methods-section { margin: 0 0 32px; padding: clamp(20px, 3.5vw, 42px); border: 1px solid var(--gray-300); border-radius: 16px; background: white; }
 .methods-section h3 { margin: 0 0 28px; font-size: clamp(23px, 2.3vw, 28px); font-weight: 500; line-height: 1.3; letter-spacing: -.02em; scroll-margin-top: 100px; }
 .methods-section h3:focus { outline: none; }
@@ -17,6 +15,9 @@
 @media (max-width: 700px) {
   .methods-section { padding: 20px 16px; margin-bottom: 20px; }
   .methods-section h3 { margin-bottom: 22px; }
-  .methods-nav { gap: 6px; }
-  .methods-nav button { padding: 9px 10px; }
+}
+.methods-logic-layout { display: grid; grid-template-columns: minmax(280px,410px) minmax(0,1fr); align-items: start; gap: 36px; }
+.methods-logic-layout figure { width: 100%; margin-bottom: 0; }
+@media (max-width: 760px) {
+  .methods-logic-layout { grid-template-columns: minmax(0,1fr); gap: 24px; }
 }

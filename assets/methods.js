@@ -4,16 +4,6 @@
   const page = document.querySelector('[data-page="methods"]');
   if (!page) return;
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const nav = page.querySelector('[data-methods-nav]');
-  nav.hidden = false;
-  nav.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-methods-jump]');
-    if (!button) return;
-    const heading = document.getElementById(button.dataset.methodsJump);
-    heading.focus({ preventScroll: true });
-    heading.scrollIntoView({ behavior: motion.matches ? 'instant' : 'smooth', block: 'start' });
-  });
-
   const carousel = page.querySelector('[data-methods-carousel]');
   const slides = [...carousel.querySelectorAll('[data-methods-slide]')];
   let current = 0;
