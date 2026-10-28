@@ -8,13 +8,13 @@
   <link rel="icon" href="assets/glycan-5.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/styles.css?v=2026-10-28-explorer">
   <script src="assets/theme.js?v=2026-09-30-review-r1" defer></script>
-  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-28-refinements-5">
+  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-28-fit-2">
   <script src="assets/comparison-layout.js?v=2026-10-28-refinements-5" defer></script>
-  <script src="assets/comparisons.js?v=2026-10-28-refinements-5" defer></script>
-  <link rel="stylesheet" href="assets/methods.css?v=2026-10-28-permutation-scroll-3">
+  <script src="assets/comparisons.js?v=2026-10-28-fit-2" defer></script>
+  <link rel="stylesheet" href="assets/methods.css?v=2026-10-28-fit-2">
   <script src="assets/methods.js?v=2026-10-28-permutation-scroll-3" defer></script>
-  <script src="assets/protein-search.js?v=2026-10-28-uniprot" defer></script>
-  <script src="assets/app.js?v=2026-10-28-uniprot" defer></script>
+  <script src="assets/protein-search.js?v=2026-10-28-uniprot-full" defer></script>
+  <script src="assets/app.js?v=2026-10-28-uniprot-full" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -24,7 +24,6 @@
       The <span>Glycoprotein</span> Atlas
     </a>
     <nav class="main-nav" aria-label="Primary navigation">
-      <a href="#overview" data-page-link="overview">Overview</a>
       <a href="#explore" data-explore-link>Explore</a>
       <a href="#tvd" data-page-link="tvd">Age comparisons</a>
       <a href="#inter-organ" data-page-link="inter-organ">Inter-organ comparisons</a>
@@ -74,7 +73,6 @@
         </form>
         <div class="explore-top-actions">
           <nav class="explore-nav" aria-label="Explorer navigation">
-            <a href="#overview" data-page-link="overview">Overview</a>
             <a href="#explore" data-explore-link aria-current="page">Explore</a>
             <a href="#tvd" data-page-link="tvd">Age comparisons</a>
             <a href="#inter-organ" data-page-link="inter-organ">Inter-organ comparisons</a>
@@ -204,7 +202,7 @@
       <div class="tvd-plot" data-tvd-plot><p class="empty-note">Loading age-comparison data…</p></div>
       <p class="comparison-note">TVD measures the fraction of glycan-type composition redistributed (0–100%). Hits use raw permutation p &lt;0.05, without multiple-testing adjustment. Young (Y): 1–6 months; middle-aged (MA): 9–16 months; old (O): 19–28 months in atlas organs. Myelin uses cohort-specific ages.</p>
       <div class="comparison-grid age-grid">
-        <article class="comparison-card"><h3 data-age-matrix-title>Glycan gains and losses</h3><p class="comparison-note" data-age-direction-note></p><div class="comparison-scroll" data-age-matrix></div><details class="dominance-example"><summary>Example: Mog N59 in brain, old versus young</summary><p>Paucimannose increases by 8.15 percentage points, accounting for 56.9% of total gains. This is below 60%, so the gain is mixed. Fucosylated glycans decrease by 12.07 points and account for 84.2% of total losses, giving a dominant fucosylated loss. Mog N59 therefore belongs to fucosylated loss / mixed gain.</p></details></article>
+        <article class="comparison-card"><h3 data-age-matrix-title>Glycan gains and losses</h3><p class="comparison-note" data-age-direction-note></p><div class="comparison-scroll" data-age-matrix></div></article>
         <article class="comparison-card"><div class="comparison-heading"><h3>Browse age hits</h3><strong data-age-hit-count aria-live="polite"></strong></div><p class="comparison-note" data-age-active-filter>All glycan changes</p><p class="comparison-note">Mean changes are in percentage points. Shares use separate gain and loss totals.</p><button class="comparison-reset" type="button" data-age-clear>Clear glycan filter</button><div class="comparison-hit-scroll" tabindex="0" role="region" aria-label="All matching age-comparison hits" data-age-hits></div></article>
       </div>
     </section>
@@ -212,10 +210,6 @@
     <section class="content-page comparison-page" id="inter-organ" data-page="inter-organ" aria-label="Inter-organ comparisons" hidden>
       <div class="comparison-intro"><h2>Inter-organ comparisons</h2><p>Compare glycosite composition and heterogeneity across organs, or between whole brain and male and female myelin.</p></div>
       <div data-inter-content></div>
-    </section>
-    <section class="content-page comparison-page" id="overview" data-page="overview" aria-label="Overview" hidden>
-      <div class="comparison-intro"><span class="comparison-kicker">The Glycoprotein Atlas</span><h2>A lifespan view of N-glycosylation</h2><p>Explore site-resolved N-glycan composition alongside protein abundance across mouse brain, spleen, liver, kidney, and plasma, with male and female myelin datasets.</p></div>
-      <div class="summary-copy"><h3>From protein to glycosite</h3><p>The explorer shows where N-glycosites fall on a protein, the glycan types found at each site, age trajectories, exact glycan composition, and pairwise differences between sites or datasets.</p><h3>Find compositional changes</h3><p><a href="#tvd" data-page-link="tvd">Age comparisons</a> combine TVD and permutation tests with browsable glycan gains and losses. <a href="#inter-organ" data-page-link="inter-organ">Inter-organ comparisons</a> show composition differences and glycan-type heterogeneity at shared sites.</p><h3>Read composition in context</h3><p>Glycan percentages describe the distribution within a glycosite; they do not measure total site abundance. Protein abundance is displayed separately. Missing measurements are not treated as zero.</p></div>
     </section>
 
     <section class="content-page comparison-page methods-page" id="methods" data-page="methods" aria-label="Methods" hidden>

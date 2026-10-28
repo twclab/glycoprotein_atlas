@@ -88,7 +88,18 @@ test('rendered matrix labels its loss rows and gain columns with correct margina
   const nodes = new Map();
   const node = selector => {
     if (!nodes.has(selector)) nodes.set(selector, { innerHTML: '', textContent: '', dataset: {},
-      querySelectorAll: () => [], querySelector: () => null, addEventListener() {} });
+      querySelectorAll(query) {
+        if (selector !== '[data-age-matrix]' || query !== 'button') return [];
+        if (this.buttonsHTML !== this.innerHTML) {
+          this.buttonsHTML = this.innerHTML;
+          this.buttons = [...this.innerHTML.matchAll(/<button([^>]*)>/g)].map(([, attrs]) => ({
+            dataset: {loss: attrs.match(/data-loss="([^"]+)"/)?.[1], gain: attrs.match(/data-gain="([^"]+)"/)?.[1]},
+            margin: attrs.includes('matrix-margin-button'),
+            addEventListener(event, callback) { this[event] = callback; },
+          }));
+        }
+        return this.buttons;
+      }, querySelector: () => null, addEventListener() {} });
     return nodes.get(selector);
   };
   const theme = {};
@@ -99,10 +110,22 @@ test('rendered matrix labels its loss rows and gain columns with correct margina
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8'), context);
   await context.window.ATLAS_COMPARISONS.renderAge({ dataset: 'atlas_brain', comparison: 'O_vs_Y', query: '' });
   const html = node('[data-age-matrix]').innerHTML;
-  assert.match(html, /<tfoot>.*<th scope="col">All losses<\/th>/);
-  assert.match(html, /<tr><th scope="row">All gains<\/th>/);
-  assert.match(html, /aria-label="All Paucimannose gains"[^>]*>26<\/button>/);
-  assert.match(html, /aria-label="All Paucimannose losses"[^>]*>1<\/button>/);
+  assert.match(html, /<tfoot><tr class="matrix-gain-labels"><th colspan="2" class="matrix-loss-end">All losses<\/th>/);
+  assert.match(html, /<th class="matrix-gain-end" scope="row">All gains<\/th>/);
+  assert.match(html, /aria-label="All Paucimannose gains: 26 hits"[^>]*class="matrix-margin-button"[^>]*><span>26<\/span><\/button>/);
+  assert.match(html, /aria-label="All Paucimannose losses: 1 hit"[^>]*class="matrix-margin-button"[^>]*><span>1<\/span><\/button>/);
+  const margins = [...html.matchAll(/aria-label="All [^"]+ (losses|gains): ([\d,]+) hits?"[^>]*class="matrix-margin-button"[^>]*style="background:[^"]+"/g)];
+  assert.equal(margins.length, 18);
+  for (const direction of ['losses', 'gains']) {
+    assert.equal(margins.filter(match => match[1] === direction).reduce((sum, match) => sum + Number(match[2].replaceAll(',', '')), 0), hits.length);
+  }
+  assert.equal((html.match(/<tfoot>/g) || []).length, 1);
+  assert.doesNotMatch(html, /matrix-total|legend-swatch/);
   const rows = [...html.matchAll(/<th scope="row"><button[^>]*data-loss="([^"]+)"/g)].map(match => match[1]);
   assert.deepEqual(rows, [...layout.MATRIX_CLASSES].reverse());
+  node('[data-age-matrix]').querySelectorAll('button').find(button => button.margin && button.dataset.loss === 'paucimannose').click();
+  assert.equal(node('[data-age-hit-count]').textContent, '1 of 158 hits');
+  node('[data-age-clear]').onclick();
+  node('[data-age-matrix]').querySelectorAll('button').find(button => button.margin && button.dataset.gain === 'paucimannose').click();
+  assert.equal(node('[data-age-hit-count]').textContent, '26 of 158 hits');
 });

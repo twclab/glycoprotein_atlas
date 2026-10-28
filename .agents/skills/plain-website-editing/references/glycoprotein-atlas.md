@@ -15,6 +15,10 @@
   synchronized as the reader scrolls on desktop; use inline pairs on small
   screens and with reduced motion. Do not replace author artwork or prose with
   agent-created explanations. Do not add a second browser-rules panel.
+- Overview is removed for now. Keep Methods as the explanatory page.
+- Keep the permutation section title and full plot visible together. The age
+  matrix fills its card; totals belong inside the colored margin swatches,
+  with labels at the ends. Do not restore the Mog example disclosure.
 - Use **Weighted glycan types** for exp(Shannon H) in visible labels and tooltips.
   Keep existing `effective_*` data keys compatible; label changes do not require
   rewriting scientific data.
