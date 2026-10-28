@@ -1,0 +1,35 @@
+{
+  "retrieved": "2026-10-28",
+  "taxon": 10090,
+  "sources": [
+    {
+      "name": "NCBI Gene mouse gene_info",
+      "url": "https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Mus_musculus.gene_info.gz",
+      "sha256": "fa5e22f00df1bc9553578b5cae91a95f97f00cabe6dc2aee12b966d80ac3be5b",
+      "fields": [
+        "Symbol",
+        "Symbol_from_nomenclature_authority",
+        "Synonyms"
+      ]
+    },
+    {
+      "name": "UniProt names for Prom1 and Pdcd1",
+      "url": "https://rest.uniprot.org/uniprotkb/search?query=accession%3AO54990%20OR%20accession%3AQ02242&fields=accession%2Cgene_names%2Cprotein_name&size=10&format=tsv",
+      "sha256": "a6e212b5b9ec85e92154a3943195ed4519ef70e38ed82653c80c040fade315bc"
+    }
+  ],
+  "mapping": "Exact mouse gene symbol for NCBI; exact UniProt accession for supplemental protein names. Ambiguous aliases retain every matched atlas protein.",
+  "indexed_proteins": 12280,
+  "proteins_with_ncbi_symbol_match": 11850,
+  "proteins_with_aliases": 11053,
+  "alias_count": 33282,
+  "output_bytes": 469512,
+  "output_sha256": "e6d7b36e7a6da9d1768ed4b11a5b7d2148c619574cb638e411f92e2ab32ba030",
+  "search_index_sha256": "845e2a11af71dd64dceeef3a1545d8b9fa7b4c691745d2c960cc67f29e5c54eb",
+  "legacy_aliases": {
+    "Ern1": [
+      "IRE1",
+      "IRE1\u03b1"
+    ]
+  }
+}

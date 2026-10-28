@@ -1,11 +1,11 @@
 /* Linked manuscript-inspired views over the current public atlas release. */
 (() => {
   "use strict";
-  const { CLASS_ORDER, CLASS_LABELS, CLASS_COLORS, ORGAN_COLORS } = window.ATLAS_THEME;
-  const { ROW_HEIGHT, windowRange, changeCounts } = window.ATLAS_COMPARISON_LAYOUT;
+  const { CLASS_ORDER, CLASS_LABELS, CLASS_COLORS } = window.ATLAS_THEME;
+  const { ROW_HEIGHT, PAIR_STYLES, MATRIX_CLASSES, displayPair, matrixColor, windowRange, changeCounts } = window.ATLAS_COMPARISON_LAYOUT;
   const labels = { brain: "Brain", spleen: "Spleen", liver: "Liver", kidney: "Kidney", plasma: "Plasma", myelin_male: "Male myelin", myelin_female: "Female myelin" };
   const ageLabels = { O_vs_Y: 'Old versus young', O_vs_MA: 'Old versus middle-aged', MA_vs_Y: 'Middle-aged versus young' };
-  const classes = [...CLASS_ORDER, "mixed"];
+  const classes = MATRIX_CLASSES;
   const classLabel = (name) => CLASS_LABELS[name] || (name === "mixed" ? "Mixed" : name);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const num = (v) => Number(v).toLocaleString("en-US");
@@ -14,7 +14,7 @@
   const profiling = new URLSearchParams(location.search).has('profileComparisons');
   let hooks, age = {}, ageRequest = 0, interRequest = 0;
   const inter = { scope: "atlas", pair: "all", state: "all", diversity: "all", query: "", metric: "tvd", sort: "descending", selectedSite: null };
-  const queryMatch = (row, query) => `${row.glycosite} ${row.protein_id} ${row.site_key}`.toLowerCase().includes(query.trim().toLowerCase());
+  const queryMatch = (row, query) => !query.trim() || hooks.matchesProtein(row.protein_id, query, `${row.glycosite} ${row.site_key}`);
   const paint = (name) => name === "mixed" ? "linear-gradient(135deg, #5A8C54, #A34599)" : name === "fucosylated_and_sialylated" ? "repeating-linear-gradient(135deg, #CD4D2C 0 3px, #A34599 3px 6px)" : CLASS_COLORS[name];
   const swatch = (name) => `<i class="legend-swatch" style="background:${paint(name)}"></i>`;
   function profile(operation, start, extra = {}) {
@@ -99,7 +99,7 @@
   function hitRows(rows, { organ, ageHits = false, startIndex = 0 } = {}) {
     return rows.map((row,index) => {
       const a = organ || row.organs[0], b = row.organs?.[1], selected = !ageHits && row.pair===inter.pair && row.site_key===inter.selectedSite;
-      return `<tr class="${ageHits?'':'site-row'} ${selected?'selected-site':''}" ${selected?'data-selected-site tabindex="-1"':''} ${ageHits?'':`aria-rowindex="${startIndex+index+2}"`}><th scope="row"><a data-comparison-site data-hover-label="${esc(`${row.glycosite} · ${row.protein_id} · ${labels[a]}${b?` / ${labels[b]}`:''} · Open in Explore`)}" href="${esc(siteHref(row, a, b))}">${esc(row.glycosite)}</a><small>${esc(row.protein_id)}${row.organs ? ` · ${esc(row.organs.map(x => labels[x]).join(' / '))}` : ''}</small></th><td>${fmt(ageHits ? row.percent_difference : row.tvd)}</td>${ageHits ? `<td>${Number(row.p_value).toExponential(2)}</td><td>${swatch(row.loss)}${esc(classLabel(row.loss))} → ${swatch(row.gain)}${esc(classLabel(row.gain))}${row.changes?`<details class="change-details" data-change-site="${esc(row.site_key)}"><summary>Mean changes and shares</summary></details>`:''}</td>` : `<td>${Number(row.h_a).toFixed(2)} / ${Number(row.h_b).toFixed(2)}<small>Effective types:<br>${Number(row.effective_a).toFixed(2)} / ${Number(row.effective_b).toFixed(2)}</small></td><td>${compositionBar(row.composition_a,a,'A')}${compositionBar(row.composition_b,b,'B')}</td>`}</tr>`;
+      return `<tr class="${ageHits?'':'site-row'} ${selected?'selected-site':''}" ${selected?'data-selected-site tabindex="-1"':''} ${ageHits?'':`aria-rowindex="${startIndex+index+2}"`}><th scope="row"><a data-comparison-site data-hover-label="${esc(`${row.glycosite} · ${row.protein_id} · ${labels[a]}${b?` / ${labels[b]}`:''} · Open in Explore`)}" href="${esc(siteHref(row, a, b))}">${esc(row.glycosite)}</a><small>${esc(row.protein_id)}${row.organs ? ` · ${esc(row.organs.map(x => labels[x]).join(' / '))}` : ''}</small></th><td>${fmt(ageHits ? row.percent_difference : row.tvd)}</td>${ageHits ? `<td>${Number(row.p_value).toExponential(2)}</td><td>${swatch(row.loss)}${esc(classLabel(row.loss))} → ${swatch(row.gain)}${esc(classLabel(row.gain))}${row.changes?`<details class="change-details" data-change-site="${esc(row.site_key)}"><summary>Mean changes and shares</summary></details>`:''}</td>` : `<td>${Number(row.h_a).toFixed(2)} / ${Number(row.h_b).toFixed(2)}<small>Weighted glycan types:<br>${Number(row.effective_a).toFixed(2)} / ${Number(row.effective_b).toFixed(2)}</small></td><td>${compositionBar(row.composition_a,a,'A')}${compositionBar(row.composition_b,b,'B')}</td>`}</tr>`;
     }).join('');
   }
   const emptyList = '<p class="empty-note">No glycosites match these filters. Clear a filter or try another search.</p>';
@@ -113,9 +113,10 @@
     const i = (sorted.length - 1) * p, j = Math.floor(i);
     return sorted[j] + (sorted[Math.ceil(i)] - sorted[j]) * (i-j);
   }
-  function boxPlot(groups, { metric = 'tvd', caption, selected = '' } = {}) {
-    const w = Math.max(560, groups.length * 70 + 100), h = 370;
-    const left = 58, top = 32, bottom = 115, width = w-left-20, height = h-top-bottom;
+  function boxPlot(groups, { metric = 'tvd', caption, selected = '', plotWidth = 720 } = {}) {
+    const w = Math.max(650, plotWidth), h = 760;
+    const left = 72, top = 44, bottom = groups.some(g => g.label.length > 24) ? 225 : 155;
+    const width = w-left-20, height = h-top-bottom;
     const values = groups.flatMap(g => g.rows.map(r => metric === 'tvd' ? r.tvd : r[`${metric}_b`] - r[`${metric}_a`]));
     const limit = Math.max(1, ...values.map(Math.abs));
     const min = metric === 'tvd' ? 0 : -Math.ceil(limit), max = metric === 'tvd' ? 100 : Math.ceil(limit);
@@ -134,17 +135,17 @@
         const q1=quantile(vals,.25), median=quantile(vals,.5), q3=quantile(vals,.75), iqr=q3-q1;
         const low=vals.find(v=>v>=q1-1.5*iqr), high=[...vals].reverse().find(v=>v<=q3+1.5*iqr);
         const color = g.color || '#087f78';
-        svg += `<g class="box-choice ${selected===g.key?'selected':''}" data-box="${esc(g.key)}" tabindex="0" role="button" aria-pressed="${selected===g.key}" data-hover-label="${esc(`${g.label} · ${num(vals.length)} glycosites · Median ${fmt(median)} · Click to browse`)}" aria-label="${esc(`Browse ${g.label}, ${num(vals.length)} glycosites`)}"><rect class="box-hit-area" x="${x-step/2+2}" y="5" width="${step-4}" height="${h-10}"/><line stroke="${color}" x1="${x}" x2="${x}" y1="${y(low)}" y2="${y(high)}"/><line stroke="${color}" x1="${x-10}" x2="${x+10}" y1="${y(low)}" y2="${y(low)}"/><line stroke="${color}" x1="${x-10}" x2="${x+10}" y1="${y(high)}" y2="${y(high)}"/><rect x="${x-16}" y="${y(q3)}" width="32" height="${Math.max(1,y(q1)-y(q3))}" fill="${color}" fill-opacity=".24" stroke="${color}"/><line stroke="${color}" stroke-width="3" x1="${x-16}" x2="${x+16}" y1="${y(median)}" y2="${y(median)}"/><text x="${x}" y="20" text-anchor="middle">${num(vals.length)}</text><text transform="translate(${x+4} ${top+height+28}) rotate(-48)" text-anchor="end">${esc(g.label)}</text></g>`;
+        svg += `<g class="box-choice ${selected===g.key?'selected':''}" data-box="${esc(g.key)}" tabindex="0" role="button" aria-pressed="${selected===g.key}" data-hover-label="${esc(`${g.label} · ${num(vals.length)} glycosites · Median ${fmt(median)} · Click to browse`)}" aria-label="${esc(`Browse ${g.label}, ${num(vals.length)} glycosites`)}"><rect class="box-hit-area" x="${x-step/2+2}" y="${top}" width="${step-4}" height="${height+140}"/><rect class="box-selection" x="${x-24}" y="${y(q3)-8}" width="48" height="${Math.max(16,y(q1)-y(q3)+16)}" rx="4"/><line stroke="#222" x1="${x}" x2="${x}" y1="${y(low)}" y2="${y(high)}"/><line stroke="#222" x1="${x-10}" x2="${x+10}" y1="${y(low)}" y2="${y(low)}"/><line stroke="#222" x1="${x-10}" x2="${x+10}" y1="${y(high)}" y2="${y(high)}"/><rect x="${x-16}" y="${y(q3)}" width="32" height="${Math.max(1,y(q1)-y(q3))}" fill="${color}" fill-opacity=".45" stroke="#222" stroke-width="1.5"/><line stroke="#222" stroke-width="3" x1="${x-16}" x2="${x+16}" y1="${y(median)}" y2="${y(median)}"/><text class="box-count" x="${x}" y="24" text-anchor="middle">${num(vals.length)}</text><text class="box-label" transform="translate(${x+4} ${top+height+30}) rotate(-48)" text-anchor="end">${esc(g.label)}</text></g>`;
         // Every site contributes a point. Deterministic jitter avoids layout drift.
         svg += g.rows.map((r,j) => {
           const v = metric === 'tvd' ? r.tvd : r[`${metric}_b`]-r[`${metric}_a`];
           const active = inter.pair===g.key && inter.selectedSite===r.site_key;
-          return `<circle class="box-point ${active?'selected':''}" data-point-pair="${esc(g.key)}" data-point-site="${esc(r.site_key)}" tabindex="0" role="button" aria-pressed="${active}" data-hover-label="${esc(`${r.glycosite} · ${g.label} · ${metric==='tvd'?'TVD':metric==='h'?'Shannon H change':'Effective-type change'}: ${fmt(v)}${metric==='tvd'?'%':''} · Click to show in list`)}" aria-label="${esc(`Select ${r.glycosite}, ${g.label}, ${fmt(v)}`)}" cx="${x+(((j*37)%101)/100-.5)*25}" cy="${y(v)}" r="2" fill="${color}" fill-opacity=".2"/>`;
+          return `<circle class="box-point ${active?'selected':''}" data-point-pair="${esc(g.key)}" data-point-site="${esc(r.site_key)}" tabindex="0" role="button" aria-pressed="${active}" data-hover-label="${esc(`${r.glycosite} · ${g.label} · ${metric==='tvd'?'TVD':metric==='h'?'Shannon H change':'Weighted glycan type change'}: ${fmt(v)}${metric==='tvd'?'%':''} · Click to show in list`)}" aria-label="${esc(`Select ${r.glycosite}, ${g.label}, ${fmt(v)}`)}" cx="${x+(((j*37)%101)/100-.5)*25}" cy="${y(v)}" r="2" fill="${color}" fill-opacity=".2"/>`;
         }).join('');
       }
-      if (!vals.length) svg += `<text transform="translate(${x+4} ${top+height+28}) rotate(-48)" text-anchor="end">${esc(g.label)}</text>`;
+      if (!vals.length) svg += `<text class="box-label" transform="translate(${x+4} ${top+height+30}) rotate(-48)" text-anchor="end">${esc(g.label)}</text>`;
     });
-    const axis = metric === 'tvd' ? 'TVD (%)' : metric === 'effective' ? 'Effective (weighted) glycan types, B − A' : 'Shannon H, B − A';
+    const axis = metric === 'tvd' ? 'TVD (%)' : metric === 'effective' ? 'Weighted glycan types, B − A' : 'Shannon H, B − A';
     return svg+`<text transform="translate(15 ${top+height/2}) rotate(-90)" text-anchor="middle">${esc(axis)}</text></svg>`;
   }
   function bindBoxes(node, callback, selectPoint) {
@@ -180,7 +181,7 @@
     document.querySelector('[data-age-selection]').textContent = `${organLabel} · ${ageLabels[comparison] || comparison.replaceAll('_', ' ')}`;
     document.querySelector('[data-age-matrix-title]').textContent = `${organLabel}: glycan gains and losses`;
     const [a,b] = comparison.split('_vs_'), binLabels = {O:'old',MA:'middle-aged',Y:'young'};
-    document.querySelector('[data-age-direction-note]').textContent = `Mean percentage-point changes are ${binLabels[a]} minus ${binLabels[b]}. Gains and absolute losses are summed separately. A type is dominant when it accounts for at least 60% of its direction's total; otherwise that direction is mixed. Dominant refers to the change, not the most abundant glycan type.`;
+    document.querySelector('[data-age-direction-note]').textContent = `Changes are ${binLabels[a]} minus ${binLabels[b]}, in percentage points. A dominant type accounts for at least 60% of total gain or loss; otherwise that direction is mixed.`;
     try {
       const manifest = await get('manifest.json');
       const record = manifest.age.find(r => r.dataset===dataset && r.comparison===comparison);
@@ -203,10 +204,10 @@
     const totals = changeCounts(hits, classes);
     const count = (loss, gain) => loss && gain ? totals.cells[loss][gain] : loss ? totals.losses[loss] : gain ? totals.gains[gain] : hits.length;
     const button = (loss, gain, text, label, extra='') => `<button type="button" ${loss?`data-loss="${loss}"`:''} ${gain?`data-gain="${gain}"`:''} aria-label="${esc(label)}" aria-pressed="${age.loss===loss && age.gain===gain}" ${extra}>${text}</button>`;
-    matrix.innerHTML = `<div class="matrix-class-legend">${classes.map(c=>`<span>${swatch(c)}${esc(classLabel(c))}</span>`).join('')}</div><table class="gain-loss-matrix"><caption>Rows: dominant loss · columns: dominant gain</caption><thead><tr><th scope="col">Loss ↓ / Gain →</th>${classes.map(c=>`<th scope="col">${button(null,c,`${swatch(c)}<span class="sr-only">${esc(classLabel(c))}</span>`,`Any loss → ${classLabel(c)} gain`)}</th>`).join('')}<th scope="col">All gains</th></tr></thead><tbody>${classes.map(loss=>`<tr><th scope="row">${button(loss,null,`${swatch(loss)}${esc(classLabel(loss))}`,`${classLabel(loss)} loss → any gain`)}</th>${classes.map(gain=>{
-      const n=count(loss,gain), strength=n/totals.max;
-      return `<td>${button(loss,gain,n,`${classLabel(loss)} loss → ${classLabel(gain)} gain: ${num(n)} hits`,`style="background:${n?`rgba(8,127,120,${.08+.72*strength})`:'#f1f3ef'};color:${strength>.6?'white':'#122d2a'}"`)}</td>`;
-    }).join('')}<td>${button(loss,null,count(loss,null),`All ${classLabel(loss)} losses`)}</td></tr>`).join('')}</tbody><tfoot><tr><th scope="row">All losses</th>${classes.map(gain=>`<td>${button(null,gain,count(null,gain),`All ${classLabel(gain)} gains`)}</td>`).join('')}<td><strong>${num(hits.length)}</strong></td></tr></tfoot></table>`;
+    matrix.innerHTML = `<div class="matrix-count-key"><span>Number of glycosites</span><i class="matrix-zero"></i><span>0</span><i class="matrix-count-scale"></i><span>1–30+</span></div><table class="gain-loss-matrix"><caption>Dominant glycan type loss ↓ / gain →</caption><thead><tr><th scope="col"><span class="sr-only">Dominant loss</span></th>${classes.map(c=>`<th scope="col">${button(null,c,`${swatch(c)}<span class="sr-only">${esc(classLabel(c))}</span>`,`Any loss → ${classLabel(c)} gain`)}</th>`).join('')}<th scope="col">All losses</th></tr></thead><tbody>${[...classes].reverse().map(loss=>`<tr><th scope="row">${button(loss,null,`${swatch(loss)}${esc(classLabel(loss))}`,`${classLabel(loss)} loss → any gain`)}</th>${classes.map(gain=>{
+      const n=count(loss,gain);
+      return `<td>${button(loss,gain,n,`${classLabel(loss)} loss → ${classLabel(gain)} gain: ${num(n)} hits`,`style="background:${matrixColor(n)};color:${n>0&&n<16?'white':'#000'}"`)}</td>`;
+    }).join('')}<td>${button(loss,null,count(loss,null),`All ${classLabel(loss)} losses`)}</td></tr>`).join('')}</tbody><tfoot><tr><th scope="row">All gains</th>${classes.map(gain=>`<td>${button(null,gain,count(null,gain),`All ${classLabel(gain)} gains`)}</td>`).join('')}<td><strong>${num(hits.length)}</strong></td></tr></tfoot></table>`;
     matrix.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { age.loss=b.dataset.loss||null; age.gain=b.dataset.gain||null; drawAge(); matrix.querySelector('[aria-pressed="true"]')?.focus({preventScroll:true}); }));
     const selected = hits.filter(r=>(!age.loss || r.loss===age.loss) && (!age.gain || r.gain===age.gain)).sort((a,b)=>b.percent_difference-a.percent_difference || a.p_value-b.p_value);
     document.querySelector('[data-age-hit-count]').textContent = `${num(selected.length)} of ${num(age.hits.length)} hits`;
@@ -233,11 +234,11 @@
     hideHover(); page.innerHTML='<p class="empty-note">Loading inter-organ comparisons…</p>';
     try {
       const manifest=await get('manifest.json');
-      const records = inter.scope==='young' ? manifest.young_pairs : manifest.pairs.filter(r=>(inter.scope==='myelin') === r.key.includes('myelin'));
+      const records = (inter.scope==='young' ? manifest.young_pairs : manifest.pairs.filter(r=>(inter.scope==='myelin') === r.key.includes('myelin'))).slice().sort((a,b)=>PAIR_STYLES.findIndex(pair=>pair.key===a.key)-PAIR_STYLES.findIndex(pair=>pair.key===b.key));
       const lists=await Promise.all(records.map(r=>get(r.file)));
       if(request!==interRequest)return;
       if(!records.some(r=>r.key===inter.pair))inter.pair='all';
-      inter.groups=records.map((r,i)=>({...r,label:r.organs.map(x=>labels[x]).join(' / '),color:ORGAN_COLORS[r.organs[1]],rows:lists[i].map(row=>({...row,pair:r.key,organs:r.organs}))}));
+      inter.groups=records.map((record,i)=>{ const group=displayPair(record,lists[i]); return {...group,label:group.organs.map(organ=>labels[organ]).join(' / ')}; });
       inter.loadedScope=inter.scope;
       profile('inter-data',start,{sites:lists.reduce((sum,rows)=>sum+rows.length,0)});
       mountInter();
@@ -249,11 +250,11 @@
   function mountInter() {
     const start=performance.now(), page=document.querySelector('[data-inter-content]'), groups=inter.groups;
     const options=(obj,value)=>Object.entries(obj).map(([k,v])=>`<option value="${k}" ${k===value?'selected':''}>${esc(v)}</option>`).join('');
-    page.innerHTML=`<div class="comparison-toolbar"><label>Datasets<select data-inter-scope>${options({atlas:'Atlas organs · pooled',myelin:'Brain and myelin · pooled',young:'Atlas organs · young only'},inter.scope)}</select></label><label>Organ pair<select data-inter-pair>${options({all:'All pairs',...Object.fromEntries(groups.map(g=>[g.key,g.label]))},inter.pair)}</select></label><label>Box-plot metric<select data-inter-metric>${options({tvd:'TVD (%)',effective:'Effective (weighted) glycan types: B − A',h:'Shannon H: B − A'},inter.metric)}</select></label></div>
-      <p class="comparison-note">${inter.scope==='young'?'Young bins only; pooled PSM composition, ≥9 detected animals and ≥18 PSMs in each young bin.':'All ages pooled within each site and dataset; ≥5 PSMs in both datasets.'} Organ pairs, scores and composition bars are ordered A / B. Heterogeneity is shown as Shannon H. Effective (weighted) glycan types = exp(H); this is a diversity measure, not a count of observed types.</p>
+    page.innerHTML=`<div class="comparison-toolbar"><label>Datasets<select data-inter-scope>${options({atlas:'Atlas organs · pooled',myelin:'Brain and myelin · pooled',young:'Atlas organs · young only'},inter.scope)}</select></label><label>Organ pair<select data-inter-pair>${options({all:'All pairs',...Object.fromEntries(groups.map(g=>[g.key,g.label]))},inter.pair)}</select></label><label>Box-plot metric<select data-inter-metric>${options({tvd:'TVD (%)',effective:'Weighted glycan types: B − A',h:'Shannon H: B − A'},inter.metric)}</select></label></div>
+      <p class="comparison-note">${inter.scope==='young'?'Young bins only; pooled PSM composition, ≥9 detected animals and ≥18 PSMs in each young bin.':'All ages pooled within each site and dataset; ≥5 PSMs in both datasets.'} Organ pairs, scores and composition bars are ordered A / B. Weighted glycan types = exp(Shannon H).</p>
       <div class="comparison-legend composition-legend" aria-label="Glycan-type colors">${CLASS_ORDER.map(name=>`<span>${swatch(name)}${esc(classLabel(name))}</span>`).join('')}</div>
-      <div class="comparison-grid inter-grid"><article class="comparison-card"><h3 data-inter-plot-title></h3><p class="comparison-note">Click a box or its label to browse that organ pair. Click a dot to highlight its row in the list; click the glycosite name there to open Explore.</p><div class="comparison-boxes" data-inter-boxes></div></article>
-      <article class="comparison-card"><div class="comparison-heading"><h3>Browse glycosites</h3><strong data-inter-count aria-live="polite"></strong></div><div class="comparison-toolbar list-filters"><label>Remodeling<select data-inter-state>${options({all:'All states',...stateLabels},inter.state)}</select></label><label>Diversity relationship<select data-inter-diversity>${options({all:'All relationships',...diversityLabels},inter.diversity)}</select></label><label>Find a protein or site<input type="search" data-inter-search value="${esc(inter.query)}" placeholder="Gene, UniProt ID, or site"></label><label>Sort sites<select data-inter-sort>${options({descending:'Largest TVD first',ascending:'Smallest TVD first',gene:'Glycosite name'},inter.sort)}</select></label></div><button type="button" class="comparison-reset" data-inter-clear>Clear list filters</button><p class="comparison-note" data-inter-selection aria-live="polite"></p><div class="comparison-hit-scroll inter-hit-scroll" tabindex="0" role="region" aria-label="All matching inter-organ glycosites" data-inter-hits></div><p class="comparison-window-note" data-inter-window-count></p></article></div>
+      <div class="comparison-grid inter-grid"><article class="comparison-card"><h3 data-inter-plot-title></h3><p class="comparison-note">Select a box to browse the pair, or a point to find its glycosite.</p><div class="comparison-boxes" data-inter-boxes></div></article>
+      <article class="comparison-card"><div class="comparison-heading"><h3>Browse glycosites</h3><strong data-inter-count aria-live="polite"></strong></div><div class="comparison-toolbar list-filters"><label>Remodeling<select data-inter-state>${options({all:'All states',...stateLabels},inter.state)}</select></label><label>Heterogeneity relationship<select data-inter-diversity>${options({all:'All relationships',...diversityLabels},inter.diversity)}</select></label><label>Find a protein or site<input type="search" data-inter-search value="${esc(inter.query)}" placeholder="Gene, alias, UniProt ID, or site"></label><label>Sort sites<select data-inter-sort>${options({descending:'Largest TVD first',ascending:'Smallest TVD first',gene:'Glycosite name'},inter.sort)}</select></label></div><button type="button" class="comparison-reset" data-inter-clear>Clear list filters</button><p class="comparison-note" data-inter-selection aria-live="polite"></p><div class="comparison-hit-scroll inter-hit-scroll" tabindex="0" role="region" aria-label="All matching inter-organ glycosites" data-inter-hits></div><p class="comparison-window-note" data-inter-window-count></p></article></div>
       <article class="comparison-card diversity-summary" data-inter-summary></article>`;
     const list=page.querySelector('[data-inter-hits]');
     let scrollFrame=0;
@@ -305,9 +306,15 @@
     const start=performance.now(), page=document.querySelector('[data-inter-content]'), node=page.querySelector('[data-inter-boxes]');
     hideHover();
     page.querySelector('[data-inter-plot-title]').textContent=inter.metric==='tvd'?'Site composition across datasets':'Heterogeneity across datasets';
-    node.innerHTML=boxPlot(inter.groups,{metric:inter.metric,caption:'Inter-organ glycosite distributions',selected:inter.pair});
+    inter.plotWidth=Math.max(650,node.clientWidth);
+    node.innerHTML=boxPlot(inter.groups,{metric:inter.metric,caption:'Inter-organ glycosite distributions',selected:inter.pair,plotWidth:inter.plotWidth});
     bindBoxes(node,key=>selectInter(key), (pair,site)=>selectInter(pair,site));
     profile('inter-plot',start,{points:node.querySelectorAll('[data-point-site]').length});
+  }
+  function resizeInter() {
+    const node=document.querySelector('[data-inter-boxes]');
+    if (!node || node.closest('[hidden]') || !inter.groups) return;
+    if (Math.max(650,node.clientWidth)!==inter.plotWidth) renderInterPlot();
   }
   function syncPlotSelection() {
     const node=document.querySelector('[data-inter-boxes]');
@@ -336,7 +343,7 @@
     const index=reveal?inter.rows.findIndex(row=>row.site_key===inter.selectedSite):-1;
     const desired=index<0?0:Math.max(0,60+index*ROW_HEIGHT-(node.clientHeight-ROW_HEIGHT)/2);
     renderInterWindow(true,desired);node.scrollTop=desired;
-    page.querySelector('[data-inter-selection]').textContent=index>=0?`Selected: ${inter.rows[index].glycosite}. Click its glycosite name to open Explore.`:'Composition bars show the eight glycan-type percentages in each dataset; each bar totals 100%.';
+    page.querySelector('[data-inter-selection]').textContent=index>=0?`Selected: ${inter.rows[index].glycosite}`:'';
     if (index>=0) {
       const row=node.querySelector('[data-selected-site]');
       row.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});row.focus({preventScroll:true});
@@ -372,7 +379,7 @@
   }
   function renderInterSummary() {
     const base=inter.base;
-    document.querySelector('[data-inter-summary]').innerHTML=`<h3>Remodeling and glycan-type heterogeneity</h3><p class="comparison-note">${inter.pair==='all'?'All displayed organ pairs':esc(inter.groups.find(group=>group.key===inter.pair)?.label)} · low: &lt;1.5, intermediate: 1.5–&lt;2.5, high: ≥2.5 effective glycan types. Click a segment to browse that state and diversity relationship.</p><div data-diversity-summary>${Object.entries(stateLabels).map(([state,label])=>{
+    document.querySelector('[data-inter-summary]').innerHTML=`<h3>Remodeling and glycan-type heterogeneity</h3><p class="comparison-note">${inter.pair==='all'?'All displayed organ pairs':esc(inter.groups.find(group=>group.key===inter.pair)?.label)} · low: &lt;1.5, intermediate: 1.5–&lt;2.5, high: ≥2.5 weighted glycan types. Click a segment to browse that state and heterogeneity relationship.</p><div data-diversity-summary>${Object.entries(stateLabels).map(([state,label])=>{
       const rows=base.filter(row=>row.state===state), n=rows.length;
       return `<div class="diversity-row"><button class="diversity-state" type="button" data-summary-state="${state}">${label}<small>n=${num(n)}</small></button><div class="diversity-stack">${Object.entries(diversityLabels).map(([band,name],i)=>{
         const count=rows.filter(row=>row.diversity===band).length;
@@ -380,5 +387,8 @@
       }).join('')}</div></div>`;
     }).join('')}<div class="comparison-legend">${Object.values(diversityLabels).map((name,i)=>`<span><i style="background:${diversityColors[i]}"></i>${name}</span>`).join('')}</div></div>`;
   }
-  window.ATLAS_COMPARISONS={configure:config=>{hooks=config;},resetAge,renderAge,loadInter};
+  function refreshSearch() {
+    if (inter.groups && inter.query.trim() && document.querySelector('[data-inter-hits]')) updateInterList();
+  }
+  window.ATLAS_COMPARISONS={configure:config=>{hooks=config;},resetAge,renderAge,loadInter,resize:resizeInter,refreshSearch};
 })();

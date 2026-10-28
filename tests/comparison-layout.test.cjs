@@ -55,3 +55,54 @@ test('Mog stays mixed-gain when the matrix is filtered to that site', () => {
   assert.equal(counts.cells.fucosylated.mixed, 1);
   assert.equal(counts.gains.paucimannose, 0);
 });
+
+test('paper pair order and display orientation keep signed scores and composition together', () => {
+  const { PAIR_STYLES, displayPair } = require('../assets/comparison-layout.js');
+  assert.deepEqual(PAIR_STYLES.slice(0, 10).map(pair => pair.key), [
+    'liver__kidney', 'brain__liver', 'spleen__liver', 'brain__kidney', 'spleen__kidney',
+    'brain__spleen', 'spleen__plasma', 'brain__plasma', 'kidney__plasma', 'liver__plasma',
+  ]);
+  const manifest = data('manifest.json');
+  for (const record of [...manifest.pairs, ...manifest.young_pairs]) {
+    const input = data(record.file), original = JSON.stringify(input);
+    const display = displayPair(record, input);
+    const reversed = display.organs[0] !== record.organs[0];
+    assert.equal(JSON.stringify(input), original, 'source rows stay unchanged');
+    for (let i = 0; i < input.length; i++) {
+      const row = display.rows[i];
+      assert.equal(row.tvd, input[i].tvd);
+      assert.equal(row.site_key, input[i].site_key);
+      assert.ok(row.h_b - row.h_a === (reversed ? -1 : 1) * (input[i].h_b - input[i].h_a));
+      assert.ok(row.effective_b - row.effective_a === (reversed ? -1 : 1) * (input[i].effective_b - input[i].effective_a));
+      assert.deepEqual(row.composition_a, input[i][reversed ? 'composition_b' : 'composition_a']);
+      assert.deepEqual(row.composition_b, input[i][reversed ? 'composition_a' : 'composition_b']);
+      assert.deepEqual(row.organs, display.organs);
+    }
+  }
+});
+
+test('rendered matrix labels its loss rows and gain columns with correct marginal counts', async () => {
+  const vm = require('node:vm');
+  const layout = require('../assets/comparison-layout.js');
+  const manifest = data('manifest.json'), hits = data('atlas_brain_O_vs_Y_hits.json');
+  const nodes = new Map();
+  const node = selector => {
+    if (!nodes.has(selector)) nodes.set(selector, { innerHTML: '', textContent: '', dataset: {},
+      querySelectorAll: () => [], querySelector: () => null, addEventListener() {} });
+    return nodes.get(selector);
+  };
+  const theme = {};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/theme.js'), 'utf8'), { window: theme });
+  const context = { window: { ...theme, ATLAS_COMPARISON_LAYOUT: layout },
+    document: { querySelector: node }, location: { search: '' }, URLSearchParams, performance,
+    fetch: async url => ({ ok: true, json: async () => url.includes('manifest.json') ? manifest : hits }) };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8'), context);
+  await context.window.ATLAS_COMPARISONS.renderAge({ dataset: 'atlas_brain', comparison: 'O_vs_Y', query: '' });
+  const html = node('[data-age-matrix]').innerHTML;
+  assert.match(html, /<thead>.*<th scope="col">All losses<\/th>/);
+  assert.match(html, /<tfoot><tr><th scope="row">All gains<\/th>/);
+  assert.match(html, /aria-label="All Paucimannose gains"[^>]*>26<\/button>/);
+  assert.match(html, /aria-label="All Paucimannose losses"[^>]*>1<\/button>/);
+  const rows = [...html.matchAll(/<th scope="row"><button[^>]*data-loss="([^"]+)"/g)].map(match => match[1]);
+  assert.deepEqual(rows, [...layout.MATRIX_CLASSES].reverse());
+});

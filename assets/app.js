@@ -30,6 +30,7 @@
 
   const state = {
     searchIndex: [],
+    proteinSearch: null,
     sequenceLengths: {},
     byProtein: new Map(),
     currentProtein: null,
@@ -90,6 +91,7 @@
   async function init() {
     dom.home.dataset.shape = ["circle", "square", "diamond", "triangle"][Math.floor(Math.random() * 4)];
     window.ATLAS_COMPARISONS.configure({
+      matchesProtein: (proteinId, query, siteText) => state.proteinSearch?.matchesProtein(proteinId, query, siteText) || false,
       openSite: async (href) => {
         history.pushState({}, "", href);
         await routeFromLocation();
@@ -102,6 +104,7 @@
     window.addEventListener("resize", () => {
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => {
+        window.ATLAS_COMPARISONS.resize();
         if (state.currentProtein && !dom.explore.hidden) {
           fitSegmentLegend();
           renderDetailCharts();
@@ -112,17 +115,21 @@
     if (initialProteinId) showProteinLoading();
     else await routeFromLocation();
     try {
-      const [manifest, searchIndex, sequenceMetadata] = await Promise.all([
+      const [manifest, searchIndex, sequenceMetadata, aliases] = await Promise.all([
         fetchJSON("data/manifest.json"),
         fetchJSON("data/search-index.json"),
         fetchJSON("data/sequence-lengths.json"),
+        window.ATLAS_PROTEIN_SEARCH.loadAliases(fetchJSON),
       ]);
       state.searchIndex = searchIndex;
+      state.proteinSearch = window.ATLAS_PROTEIN_SEARCH.create(searchIndex, aliases);
       state.sequenceLengths = sequenceMetadata.lengths;
       state.byProtein = new Map(searchIndex.map((row) => [row.protein_id, row]));
       state.indexReady = true;
       document.querySelectorAll("[data-stat='proteins']").forEach((node) => { node.textContent = formatNumber(manifest.n_proteins); });
       bindSearch();
+      window.ATLAS_COMPARISONS.refreshSearch();
+      if (dom.tvdSearch.value.trim()) { renderTVDPlot(); renderAgeComparisons(); }
       const pendingProteinId = proteinFromHash();
       if (pendingProteinId && state.byProtein.has(pendingProteinId)) {
         await openProtein(state.byProtein.get(pendingProteinId), false);
@@ -207,12 +214,12 @@
       container.hidden = false;
       return;
     }
-    container.innerHTML = matches.map((row) => `
+    container.innerHTML = matches.slice(0, 50).map((row) => `
       <button type="button" class="search-result" role="option" data-result-id="${escapeHTML(row.protein_id)}">
         <strong>${escapeHTML(row.gene || row.protein_id)}</strong>
         <span>${escapeHTML(row.description || "No description")}</span>
         <small>${escapeHTML(row.protein_id)}<br>${row.n_glycosites} site${row.n_glycosites === 1 ? "" : "s"} · ${row.n_proteome_organs} organ${row.n_proteome_organs === 1 ? "" : "s"}</small>
-      </button>`).join("");
+      </button>`).join("") + (matches.length > 50 ? `<p class="search-empty">Showing 50 of ${formatNumber(matches.length)} matches. Refine your search.</p>` : "");
     container.querySelectorAll("[data-result-id]").forEach((button) => {
       button.addEventListener("click", async () => openProtein(state.byProtein.get(button.dataset.resultId)));
       button.addEventListener("keydown", (event) => {
@@ -224,39 +231,11 @@
   }
 
   function search(query, limit = 10) {
-    const q = normalize(query);
-    if (!q) return [];
-    const commonNames = { ire1: "ern1", "ire1α": "ern1", bip: "hspa5", grp78: "hspa5" };
-    const expanded = commonNames[q] || q;
-    return state.searchIndex
-      .map((row) => ({ row, score: matchScore(row, expanded) }))
-      .filter(({ score }) => Number.isFinite(score))
-      .sort((a, b) => a.score - b.score || normalize(a.row.gene).localeCompare(normalize(b.row.gene)) || a.row.protein_id.localeCompare(b.row.protein_id))
-      .slice(0, limit)
-      .map(({ row }) => row);
-  }
-
-  function matchScore(row, q) {
-    const gene = normalize(row.gene);
-    const protein = normalize(row.protein_id);
-    const description = normalize(row.description);
-    const aliases = normalize(row.aliases || "");
-    if (gene === q || protein === q) return 0;
-    if (gene.startsWith(q)) return 1;
-    if (protein.startsWith(q)) return 2;
-    if (gene.includes(q)) return 3;
-    if (protein.includes(q)) return 4;
-    if (aliases.split(/[,;| ]+/).includes(q)) return 2;
-    if (aliases.includes(q)) return 5;
-    if (description.includes(q)) return 6;
-    return Infinity;
+    return state.proteinSearch?.search(query, limit) || [];
   }
 
   function findExact(value) {
-    const q = normalize(value);
-    const commonNames = { ire1: "ern1", "ire1α": "ern1", bip: "hspa5", grp78: "hspa5" };
-    const target = commonNames[q] || q;
-    return state.searchIndex.find((row) => normalize(row.gene) === target || normalize(row.protein_id) === target);
+    return state.proteinSearch?.findExact(value);
   }
 
   async function openProtein(indexRow, updateHistory = true) {
@@ -425,7 +404,7 @@
       state.currentProtein.organs[organ].glycosites.some((site) => site.total_psm < 5));
     dom.segmentMethodNote.hidden = !sites.length;
     dom.segmentFooter.hidden = !proteomicsOnlyOrgans.length && !sites.length;
-    dom.segmentLegend.innerHTML = `<strong>Glycan Types</strong> ` + CLASS_ORDER.map((name) => `<span class="legend-item"><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</span>`).join("");
+    dom.segmentLegend.innerHTML = `<strong>Glycan types</strong> ` + CLASS_ORDER.map((name) => `<span class="legend-item"><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</span>`).join("");
   }
 
   function fitSegmentLegend() {
@@ -964,10 +943,7 @@
   function renderTVDPlot() {
     if (!state.tvdRows) return;
     const query = normalize(dom.tvdSearch.value);
-    const matches = (row) => {
-      const gene = state.byProtein.get(row.protein_id)?.gene || "";
-      return !query || normalize(`${row.protein_id} ${row.glycosite} ${gene}`).includes(query);
-    };
+    const matches = (row) => !query || state.proteinSearch?.matchesProtein(row.protein_id, query, `${row.glycosite} ${row.site_key}`);
     const w = Math.max(640, dom.tvdPlot.clientWidth), h = 520, left = 92, right = 30, top = 24, bottom = 75;
     const width = w - left - right, height = h - top - bottom;
     const zoom = state.tvdZoom || 1;
