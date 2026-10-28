@@ -6,7 +6,6 @@
   const AGE_BINS = ["Y", "MA", "O"];
   const AGE_BIN_LABELS = { Y: "Y", MA: "MA", O: "O" };
   const PAGE_TITLES = {
-    overview: "Overview",
     methods: "Methods",
     contact: "Contact",
     tvd: "Age comparisons",
@@ -1158,6 +1157,10 @@
       return;
     }
     const route = location.hash.replace(/^#/, "");
+    if (route === "overview") {
+      history.replaceState({}, "", `${location.pathname}${location.search}#methods`);
+      return showPage("methods", false);
+    }
     if (route === "explore") return showExplore(false);
     if (Object.hasOwn(PAGE_TITLES, route)) return showPage(route, false);
     showHome(false);

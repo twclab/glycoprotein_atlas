@@ -3,7 +3,6 @@
 .comparison-intro { max-width: 850px; margin-bottom: 28px; }
 .comparison-intro h2 { margin: 0 0 12px; font-size: clamp(32px, 4vw, 48px); font-weight: 500; letter-spacing: -.035em; }
 .comparison-intro p { color: var(--ink-soft); font-size: 16px; line-height: 1.6; }
-.comparison-kicker { color: var(--teal-700); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .age-selection { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; padding: 16px 0; margin: 12px 0 20px; border-bottom: 1px solid var(--gray-300); }
 .age-selection strong { color: var(--teal-900); font-size: 22px; font-weight: 600; }
 .age-selection span { color: var(--ink-soft); font-size: 13px; }
@@ -22,18 +21,19 @@
 .comparison-toolbar label { display: grid; gap: 6px; min-width: 0; color: var(--ink-soft); font-size: 15px; font-weight: 600; }
 .comparison-toolbar input, .comparison-toolbar select { min-width: 140px; max-width: 100%; height: 40px; padding: 0 9px; border: 1px solid var(--gray-300); border-radius: 7px; background: white; color: var(--ink); font-size: 14px; }
 .comparison-reset { padding: 6px 10px; border: 1px solid var(--gray-300); border-radius: 6px; background: white; color: var(--teal-900); cursor: pointer; }
-.gain-loss-matrix { --matrix-cell: clamp(24px,3.4vh,30px); width: calc(142px + 9 * var(--matrix-cell) + 46px + 24px); border-collapse: separate; border-spacing: 2px; text-align: center; table-layout: fixed; font-size: 12px; margin: 0 auto; }
-.gain-loss-matrix caption { caption-side: bottom; padding: 8px 0 0; color: var(--ink-soft); font-size: 12px; }
-.gain-loss-matrix .matrix-loss-label { width: 142px; }
+.gain-loss-matrix { --matrix-label: clamp(112px,28cqi,148px); --matrix-cell: clamp(24px,min(calc((100cqi - var(--matrix-label) - 82px)/10),calc((100svh - 240px)/10)),48px); width: 100%; min-width: calc(var(--matrix-label) + 10 * var(--matrix-cell) + 82px); border-collapse: separate; border-spacing: 2px; text-align: center; table-layout: fixed; font-size: 12px; margin: 0; }
+.gain-loss-matrix caption { caption-side: bottom; padding: 10px 0 0; color: var(--ink-soft); font-size: 12px; }
+.gain-loss-matrix .matrix-loss-label { width: var(--matrix-label); }
 .gain-loss-matrix .matrix-cell { width: var(--matrix-cell); }
-.gain-loss-matrix .matrix-total { width: 46px; }
+.gain-loss-matrix .matrix-axis-label { width: 56px; }
 .gain-loss-matrix th { font-size: 12px; font-weight: 600; }
 .gain-loss-matrix th, .gain-loss-matrix td { padding: 0; height: var(--matrix-cell); }
-.gain-loss-matrix button { display: block; width: 100%; height: var(--matrix-cell); min-height: 0; padding: 0; border: 0; border-radius: 0; cursor: pointer; color: var(--ink); font-size: 13px; line-height: 1.1; }
-.gain-loss-matrix tbody th button { display: grid; grid-template-columns: minmax(0,1fr) 16px; align-items: center; gap: 8px; background: transparent; padding-right: 4px; text-align: right; font-size: 12px; }
-.gain-loss-matrix .legend-swatch { display: inline-block; width: 16px; height: 16px; flex: 0 0 16px; }
-.gain-loss-matrix .matrix-gain-labels button { display: grid; place-items: center; background: transparent; }
-.gain-loss-matrix tfoot td button, .gain-loss-matrix td:last-child button { background: var(--teal-050); }
+.gain-loss-matrix button { display: block; width: 100%; height: var(--matrix-cell); min-height: 0; padding: 0; border: 0; border-radius: 0; cursor: pointer; color: var(--ink); font-size: min(15px,calc(var(--matrix-cell)*.52)); line-height: 1.1; }
+.gain-loss-matrix .matrix-type-label { background: transparent; padding-right: 6px; text-align: right; font-size: min(13px,calc(var(--matrix-cell)/2.1)); line-height: 1.05; }
+.gain-loss-matrix .matrix-margin-button { font-weight: 600; }
+.gain-loss-matrix .matrix-pattern-count { padding: 0 2px; background: #ffffffe0; border-radius: 2px; color: #122d2a; }
+.gain-loss-matrix .matrix-loss-end { text-align: right; padding-right: 2px; }
+.gain-loss-matrix .matrix-gain-end { text-align: left; padding-left: 6px; }
 .gain-loss-matrix button[aria-pressed="true"] { outline: 2px solid var(--teal-900); outline-offset: -2px; }
 .gain-loss-matrix button:hover, .gain-loss-matrix button:focus-visible { outline: 2px solid var(--teal-700); outline-offset: -2px; }
 .comparison-hit-scroll { max-height: 500px; min-height: 180px; overflow: auto; margin-top: 14px; border-top: 1px solid var(--gray-100); }
@@ -77,14 +77,12 @@
 .age-hit-table td:last-child { min-width: 170px; }
 .age-hit-table td .legend-swatch, .change-details dt .legend-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: baseline; }
 .change-details { margin-top: 10px; font-size: 11px; }
-.change-details summary, .dominance-example summary { color: var(--teal-900); cursor: pointer; }
+.change-details summary { color: var(--teal-900); cursor: pointer; }
 .change-details dl { margin: 10px 0 0; }
 .change-details dl > div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; padding: 7px 0; border-top: 1px solid var(--gray-100); }
 .change-details dt { font-weight: 400; }
 .change-details dd { margin: 0; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .change-details dd small { margin-top: 3px; font-size: 9px; }
-.dominance-example { margin-top: 22px; font-size: 13px; line-height: 1.6; }
-.dominance-example p { color: var(--ink-soft); }
 .list-filters { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
 .list-filters input, .list-filters select { width: 100%; min-width: 0; }
 .diversity-summary { margin-top: 24px; }
@@ -97,9 +95,6 @@
 .comparison-legend { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-top: 20px; font-size: 16px; }
 .comparison-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .comparison-legend i { display: inline-block; width: 20px; height: 20px; flex: 0 0 20px; border-radius: 2px; }
-.summary-copy { max-width: 860px; line-height: 1.7; }
-.summary-copy h3 { margin: 32px 0 12px; font-size: 22px; }
-.summary-copy p { color: var(--ink-soft); }
 #contact .contact-grid { margin-top: 34px; }
 #contact .contact-grid h3 { margin-top: 12px; font-size: 24px; }
 #contact .contact-grid article { min-height: 150px; }
@@ -132,10 +127,9 @@
 
 .age-grid { grid-template-columns: minmax(0,.95fr) minmax(0,1.05fr); align-items: stretch; height: clamp(540px,calc(100svh - 100px),780px); }
 .age-grid > .comparison-card { min-height: 0; display: flex; flex-direction: column; padding: 18px; }
-.age-grid .comparison-scroll { min-height: 0; flex: 1; display: grid; align-content: center; overflow-y: auto; }
+.age-grid .comparison-scroll { min-width: 0; min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0,1fr); align-content: center; overflow-y: auto; container-type: inline-size; }
 .age-grid [data-age-direction-note] { margin: 0 0 10px; font-size: 12px; line-height: 1.45; }
 .age-grid .comparison-hit-scroll { flex: 1; height: 0; min-height: 0; max-height: none; }
-.age-grid .dominance-example { margin-top: 14px; font-size: 12px; }
 .age-grid .matrix-count-key { margin-bottom: 8px; font-size: 12px; }
 .inter-grid > .comparison-card { padding: 20px; }
 .inter-pair-context { margin: 0 0 12px; font-size: 18px; font-weight: 600; color: var(--teal-900); }
@@ -151,9 +145,4 @@
 @media (max-width: 1100px) {
   .age-grid { grid-template-columns: 1fr; height: auto; }
   .age-grid .comparison-hit-scroll { flex: auto; height: 420px; min-height: 0; }
-}
-@media (max-width: 720px) {
-  .gain-loss-matrix { --matrix-cell: 24px; width: 426px; }
-  .gain-loss-matrix .matrix-loss-label { width: 118px; }
-  .gain-loss-matrix tbody th button { font-size: 11px; gap: 5px; }
 }
