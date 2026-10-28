@@ -16,7 +16,7 @@ keep the first image static. Hidden or off-screen views do not advance.
 
 The last section uses the three supplied permutation plots and the prose from
 `website_methods_permutation_test_text.docx`. The prose is unchanged; the final
-paragraph is split at its three glycosite examples. On desktop, the plot stays
+paragraph is split at its three glycosite examples. At widths of at least 760px, the plot stays
 beside the text and changes from Lamc1 N574 to Nfasc N1047 to Thy1 N94 as each
 example's text reaches the reading area. Plot and text change together, including
 when scrolling back or jumping through the page. All three images preload before

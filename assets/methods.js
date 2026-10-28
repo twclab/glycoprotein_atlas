@@ -48,7 +48,7 @@
   const stage = story.querySelector('[data-permutation-stage]');
   const steps = [...story.querySelectorAll('[data-permutation-step]')];
   const plots = steps.map(step => step.querySelector('[data-permutation-plot]'));
-  const desktop = window.matchMedia('(min-width: 1000px)');
+  const desktop = window.matchMedia('(min-width: 760px)');
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let current = 0, frame = 0, ready = false, nearby = false, failed = false, loading;
 
