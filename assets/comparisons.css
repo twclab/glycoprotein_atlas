@@ -29,7 +29,7 @@
 .gain-loss-matrix .matrix-separation { width: 12px; }
 .gain-loss-matrix th { font-size: 12px; font-weight: 600; }
 .gain-loss-matrix th, .gain-loss-matrix td { padding: 0; height: var(--matrix-cell); }
-.gain-loss-matrix button { display: block; width: 100%; height: var(--matrix-cell); min-height: 0; padding: 0; border: 0; border-radius: 0; cursor: pointer; color: var(--ink); font-size: min(15px,calc(var(--matrix-cell)*.52)); line-height: 1.1; }
+.gain-loss-matrix button { display: block; width: 100%; height: var(--matrix-cell); min-height: 0; padding: 0; border: 0; border-radius: 0; cursor: pointer; color: var(--ink); font-size: max(12px,calc(var(--matrix-cell)*.31)); line-height: 1.1; }
 .gain-loss-matrix .matrix-type-label { background: transparent; padding-right: 6px; text-align: right; font-size: min(13px,calc(var(--matrix-cell)/2.1)); line-height: 1.05; }
 .gain-loss-matrix .matrix-margin-button { font-weight: 600; }
 .gain-loss-matrix .matrix-pattern-count { padding: 0 2px; background: #ffffffe0; border-radius: 2px; color: #122d2a; }
@@ -156,16 +156,16 @@
   background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23425b55' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 16px center / 12px 8px;
   padding-right: 38px;
 }
-.age-grid { grid-template-columns: minmax(0,min(580px,52%)) minmax(0,1fr); height: auto; }
+.age-grid { grid-template-columns: minmax(0,52%) minmax(0,1fr); height: auto; }
 .age-grid .comparison-scroll { align-content: start; }
-.age-grid .comparison-hit-scroll { flex: none; height: 594px; }
-.age-grid .gain-loss-matrix { --matrix-cell: clamp(14px, calc((100cqi - 68px) / 10), 48px); --matrix-label: var(--matrix-cell); width: calc(10 * var(--matrix-cell) + 64px); min-width: 0; font-size: 13px; }
+.age-grid .comparison-hit-scroll { contain: size; flex: 1; height: 0; }
+.age-grid .gain-loss-matrix { --matrix-cell: max(14px, calc((100cqi - 68px) / 10)); --matrix-label: var(--matrix-cell); width: calc(10 * var(--matrix-cell) + 64px); min-width: 0; font-size: 13px; }
 .gain-loss-matrix .matrix-axis-col { width: 26px; }
 .gain-loss-matrix .matrix-label-col { width: var(--matrix-label); }
 .gain-loss-matrix .matrix-cell { width: var(--matrix-cell); }
 .gain-loss-matrix .matrix-separation { width: 12px; }
 .gain-loss-matrix th, .gain-loss-matrix td { height: var(--matrix-cell); }
-.gain-loss-matrix .matrix-margin-button { display: grid; place-items: center; font-size: clamp(13px, calc(var(--matrix-cell) * .31), 18px); font-weight: 700; }
+.gain-loss-matrix .matrix-margin-button { display: grid; place-items: center; font-size: max(13px, calc(var(--matrix-cell) * .31)); font-weight: 700; }
 .gain-loss-matrix tfoot .matrix-gain-totals th { padding-top: 14px; }
 .gain-loss-matrix tfoot .matrix-gain-title { height: 0; padding-top: 8px; color: var(--axis-ink); font-size: 20px; font-weight: 600; text-align: center; vertical-align: top; }
 .gain-loss-matrix tfoot tr:last-child td { height: 0; }
@@ -183,5 +183,8 @@
 .age-hit-table small { font-size: 14px; }
 .age-hit-table .change-details, .age-hit-table .change-details summary { font-size: 16px; }
 .age-hit-table .change-details dd small { font-size: 13px; }
-@media (max-width: 1100px) { .age-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) {
+  .age-grid { grid-template-columns: 1fr; }
+  .age-grid .comparison-hit-scroll { flex: auto; height: 420px; }
+}
 @media (max-width: 720px) { .gain-loss-matrix tfoot .matrix-gain-title { white-space: normal; } }

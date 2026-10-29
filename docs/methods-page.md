@@ -23,7 +23,9 @@ for the viewport with room for the sticky section title. Plot and text change to
 when scrolling back or jumping through the page. All three images preload before
 scroll changes begin. On small screens and with reduced motion, each plot remains
 inline with its corresponding text. No timer or manual controls are used for this
-sequence. The earlier glycan-type carousel retains its four-second interval.
+sequence. The short Nfasc and Thy1 examples use compact spacing, with enough
+trailing room to keep the final plot visible. The earlier glycan-type carousel
+retains its four-second interval.
 
 The two agent-created schematics and their builder are removed. The earlier
 added significance paragraph is also replaced by the author's supplied section.
