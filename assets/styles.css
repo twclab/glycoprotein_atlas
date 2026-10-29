@@ -1023,3 +1023,28 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
 .abundance-scale i { width: 140px; }
 .exact-age-heading span { position: relative; border-bottom: 0; color: var(--axis-ink); }
 .exact-age-heading span::after { content: ""; position: absolute; top: calc(100% + 6px); left: 0; right: 0; height: 1px; background: var(--axis-ink); }
+
+/* Keep selector arrows close to the option text across the comparison and explorer controls. */
+.analysis-controls select, .pairwise-controls select, .exact-site-controls select, .tvd-controls select, .comparison-toolbar select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23425b55' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 12px 8px;
+  background-position: right 16px center;
+  padding-right: 38px;
+}
+.exact-row .exact-name { justify-content: flex-end; text-align: right; padding-right: 8px; }
+.exact-age-heading span { font-size: var(--text-axis); }
+.tvd-layout { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(300px,1fr); gap: 18px; align-items: start; }
+.tvd-layout .tvd-plot svg { min-width: 440px; }
+.tvd-preview { min-width: 0; padding: 18px; border: 1px solid var(--gray-100); border-radius: 12px; background: white; }
+.tvd-preview h3 { margin: 0 0 12px; font-size: 19px; line-height: 1.3; }
+.tvd-preview h3 a, .tvd-preview > a { color: var(--teal-900); text-underline-offset: 3px; }
+.tvd-preview .scientific-chart { min-width: 0; }
+.tvd-preview .scientific-chart svg { display: block; width: 100%; }
+.tvd-preview .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0; font-size: 12px; }
+.tvd-preview .chart-legend .legend-item { display: inline-flex; align-items: center; gap: 4px; }
+.tvd-preview > a { display: inline-block; margin-top: 6px; font-size: 14px; }
+.tvd-preview > a[hidden] { display: none; }
+.tvd-plot circle.selected-site { stroke: var(--ink); stroke-width: 2.5; fill-opacity: 1; }
+@media (max-width: 950px) { .tvd-layout { grid-template-columns: minmax(0,1fr); } }

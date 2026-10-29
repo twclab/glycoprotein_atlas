@@ -77,7 +77,7 @@ test('Age scatter highlights, age-hit filtering and the inter-organ list resolve
   assert.ok(tested.length > 0);
   const ageInput = view.node('[data-tvd-search]'); ageInput.value = query; ageInput.events.input(); await settle();
   const plot = view.node('[data-tvd-plot]').innerHTML;
-  const highlights = [...plot.matchAll(/<circle class="search-hit"[^>]*data-tvd-protein="([^"]+)"/g)].map(match => match[1]);
+  const highlights = [...plot.matchAll(/<circle class="search-hit[^"]*"[^>]*data-tvd-protein="([^"]+)"/g)].map(match => match[1]);
   assert.equal(highlights.length, tested.length);
   assert.ok(highlights.every(found => found === id));
   assert.equal(view.node('[data-age-hit-count]').textContent, '1 of 158 hits');

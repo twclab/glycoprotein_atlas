@@ -1,7 +1,7 @@
 /* Linked manuscript-inspired views over the current public atlas release. */
 (() => {
   "use strict";
-  const { CLASS_ORDER, CLASS_LABELS, CLASS_COLORS } = window.ATLAS_THEME;
+  const { CLASS_ORDER, CLASS_LABELS, CLASS_COLORS, ORGAN_COLORS } = window.ATLAS_THEME;
   const { ROW_HEIGHT, PAIR_STYLES, MATRIX_CLASSES, displayPair, matrixColor, windowRange, changeCounts } = window.ATLAS_COMPARISON_LAYOUT;
   const labels = { brain: "Brain", spleen: "Spleen", liver: "Liver", kidney: "Kidney", plasma: "Plasma", myelin_male: "Male myelin", myelin_female: "Female myelin" };
   const ageLabels = { O_vs_Y: 'Old versus young', O_vs_MA: 'Old versus middle-aged', MA_vs_Y: 'Middle-aged versus young' };
@@ -102,7 +102,7 @@
   function hitRows(rows, { organ, ageHits = false, startIndex = 0 } = {}) {
     return rows.map((row,index) => {
       const a = organ || row.organs[0], b = row.organs?.[1], selected = !ageHits && row.pair===inter.pair && row.site_key===inter.selectedSite;
-      return `<tr class="${ageHits?'':'site-row'} ${selected?'selected-site':''}" ${selected?'data-selected-site tabindex="-1"':''} ${ageHits?'':`aria-rowindex="${startIndex+index+2}"`}><th scope="row"><a data-comparison-site data-hover-label="${esc(`${row.glycosite} · ${row.protein_id} · ${labels[a]}${b?` v ${labels[b]}`:''} · Open in Explore`)}" href="${esc(siteHref(row, a, b))}">${esc(row.glycosite)}</a><small>${esc(row.protein_id)}${row.organs ? ` · ${esc(row.organs.map(x => labels[x]).join(' v '))}` : ''}</small></th><td>${fmt(ageHits ? row.percent_difference : row.tvd)}</td>${ageHits ? `<td>${Number(row.p_value).toExponential(2)}</td><td>${swatch(row.loss)}${esc(classLabel(row.loss))} → ${swatch(row.gain)}${esc(classLabel(row.gain))}${row.changes?`<details class="change-details" data-change-site="${esc(row.site_key)}"><summary>Mean changes and shares</summary></details>`:''}</td>` : `<td><div class="inter-site-metrics">${pairedMetric("Shannon H",row.h_a,row.h_b,[a,b])}${pairedMetric("Weighted glycan types",row.effective_a,row.effective_b,[a,b])}</div></td><td>${compositionBar(row.composition_a,a,'A')}${compositionBar(row.composition_b,b,'B')}</td>`}</tr>`;
+      return `<tr class="${ageHits?'':'site-row'} ${selected?'selected-site':''}" ${selected?'data-selected-site tabindex="-1"':''} ${ageHits?'':`aria-rowindex="${startIndex+index+2}"`}><th scope="row"><a data-comparison-site data-hover-label="${esc(`${row.glycosite} · ${row.protein_id} · ${labels[a]}${b?` v ${labels[b]}`:''} · Open in Explore`)}" href="${esc(siteHref(row, a, b))}">${esc(row.glycosite)}</a><small>${esc(row.protein_id)}${row.organs ? ` · ${esc(row.organs.map(x => labels[x]).join(' v '))}` : ''}</small></th><td>${fmt(ageHits ? row.percent_difference : row.tvd)}</td>${ageHits ? `<td>${Number(row.p_value).toExponential(2)}</td><td>${swatch(row.loss)}${esc(classLabel(row.loss))} → ${swatch(row.gain)}${esc(classLabel(row.gain))}${row.changes?`<details class="change-details" data-change-site="${esc(row.site_key)}"><summary>Glycan type composition changes</summary></details>`:''}</td>` : `<td><div class="inter-site-metrics">${pairedMetric("Shannon H",row.h_a,row.h_b,[a,b])}${pairedMetric("Weighted glycan types",row.effective_a,row.effective_b,[a,b])}</div></td><td>${compositionBar(row.composition_a,a,'A')}${compositionBar(row.composition_b,b,'B')}</td>`}</tr>`;
     }).join('');
   }
   const emptyList = '<p class="empty-note">No glycosites match these filters. Clear a filter or try another search.</p>';
@@ -110,7 +110,7 @@
   function hitTable(rows, options = {}) {
     const { ageHits = false, totalRows = rows.length, before = 0, after = 0 } = options;
     if (!totalRows) return emptyList;
-    return `<table class="hit-table ${ageHits?'age-hit-table':'inter-hit-table'}" aria-rowcount="${totalRows+1}" style="--comparison-row-height:${ROW_HEIGHT}px">${ageHits?'':'<colgroup><col style="width:30%"><col style="width:11%"><col style="width:31%"><col style="width:28%"></colgroup>'}<thead><tr><th scope="col">Glycosite</th><th scope="col">TVD (%)</th>${ageHits ? '<th scope="col">Raw p</th><th scope="col">Dominant loss → gain</th>' : '<th scope="col">Heterogeneity (A / B)</th><th scope="col">Glycan composition<br>A / B (%)</th>'}</tr></thead><tbody>${spacer(before)}${hitRows(rows,options)}${spacer(after)}</tbody></table>`;
+    return `<table class="hit-table ${ageHits?'age-hit-table':'inter-hit-table'}" aria-rowcount="${totalRows+1}" style="--comparison-row-height:${ROW_HEIGHT}px">${ageHits?'':'<colgroup><col style="width:30%"><col style="width:11%"><col style="width:31%"><col style="width:28%"></colgroup>'}<thead><tr><th scope="col">Glycosite</th><th scope="col">TVD (%)</th>${ageHits ? '<th scope="col">P value</th><th scope="col">Dominant loss → Dominant gain</th>' : '<th scope="col">Heterogeneity (A / B)</th><th scope="col">Glycan composition<br>A / B (%)</th>'}</tr></thead><tbody>${spacer(before)}${hitRows(rows,options)}${spacer(after)}</tbody></table>`;
   }
   function quantile(sorted, p) {
     const i = (sorted.length - 1) * p, j = Math.floor(i);
@@ -181,10 +181,11 @@
     }
     age.query = query;
     const organLabel = labels[dataset.replace(/^atlas_/, '')];
-    document.querySelector('[data-age-selection]').textContent = `${organLabel} · ${ageLabels[comparison] || comparison.replaceAll('_', ' ')}`;
-    document.querySelector('[data-age-matrix-title]').textContent = `${organLabel}: glycan gains and losses`;
-    const [a,b] = comparison.split('_vs_'), binLabels = {O:'old',MA:'middle-aged',Y:'young'};
-    document.querySelector('[data-age-direction-note]').textContent = `${binLabels[a][0].toUpperCase()+binLabels[a].slice(1)} minus ${binLabels[b]} (percentage points). Dominant gain or loss: ≥60%; otherwise mixed.`;
+    const comparisonLabel = (ageLabels[comparison] || comparison.replaceAll('_', ' ')).replace(/\b(young|middle-aged)\b/g, word => word[0].toUpperCase()+word.slice(1));
+    const organName = `<span class="comparison-organ" style="color:${ORGAN_COLORS[dataset.replace(/^atlas_/, '')] || '#173a35'}">${esc(organLabel)}</span>`;
+    document.querySelector('[data-age-selection]').innerHTML = `${organName} (${esc(comparisonLabel)})`;
+    document.querySelector('[data-age-matrix-title]').innerHTML = `Glycan type gains and losses: ${organName} (${esc(comparisonLabel)})`;
+    document.querySelector('[data-age-hits-title]').innerHTML = `Browse hits: ${organName} (${esc(comparisonLabel)})`;
     try {
       const manifest = await get('manifest.json');
       const record = manifest.age.find(r => r.dataset===dataset && r.comparison===comparison);
@@ -207,16 +208,12 @@
     const totals = changeCounts(hits, classes);
     const count = (loss, gain) => loss && gain ? totals.cells[loss][gain] : loss ? totals.losses[loss] : gain ? totals.gains[gain] : hits.length;
     const button = (loss, gain, text, label, extra='') => `<button type="button" ${loss?`data-loss="${loss}"`:''} ${gain?`data-gain="${gain}"`:''} aria-label="${esc(label)}" aria-pressed="${age.loss===loss && age.gain===gain}" ${extra}>${text}</button>`;
-    const margin = (type, loss, gain) => {
-      const n = count(loss, gain);
-      const darkText = ['paucimannose', 'high_mannose', 'phospho'].includes(type);
-      const patterned = ['mixed', 'fucosylated_and_sialylated'].includes(type);
-      return button(loss, gain, `<span${patterned?' class="matrix-pattern-count"':''}>${num(n)}</span>`, `All ${classLabel(type)} ${loss?'losses':'gains'}: ${num(n)} ${n===1?'hit':'hits'}`, `class="matrix-margin-button" style="background:${paint(type)};color:${darkText?'#000':'#fff'}"`);
-    };
-    matrix.innerHTML = `<table class="gain-loss-matrix"><caption>Dominant glycan type loss ↓ / gain →</caption><colgroup><col class="matrix-loss-label"><col class="matrix-cell"><col class="matrix-separation">${classes.map(()=>'<col class="matrix-cell">').join('')}<col class="matrix-axis-label"></colgroup><thead><tr><th aria-hidden="true"></th><th scope="col" class="matrix-loss-end"><span>All losses</span></th><th aria-hidden="true"></th><th colspan="${classes.length}" class="matrix-key-cell"><div class="matrix-count-key"><span>Number of glycosites</span><i class="matrix-zero"></i><span>0</span><i class="matrix-count-scale"></i><span>1–30+</span></div></th><th aria-hidden="true"></th></tr></thead><tbody>${[...classes].reverse().map(loss=>`<tr><th scope="row">${button(loss,null,esc(classLabel(loss)),`${classLabel(loss)} loss → any gain`,'class="matrix-type-label"')}</th><td>${margin(loss,loss,null)}</td><td class="matrix-separation" aria-hidden="true"></td>${classes.map(gain=>{
+    const key = `<div class="matrix-count-key"><span>Number of glycosites</span><div class="matrix-count-scale"><span>1</span><span>10</span><span>20</span><span>30+</span></div></div>`;
+    const legend = `<div class="matrix-class-legend" aria-label="Glycan type color key">${classes.map(type=>`<span>${swatch(type)}${esc(classLabel(type))}</span>`).join('')}</div>`;
+    matrix.innerHTML = `${key}${legend}<div class="matrix-table-wrap"><div class="matrix-loss-title">Dominant glycan type loss</div><table class="gain-loss-matrix"><caption>Dominant glycan type gain</caption><colgroup><col class="matrix-label-col">${classes.map(()=>'<col class="matrix-cell">').join('')}</colgroup><thead><tr><th aria-hidden="true"></th>${classes.map(gain=>`<th scope="col">${button(null,gain,swatch(gain),`${classLabel(gain)} gain: ${num(count(null,gain))} ${count(null,gain)===1?'hit':'hits'}`,'class="matrix-type-button"')}</th>`).join('')}</tr></thead><tbody>${[...classes].reverse().map(loss=>`<tr><th scope="row">${button(loss,null,swatch(loss),`${classLabel(loss)} loss: ${num(count(loss,null))} ${count(loss,null)===1?'hit':'hits'}`,'class="matrix-type-button"')}</th>${classes.map(gain=>{
       const n=count(loss,gain);
-      return `<td>${button(loss,gain,n,`${classLabel(loss)} loss → ${classLabel(gain)} gain: ${num(n)} hits`,`style="background:${matrixColor(n)};color:${n>0&&n<16?'white':'#000'}"`)}</td>`;
-    }).join('')}<td aria-hidden="true"></td></tr>`).join('')}</tbody><tfoot><tr class="matrix-gain-labels"><td colspan="3" aria-hidden="true"></td>${classes.map(gain=>`<th scope="col">${margin(gain,null,gain)}</th>`).join('')}<th class="matrix-gain-end" scope="row">All gains</th></tr></tfoot></table>`;
+      return `<td>${button(loss,gain,n ? num(n) : '',`${classLabel(loss)} loss → ${classLabel(gain)} gain: ${num(n)} hits`,`style="background:${matrixColor(n)};color:${n>0&&n<16?'white':'#000'}"`)}</td>`;
+    }).join('')}</tr>`).join('')}</tbody></table></div>`;
     matrix.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { age.loss=b.dataset.loss||null; age.gain=b.dataset.gain||null; drawAge(); matrix.querySelector('[aria-pressed="true"]')?.focus({preventScroll:true}); }));
     const selected = hits.filter(r=>(!age.loss || r.loss===age.loss) && (!age.gain || r.gain===age.gain)).sort((a,b)=>b.percent_difference-a.percent_difference || a.p_value-b.p_value);
     document.querySelector('[data-age-hit-count]').textContent = `${num(selected.length)} of ${num(age.hits.length)} hits`;

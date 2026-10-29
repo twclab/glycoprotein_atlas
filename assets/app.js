@@ -80,6 +80,10 @@
     tooltip: document.querySelector(".tooltip[role='tooltip']"),
     live: document.querySelector("[data-live-region]"),
     tvdPlot: document.querySelector("[data-tvd-plot]"),
+    tvdPreviewChart: document.querySelector("[data-tvd-preview-chart]"),
+    tvdPreviewLegend: document.querySelector("[data-tvd-preview-legend]"),
+    tvdPreviewTitle: document.querySelector("[data-tvd-preview-title]"),
+    tvdPreviewLink: document.querySelector("[data-tvd-preview-link]"),
     tvdDataset: document.querySelector("[data-tvd-dataset]"),
     tvdComparison: document.querySelector("[data-tvd-comparison]"),
     tvdSearch: document.querySelector("[data-tvd-search]"),
@@ -512,7 +516,7 @@
     const metrics = [
       ["Detected samples", `${formatNumber(detected)}/${formatNumber(possible)}`],
       ["Site evidence", `${formatNumber(site.total_psm)} total PSMs · ${detected ? formatNumber(Math.round(site.total_psm / detected)) : "—"} average per detected sample`],
-      ["Site confidence", `${tier}/7 · ${tierLabel}`],
+      ["Glycosite coverage tier", `${tier}/7 · ${tierLabel}`],
       ["Observed glycans", formatNumber(pooled.observed_glycans)],
       ["Observed glycan types", formatNumber(pooled.observed_glycan_types)],
       ["Weighted glycan types", Number.isFinite(pooled.effective_glycan_types) ? pooled.effective_glycan_types.toFixed(2) : "—"],
@@ -576,12 +580,12 @@
       Object.values(site.exact_compositions?.ages || {}).some((rows) => rows?.length));
   }
 
-  function chartGeometry(container) {
+  function chartGeometry(container, compact = false) {
     const w = Math.max(280, container.clientWidth);
     const left = 66, right = 20, top = 16, bottom = 54;
     const plotW = Math.max(50, w - left - right);
-    // Fixed aspect ratio for every site and metric; only panel width sets physical plot height.
-    const plotH = Math.round(plotW * 2);
+    // Keep Explore plots at their established aspect ratio; the comparison preview is compact.
+    const plotH = compact ? Math.min(420, Math.round(plotW * 1.2)) : Math.round(plotW * 2);
     const h = top + plotH + bottom;
     container.style.height = `${h}px`;
     return { w, h, left, right, top, plotW, plotH };
@@ -629,17 +633,17 @@
     return `<svg class="legend-mark" viewBox="0 0 28 12" aria-hidden="true"><line x1="1" y1="6" x2="27" y2="6" stroke="${color}" stroke-width="2"/><circle cx="14" cy="6" r="4.5" fill="${color}"/></svg>`;
   }
 
-  function renderClassChart(site) {
-    const values = site.glycan_classes?.[state.ageMode] || {};
-    const { keys, labels, numeric } = ageSpec(site);
+  function renderClassChart(site, chart = dom.classChart, legend = dom.classLegend, mode = state.ageMode) {
+    const values = site.glycan_classes?.[mode] || {};
+    const { keys, labels, numeric } = ageSpec(site, mode);
     const classes = CLASS_ORDER.filter((name) => keys.some((key) => (values[key] || []).some((row) => row.name === name && row.percent > 0)));
     if (!classes.length) {
-      dom.classChart.innerHTML = `<p class="empty-note">No N-glycosite composition is available for this site and grouping.</p>`;
-      dom.classLegend.innerHTML = "";
+      chart.innerHTML = `<p class="empty-note">No N-glycosite composition is available for this site and grouping.</p>`;
+      legend.innerHTML = "";
       return;
     }
-    const { w, h, left, right, top, plotW, plotH } = chartGeometry(dom.classChart);
-    const { x, ticks: xTicks } = ageAxis(state.ageMode, left, top, plotW, plotH, keys);
+    const { w, h, left, right, top, plotW, plotH } = chartGeometry(chart, chart === dom.tvdPreviewChart);
+    const { x, ticks: xTicks } = ageAxis(mode, left, top, plotW, plotH, keys);
     const upperBounds = keys.flatMap((key) => (values[key] || []).filter((row) => Number.isFinite(row.percent)).map((row) => row.percent + (row.sem || 0)));
     const observed = Math.max(1, ...upperBounds);
     const max = [10, 20, 30, 40, 50, 60, 75, 80, 100].find((ceiling) => ceiling >= observed) || 100;
@@ -673,8 +677,8 @@
         : `<polyline points="${pointString}" fill="none" stroke="${CLASS_COLORS[name]}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
       return `${line}${errorBars}${marks}`;
     }).join("");
-    dom.classChart.innerHTML = `<svg viewBox="0 0 ${w} ${h}" data-plot-width="${plotW}" data-plot-height="${plotH}" data-y-max="${max}" role="img" aria-label="Mean glycan type composition ± SEM across age groups"><defs><linearGradient id="dual-glycan"><stop offset="50%" stop-color="#CD4D2C"/><stop offset="50%" stop-color="#A34599"/></linearGradient></defs><text class="axis-label" transform="translate(13 ${top + plotH / 2}) rotate(-90)" text-anchor="middle">Percent abundance</text>${grid}<line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="axis" x1="${left}" y1="${top + plotH}" x2="${w - right}" y2="${top + plotH}"/>${series}${xTicks}<text class="axis-label" x="${left + plotW / 2}" y="${h - 4}" text-anchor="middle">${numeric ? "Age (months)" : "Age groups"}</text></svg>`;
-    dom.classLegend.innerHTML = classes.map((name) => `<span class="legend-item">${legendMark(CLASS_COLORS[name], name === "fucosylated_and_sialylated")}${escapeHTML(CLASS_LABELS[name] || name)}</span>`).join("");
+    chart.innerHTML = `<svg viewBox="0 0 ${w} ${h}" data-plot-width="${plotW}" data-plot-height="${plotH}" data-y-max="${max}" role="img" aria-label="Mean glycan type composition ± SEM across age groups"><defs><linearGradient id="dual-glycan"><stop offset="50%" stop-color="#CD4D2C"/><stop offset="50%" stop-color="#A34599"/></linearGradient></defs><text class="axis-label" transform="translate(13 ${top + plotH / 2}) rotate(-90)" text-anchor="middle">Percent abundance</text>${grid}<line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="axis" x1="${left}" y1="${top + plotH}" x2="${w - right}" y2="${top + plotH}"/>${series}${xTicks}<text class="axis-label" x="${left + plotW / 2}" y="${h - 4}" text-anchor="middle">${numeric ? "Age (months)" : "Age groups"}</text></svg>`;
+    legend.innerHTML = classes.map((name) => `<span class="legend-item">${legendMark(CLASS_COLORS[name], name === "fucosylated_and_sialylated")}${escapeHTML(CLASS_LABELS[name] || name)}</span>`).join("");
   }
 
   function renderProteinChart() {
@@ -785,7 +789,7 @@
         return `<button type="button" class="exact-cell ${detected ? "" : "missing"}" style="background:${color}" aria-label="${escapeHTML(tooltip)}" data-tooltip="${escapeHTML(tooltip)}"><span class="exact-value" style="color:${percent / scaleMax > .72 ? "#182020" : "#fff"}">${detected ? `${percent.toFixed(1)}%` : "—"}</span></button>`;
       }).join("");
       const shortName = name.replace(/HexNAc\((\d+)\)/g, "N$1 ").replace(/Hex\((\d+)\)/g, "H$1 ").replace(/Fuc\((\d+)\)/g, "F$1 ").replace(/NeuAc\((\d+)\)/g, "A$1 ").replace(/NeuGc\((\d+)\)/g, "G$1 ").replace(/Phospho\((\d+)\)/g, "P$1 ").trim();
-      return `<div class="exact-row"><span class="exact-name" title="${escapeHTML(name)}"><i class="legend-swatch" style="background:${classPaint(type)}"></i>${escapeHTML(shortName)}</span>${cells}</div>`;
+      return `<div class="exact-row"><span class="exact-name" title="${escapeHTML(name)}">${escapeHTML(shortName)}<i class="legend-swatch" style="background:${classPaint(type)}"></i></span>${cells}</div>`;
     }).join("");
     dom.exactGrid.innerHTML = header + rows;
     dom.exactGrid.style.setProperty("--exact-columns", keys.length);
@@ -905,10 +909,6 @@
         dom.tvdPlot.innerHTML = `<p class="empty-note">Age-comparison data could not be loaded. Choose a comparison to retry.</p>`;
       })));
       dom.tvdSearch.addEventListener("input", () => { renderTVDPlot(); renderAgeComparisons(); });
-      document.querySelectorAll("[data-tvd-zoom]").forEach((button) => button.addEventListener("click", () => {
-        state.tvdZoom = button.dataset.tvdZoom === "reset" ? 1 : Math.max(1, Math.min(8, (state.tvdZoom || 1) * Number(button.dataset.tvdZoom)));
-        renderTVDPlot();
-      }));
     }
     if (!dom.tvdDataset.value) dom.tvdDataset.value = "atlas_brain";
     await updateTVDControls(null, dom.tvdComparison.value || "O_vs_Y");
@@ -924,13 +924,21 @@
     if (!record) return;
     dom.tvdPlot.innerHTML = `<p class="empty-note">Loading ${formatNumber(record.n)} tested sites…</p>`;
     state.tvdRows = null;
+    state.tvdSelectedSite = null;
+    dom.tvdPreviewTitle.textContent = "Glycosite composition with age";
+    dom.tvdPreviewChart.innerHTML = '<p class="empty-note">Select a glycosite in the plot.</p>';
+    dom.tvdPreviewChart.style.height = "";
+    dom.tvdPreviewLegend.innerHTML = "";
+    dom.tvdPreviewLink.hidden = true;
     window.ATLAS_COMPARISONS.resetAge();
     const request = (state.tvdRequest || 0) + 1;
     state.tvdRequest = request;
     const rows = await fetchJSON(`data/tvd/${record.file}`);
     if (request !== state.tvdRequest) return;
     state.tvdRows = rows;
-    state.tvdZoom = event?.target === dom.tvdComparison ? state.tvdZoom || 1 : 1;
+    document.querySelector("[data-tvd-note]").textContent = dom.tvdDataset.value.startsWith("myelin_")
+      ? `TVD measures the fraction of glycan-type composition redistributed (0–100%). ${dom.tvdDataset.value === "myelin_male" ? "Young (Y): 3 months; Middle age (MA): 16 months; Old (O): 29 months." : "Young (Y): 3 months; Middle age (MA): 13 months; Old (O): 27 months."}`
+      : "TVD measures the fraction of glycan-type composition redistributed (0–100%). Young (Y): 1–6 months; Middle age (MA): 9–16 months; Old (O): 19–28 months.";
     renderTVDPlot();
     renderAgeComparisons();
   }
@@ -943,11 +951,10 @@
     if (!state.tvdRows) return;
     const query = normalize(dom.tvdSearch.value);
     const matches = (row) => !query || state.proteinSearch?.matchesProtein(row.protein_id, query, `${row.glycosite} ${row.site_key}`);
-    const w = Math.max(640, dom.tvdPlot.clientWidth), h = 520, left = 92, right = 30, top = 24, bottom = 75;
+    const w = Math.max(440, dom.tvdPlot.clientWidth - 24), h = 520, left = 92, right = 30, top = 24, bottom = 75;
     const width = w - left - right, height = h - top - bottom;
-    const zoom = state.tvdZoom || 1;
-    const maxX = Math.max(5, Math.ceil(Math.max(0, ...state.tvdRows.map((row) => row.percent_difference)) / 5) * 5) / zoom;
-    const maxY = Math.max(2, Math.ceil(Math.max(0, ...state.tvdRows.map((row) => row.neg_log10_p_value)))) / zoom;
+    const maxX = Math.max(5, Math.ceil(Math.max(0, ...state.tvdRows.map((row) => row.percent_difference)) / 5) * 5);
+    const maxY = Math.max(2, Math.ceil(Math.max(0, ...state.tvdRows.map((row) => row.neg_log10_p_value))));
     const x = (value) => left + value / maxX * width;
     const y = (value) => top + height - value / maxY * height;
     const visible = state.tvdRows.filter((row) => row.percent_difference <= maxX && row.neg_log10_p_value <= maxY);
@@ -961,7 +968,7 @@
         { group: groupB, n: row.n_b, psm: row.psm_b },
       ].sort((a, b) => AGE_BINS.indexOf(a.group) - AGE_BINS.indexOf(b.group));
       const sampleAttributes = sampleRows.map((sample, index) => `data-tvd-sample-label${index}="Detected ${escapeHTML(groupNames[sample.group] || sample.group)} Samples" data-tvd-sample-value${index}="${formatNumber(sample.n)} (${formatNumber(sample.psm)} total PSMs)"`).join(" ");
-      return `<circle class="${highlighted ? "search-hit" : ""}" cx="${x(row.percent_difference)}" cy="${y(row.neg_log10_p_value)}" r="${highlighted ? 6.5 : 5}" fill="${highlighted ? "#224B96" : row.p_value < .05 ? "#CD4D2C" : "#78909b"}" fill-opacity="${highlighted ? 1 : .72}" data-tvd-protein="${escapeHTML(row.protein_id)}" data-tvd-site="${escapeHTML(row.site_key)}" data-tvd-dataset="${dom.tvdDataset.value.replace(/^atlas_/, "")}" data-tvd-tooltip data-tvd-title="${escapeHTML(title)}" data-tvd-difference="${row.percent_difference.toFixed(1)}%" data-tvd-p="${Number(row.p_value).toExponential(2)}" ${sampleAttributes} data-tooltip="${escapeHTML(title)}" tabindex="0" role="button"></circle>`;
+      return `<circle class="${highlighted ? "search-hit" : ""} ${state.tvdSelectedSite === row.site_key ? "selected-site" : ""}" cx="${x(row.percent_difference)}" cy="${y(row.neg_log10_p_value)}" r="${highlighted ? 6.5 : 5}" fill="${highlighted ? "#224B96" : row.p_value < .05 ? "#CD4D2C" : "#78909b"}" fill-opacity="${highlighted ? 1 : .72}" data-tvd-protein="${escapeHTML(row.protein_id)}" data-tvd-site="${escapeHTML(row.site_key)}" data-tvd-dataset="${dom.tvdDataset.value.replace(/^atlas_/, "")}" data-tvd-tooltip data-tvd-title="${escapeHTML(title)}" data-tvd-difference="${row.percent_difference.toFixed(1)}%" data-tvd-p="${Number(row.p_value).toExponential(2)}" ${sampleAttributes} data-tooltip="${escapeHTML(title)}" tabindex="0" role="button" aria-label="Show ${escapeHTML(title)} composition with age" aria-pressed="${state.tvdSelectedSite === row.site_key}"></circle>`;
     };
     const dots = visible.filter((row) => !query || !matches(row)).map((row) => dot(row, false)).join("")
       + (query ? visible.filter(matches).map((row) => dot(row, true)).join("") : "");
@@ -974,28 +981,50 @@
     }).join("");
     const xTicks = axisMarks(maxX, maxX <= 20 ? 5 : 10, x, true);
     const yTicks = axisMarks(maxY, maxY <= 6 ? 1 : 2, y, false);
-    const matchCount = state.tvdRows.filter(matches).length;
-    const count = query ? `${formatNumber(matchCount)} matching site${matchCount === 1 ? "" : "s"}` : `${formatNumber(state.tvdRows.length)} tested sites`;
-    dom.tvdPlot.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="TVD (%) versus negative log10 raw permutation p value"><line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + height}"/><line class="axis" x1="${left}" y1="${top + height}" x2="${left + width}" y2="${top + height}"/><line class="tvd-threshold" x1="${left}" y1="${y(-Math.log10(.05))}" x2="${left + width}" y2="${y(-Math.log10(.05))}"/>${dots}${xTicks}${yTicks}<text class="axis-label" x="${left + width / 2}" y="${h - 8}" text-anchor="middle">Total variation distance (TVD, %)</text><text class="axis-label" transform="translate(24 ${top + height / 2}) rotate(-90)" text-anchor="middle">−log₁₀(raw permutation p)</text></svg><p class="tvd-count">${count} · click a point to open its glycosite.</p>`;
+    dom.tvdPlot.innerHTML = `<svg viewBox="0 0 ${w} ${h}" role="group" aria-label="TVD (%) versus −log₁₀(p value)"><line class="axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + height}"/><line class="axis" x1="${left}" y1="${top + height}" x2="${left + width}" y2="${top + height}"/><line class="tvd-threshold" x1="${left}" y1="${y(-Math.log10(.05))}" x2="${left + width}" y2="${y(-Math.log10(.05))}"/>${dots}${xTicks}${yTicks}<text class="axis-label" x="${left + width / 2}" y="${h - 8}" text-anchor="middle">Total variation distance (TVD, %)</text><text class="axis-label" transform="translate(24 ${top + height / 2}) rotate(-90)" text-anchor="middle">−log₁₀(p value)</text></svg>`;
     dom.tvdPlot.querySelectorAll("[data-tvd-protein]").forEach((dot) => {
-      const open = async () => {
-        const row = state.byProtein.get(dot.dataset.tvdProtein);
-        if (!row) return;
-        const params = new URLSearchParams({ organ: dot.dataset.tvdDataset, site: dot.dataset.tvdSite });
-        history.pushState({}, "", `#explore/${encodeURIComponent(row.protein_id)}?${params}`);
-        await openProtein(row, false);
-        const panel = document.querySelector("[data-class-chart]")?.closest(".chart-panel");
-        if (panel) {
-          const headerHeight = document.querySelector(".explore-topbar")?.getBoundingClientRect().height || 0;
-          const bounds = panel.getBoundingClientRect();
-          const visibleHeight = window.innerHeight - headerHeight;
-          const targetTop = headerHeight + Math.max(16, (visibleHeight - bounds.height) / 2);
-          window.scrollTo({ top: window.scrollY + bounds.top - targetTop, behavior: "smooth" });
-        }
-      };
-      dot.addEventListener("click", open);
-      dot.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); open(); } });
+      const select = () => selectTVDGlycosite(dot.dataset.tvdProtein, dot.dataset.tvdSite, dot.dataset.tvdDataset);
+      dot.addEventListener("click", select);
+      dot.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } });
     });
+  }
+
+  async function selectTVDGlycosite(proteinId, siteId, organ) {
+    const indexRow = state.byProtein.get(proteinId);
+    if (!indexRow) return;
+    const request = (state.tvdPreviewRequest || 0) + 1;
+    state.tvdPreviewRequest = request;
+    state.tvdSelectedSite = siteId;
+    dom.tvdPlot.querySelectorAll("[data-tvd-site]").forEach((point) => {
+      const selected = point.dataset.tvdSite === siteId;
+      point.classList.toggle("selected-site", selected);
+      point.setAttribute("aria-pressed", String(selected));
+    });
+    dom.tvdPreviewTitle.textContent = "Loading glycosite…";
+    dom.tvdPreviewChart.innerHTML = "";
+    dom.tvdPreviewLegend.innerHTML = "";
+    dom.tvdPreviewLink.hidden = true;
+    try {
+      const shard = await fetchJSON(`data/shards/${indexRow.shard}.json`);
+      if (request !== state.tvdPreviewRequest) return;
+      const site = shard[proteinId]?.organs?.[organ]?.glycosites?.find((candidate) => candidate.id === siteId);
+      if (!site) throw new Error(`Glycosite ${siteId} is absent from ${organ}`);
+      const href = `#explore/${encodeURIComponent(proteinId)}?${new URLSearchParams({ organ, site: siteId })}`;
+      dom.tvdPreviewTitle.innerHTML = `<a href="${escapeHTML(href)}" data-tvd-preview-open>${escapeHTML(site.label || `${indexRow.gene} N${site.position}`)}</a>`;
+      dom.tvdPreviewLink.href = href;
+      dom.tvdPreviewLink.hidden = false;
+      renderClassChart(site, dom.tvdPreviewChart, dom.tvdPreviewLegend, "age_bins");
+      [dom.tvdPreviewTitle.querySelector("a"), dom.tvdPreviewLink].forEach((link) => link.onclick = async (event) => {
+        event.preventDefault();
+        history.pushState({}, "", href);
+        await openProtein(indexRow, false);
+      });
+    } catch (error) {
+      if (request !== state.tvdPreviewRequest) return;
+      console.error(error);
+      dom.tvdPreviewTitle.textContent = "Glycosite composition with age";
+      dom.tvdPreviewChart.innerHTML = '<p class="empty-note">Composition data could not be loaded.</p>';
+    }
   }
 
   function selectedSite(organ) {
@@ -1012,7 +1041,7 @@
       header.className = "tooltip-header";
       header.textContent = target.dataset.tvdTitle;
       dom.tooltip.append(header);
-      [["TVD", target.dataset.tvdDifference], ["Raw p value", target.dataset.tvdP], [target.dataset.tvdSampleLabel0, target.dataset.tvdSampleValue0], [target.dataset.tvdSampleLabel1, target.dataset.tvdSampleValue1]].forEach(([label, value]) => {
+      [["TVD", target.dataset.tvdDifference], ["P value", target.dataset.tvdP], [target.dataset.tvdSampleLabel0, target.dataset.tvdSampleValue0], [target.dataset.tvdSampleLabel1, target.dataset.tvdSampleValue1]].forEach(([label, value]) => {
         const row = document.createElement("div");
         row.className = "tooltip-tvd-row";
         const name = document.createElement("span");

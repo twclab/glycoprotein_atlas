@@ -6,15 +6,15 @@
   <meta name="description" content="Explore age-associated protein abundance and site-resolved N-glycosylation across five mouse atlas organs and male and female myelin.">
   <title>The Glycoprotein Atlas</title>
   <link rel="icon" href="assets/glycan-5.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/styles.css?v=2026-10-28-explorer">
-  <script src="assets/theme.js?v=2026-09-30-review-r1" defer></script>
-  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-28-margin-offset">
+  <link rel="stylesheet" href="assets/styles.css?v=2026-10-28-age-views">
+  <script src="assets/theme.js?v=2026-10-28-age-views" defer></script>
+  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-28-age-views">
   <script src="assets/comparison-layout.js?v=2026-10-28-refinements-5" defer></script>
-  <script src="assets/comparisons.js?v=2026-10-28-margin-offset" defer></script>
+  <script src="assets/comparisons.js?v=2026-10-28-age-views" defer></script>
   <link rel="stylesheet" href="assets/methods.css?v=2026-10-28-fit-2">
   <script src="assets/methods.js?v=2026-10-28-permutation-scroll-3" defer></script>
   <script src="assets/protein-search.js?v=2026-10-28-uniprot-full" defer></script>
-  <script src="assets/app.js?v=2026-10-28-uniprot-full" defer></script>
+  <script src="assets/app.js?v=2026-10-28-age-views" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -190,20 +190,18 @@
     </section>
 
     <section class="content-page comparison-page" id="tvd" data-page="tvd" aria-label="Age comparisons" hidden>
-      <div class="comparison-intro"><h2>Age comparisons</h2><p>Find age-remodeled glycosites, follow the glycan types they lose and gain, and open each site in the explorer.</p></div>
+      <div class="comparison-intro"><h2>Age comparisons</h2></div>
       <div class="tvd-controls">
         <label>Dataset<select data-tvd-dataset></select></label>
         <label>Comparison<select data-tvd-comparison></select></label>
         <label>Find a protein or site<input type="search" data-tvd-search placeholder="Gene, alias, UniProt ID, or site"></label>
-        <div class="tvd-zoom"><span>Zoom</span><button type="button" data-tvd-zoom="1.5">+</button><button type="button" data-tvd-zoom="0.666667">−</button><button type="button" data-tvd-zoom="reset">Reset</button></div>
       </div>
       <div class="age-selection"><strong data-age-selection>Loading comparison…</strong></div>
-      <h3 class="age-plot-heading">Age-related composition changes</h3>
-      <div class="tvd-plot" data-tvd-plot><p class="empty-note">Loading age-comparison data…</p></div>
-      <p class="comparison-note">TVD measures the fraction of glycan-type composition redistributed (0–100%). Hits use raw permutation p &lt;0.05, without multiple-testing adjustment. Young (Y): 1–6 months; middle-aged (MA): 9–16 months; old (O): 19–28 months in atlas organs. Myelin uses cohort-specific ages.</p>
+      <div class="tvd-layout"><div class="tvd-plot" data-tvd-plot><p class="empty-note">Loading age-comparison data…</p></div><article class="tvd-preview" aria-live="polite"><h3 data-tvd-preview-title>Glycosite composition with age</h3><div class="scientific-chart" data-tvd-preview-chart><p class="empty-note">Select a glycosite in the plot.</p></div><div class="chart-legend" data-tvd-preview-legend></div><a data-tvd-preview-link href="#explore" hidden>See more about this site</a></article></div>
+      <p class="comparison-note" data-tvd-note>TVD measures the fraction of glycan-type composition redistributed (0–100%). Young (Y): 1–6 months; Middle age (MA): 9–16 months; Old (O): 19–28 months.</p>
       <div class="comparison-grid age-grid">
-        <article class="comparison-card"><h3 data-age-matrix-title>Glycan gains and losses</h3><p class="comparison-note" data-age-direction-note></p><div class="comparison-scroll" data-age-matrix></div></article>
-        <article class="comparison-card"><div class="comparison-heading"><h3>Browse age hits</h3><strong data-age-hit-count aria-live="polite"></strong></div><p class="comparison-note" data-age-active-filter>All glycan changes</p><p class="comparison-note">Mean changes are in percentage points. Shares use separate gain and loss totals.</p><button class="comparison-reset" type="button" data-age-clear>Clear glycan filter</button><div class="comparison-hit-scroll" tabindex="0" role="region" aria-label="All matching age-comparison hits" data-age-hits></div></article>
+        <article class="comparison-card"><h3 data-age-matrix-title>Glycan type gains and losses</h3><div class="comparison-scroll" data-age-matrix></div></article>
+        <article class="comparison-card"><div class="comparison-heading"><h3 data-age-hits-title>Browse hits</h3><strong data-age-hit-count aria-live="polite"></strong></div><p class="comparison-note" data-age-active-filter>All glycan changes</p><button class="comparison-reset" type="button" data-age-clear>Clear glycan filter</button><div class="comparison-hit-scroll" tabindex="0" role="region" aria-label="All matching age-comparison hits" data-age-hits></div></article>
       </div>
     </section>
 

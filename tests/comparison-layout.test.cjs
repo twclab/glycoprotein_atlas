@@ -81,7 +81,7 @@ test('paper pair order and display orientation keep signed scores and compositio
   }
 });
 
-test('rendered matrix labels its loss rows and gain columns with correct marginal counts', async () => {
+test('rendered matrix uses colored gain and loss headers without marginal totals', async () => {
   const vm = require('node:vm');
   const layout = require('../assets/comparison-layout.js');
   const manifest = data('manifest.json'), hits = data('atlas_brain_O_vs_Y_hits.json');
@@ -110,23 +110,18 @@ test('rendered matrix labels its loss rows and gain columns with correct margina
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8'), context);
   await context.window.ATLAS_COMPARISONS.renderAge({ dataset: 'atlas_brain', comparison: 'O_vs_Y', query: '' });
   const html = node('[data-age-matrix]').innerHTML;
-  assert.match(html, /<thead>.*<th scope="col" class="matrix-loss-end"><span>All losses<\/span><\/th>/);
-  assert.match(html, /<tfoot><tr class="matrix-gain-labels"><td colspan="3" aria-hidden="true"><\/td>/);
-  assert.match(html, /<th class="matrix-gain-end" scope="row">All gains<\/th>/);
-  assert.match(html, /aria-label="All Paucimannose gains: 26 hits"[^>]*class="matrix-margin-button"[^>]*><span>26<\/span><\/button>/);
-  assert.match(html, /aria-label="All Paucimannose losses: 1 hit"[^>]*class="matrix-margin-button"[^>]*><span>1<\/span><\/button>/);
-  const margins = [...html.matchAll(/aria-label="All [^"]+ (losses|gains): ([\d,]+) hits?"[^>]*class="matrix-margin-button"[^>]*style="background:[^"]+"/g)];
-  assert.equal(margins.length, 18);
-  for (const direction of ['losses', 'gains']) {
-    assert.equal(margins.filter(match => match[1] === direction).reduce((sum, match) => sum + Number(match[2].replaceAll(',', '')), 0), hits.length);
-  }
-  assert.equal((html.match(/<tfoot>/g) || []).length, 1);
-  assert.doesNotMatch(html, /matrix-total|legend-swatch/);
+  assert.match(html, /Dominant glycan type loss/);
+  assert.match(html, /<caption>Dominant glycan type gain<\/caption>/);
+  assert.match(html, /Number of glycosites/);
+  assert.match(html, /<span>1<\/span><span>10<\/span><span>20<\/span><span>30\+<\/span>/);
+  assert.doesNotMatch(html, /All gains|All losses|<tfoot>|>0<\/button>/);
+  assert.match(html, /aria-label="Paucimannose gain: 26 hits"/);
+  assert.match(html, /aria-label="Paucimannose loss: 1 hit"/);
   const rows = [...html.matchAll(/<th scope="row"><button[^>]*data-loss="([^"]+)"/g)].map(match => match[1]);
   assert.deepEqual(rows, [...layout.MATRIX_CLASSES].reverse());
-  node('[data-age-matrix]').querySelectorAll('button').find(button => button.margin && button.dataset.loss === 'paucimannose').click();
+  node('[data-age-matrix]').querySelectorAll('button').find(button => button.dataset.loss === 'paucimannose' && !button.dataset.gain).click();
   assert.equal(node('[data-age-hit-count]').textContent, '1 of 158 hits');
   node('[data-age-clear]').onclick();
-  node('[data-age-matrix]').querySelectorAll('button').find(button => button.margin && button.dataset.gain === 'paucimannose').click();
+  node('[data-age-matrix]').querySelectorAll('button').find(button => button.dataset.gain === 'paucimannose' && !button.dataset.loss).click();
   assert.equal(node('[data-age-hit-count]').textContent, '26 of 158 hits');
 });
