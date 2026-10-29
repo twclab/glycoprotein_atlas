@@ -120,6 +120,23 @@ test('comparison filters use exact identities before partial names', () => {
   assert.equal(ambiguous.matchesProtein('P3','shared marker'), false);
 });
 
+test('age comparisons retain canonical protein prefixes when a query is also an exact alias', () => {
+  const names = create([
+    {protein_id:'P1', gene:'Other', description:'one'},
+    {protein_id:'P2', gene:'Target1', description:'two'},
+    {protein_id:'P3', gene:'Target2', description:'three'},
+    {protein_id:'TARGET4', gene:'Different', description:'four'},
+  ], {P1:['Target']});
+  const ageMatch = id => names.matchesProtein(id, 'tar', '', {includeCanonicalPrefixes:true});
+  assert.equal(names.matchesProtein('P2', 'target'), false, 'default exact-alias behavior is unchanged');
+  assert.equal(names.matchesProtein('P1', 'target', '', {includeCanonicalPrefixes:true}), true);
+  assert.equal(names.matchesProtein('P2', 'target', '', {includeCanonicalPrefixes:true}), true);
+  assert.equal(names.matchesProtein('P3', 'target', '', {includeCanonicalPrefixes:true}), true);
+  assert.equal(names.matchesProtein('TARGET4', 'target', '', {includeCanonicalPrefixes:true}), true);
+  assert.equal(ageMatch('P2'), true, 'shorter prefixes still match');
+  assert.equal(names.matchesProtein('P2', 'unrelated', '', {includeCanonicalPrefixes:true}), false);
+});
+
 
 test('every downloaded UniProt name resolves to its original atlas accession', () => {
   const reference = JSON.parse(fs.readFileSync(path.join(__dirname, '../scripts/reference/uniprot-protein-names.json')));

@@ -439,9 +439,12 @@ a { color: inherit; }
     linear-gradient(180deg, var(--paper), var(--white) 45%);
 }
 #tvd.content-page {
-  padding-top: 110px;
+  padding: 84px max(clamp(20px, 3vw, 50px), calc((100% - 1600px) / 2)) 90px;
   background: linear-gradient(180deg, var(--paper), var(--white) 45%);
 }
+#tvd .comparison-intro { margin-bottom: 8px; }
+#tvd .tvd-controls { margin: 10px 0 6px; }
+#tvd .age-selection { margin: 4px 0 10px; padding: 8px 0; }
 #contact.content-page, #raw-data.content-page { padding-top: 110px; }
 #raw-data .page-grid { margin-top: 0; }
 .page-hero { max-width: 850px; }
@@ -791,6 +794,11 @@ body.exploring .content-page { display: none; }
 .tvd-controls { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin: 30px 0 16px; }
 .tvd-controls label { display: grid; gap: 5px; color: var(--ink-soft); font-size: 13px; font-weight: 700; }
 .tvd-controls select, .tvd-controls input { min-width: 150px; height: 40px; border: 1px solid var(--gray-300); border-radius: 8px; padding: 0 10px; background: white; color: var(--ink); }
+.tvd-controls input { box-sizing: border-box; width: min(370px, calc(100vw - 48px)); }
+.tvd-search-control { display: flex; align-items: end; gap: 10px; min-width: 0; }
+.tvd-search-control label { min-width: 0; }
+.tvd-search-control button { height: 40px; padding: 0 14px; border: 1px solid var(--gray-300); border-radius: 8px; background: white; color: var(--teal-900); cursor: pointer; white-space: nowrap; }
+.tvd-search-control button:disabled { color: var(--gray-500); cursor: default; }
 .tvd-zoom { display: flex; align-items: center; gap: 4px; height: 40px; }
 .tvd-zoom span { margin-right: 5px; color: var(--ink-soft); font-size: 13px; }
 .tvd-zoom button { height: 34px; border: 1px solid var(--gray-300); border-radius: 6px; background: white; cursor: pointer; }
@@ -803,7 +811,6 @@ body.exploring .content-page { display: none; }
 .tvd-plot circle { cursor: pointer; }
 .tvd-plot circle.search-hit { stroke: #173A78; stroke-width: 1.5; }
 .tvd-plot circle:hover, .tvd-plot circle:focus { stroke: var(--ink); stroke-width: 2; }
-.tvd-count { margin: 4px 0; color: var(--ink-soft); font-size: 13px; }
 .tooltip.tvd-tooltip { max-width: min(490px, calc(100vw - 16px)); }
 .tooltip-tvd-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: baseline; margin-top: 7px; }
 .tooltip-tvd-row strong { white-space: nowrap; }
@@ -823,6 +830,9 @@ body.exploring .content-page { display: none; }
   .explore-top-actions { grid-column: 1; }
   .explore-view { padding-top: 119px; }
   .tvd-controls { display: grid; }
+  .tvd-search-control { width: 100%; }
+  .tvd-search-control label { flex: 1; }
+  .tvd-search-control input { width: 100%; min-width: 0; }
 }
 
 /* E330 review: keep scientific controls and legends stable across proteins. */
@@ -1035,16 +1045,29 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
 }
 .exact-row .exact-name { justify-content: flex-end; text-align: right; padding-right: 8px; }
 .exact-age-heading span { font-size: var(--text-axis); }
-.tvd-layout { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(300px,1fr); gap: 18px; align-items: start; }
+.tvd-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,580px); gap: 18px; align-items: stretch; }
+.tvd-panel { display: flex; min-width: 0; flex-direction: column; }
+.tvd-panel > :last-child { flex: 1; }
 .tvd-layout .tvd-plot svg { min-width: 440px; }
-.tvd-preview { min-width: 0; padding: 18px; border: 1px solid var(--gray-100); border-radius: 12px; background: white; }
-.tvd-preview h3 { margin: 0 0 12px; font-size: 19px; line-height: 1.3; }
-.tvd-preview h3 a, .tvd-preview > a { color: var(--teal-900); text-underline-offset: 3px; }
-.tvd-preview .scientific-chart { min-width: 0; }
-.tvd-preview .scientific-chart svg { display: block; width: 100%; }
-.tvd-preview .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0; font-size: 12px; }
-.tvd-preview .chart-legend .legend-item { display: inline-flex; align-items: center; gap: 4px; }
-.tvd-preview > a { display: inline-block; margin-top: 6px; font-size: 14px; }
-.tvd-preview > a[hidden] { display: none; }
+/* The first column is Explore's single-chart width: its 1600px dashboard has four 12px-gapped columns at a 1.02:1:1:1 ratio. */
+.tvd-preview { --explore-card-width: calc((min(1600px, 100vw - clamp(40px, 6vw, 100px)) - 36px) / 4.02); display: grid; min-width: 0; grid-template-columns: calc(var(--explore-card-width) - 2px) minmax(0,1fr); gap: 12px; align-content: start; padding: 0; }
+.tvd-preview-plot { min-width: 0; overflow-x: auto; padding: 13px; }
+.tvd-preview .scientific-chart { width: 100%; margin-top: 7px; }
+.tvd-preview .chart-legend { display: grid; grid-template-columns: minmax(0,1fr); align-content: start; justify-content: start; gap: 6px; margin: 28px 12px 0 0; }
+.tvd-preview .legend-item { font-size: 14px; line-height: 1.2; }
+.tvd-panel .age-selection a { color: var(--teal-900); text-underline-offset: 3px; }
 .tvd-plot circle.selected-site { stroke: var(--ink); stroke-width: 2.5; fill-opacity: 1; }
-@media (max-width: 950px) { .tvd-layout { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 1400px) {
+  .tvd-layout { grid-template-columns: minmax(0,1fr); }
+  .tvd-preview { grid-template-columns: 352px minmax(0,1fr); }
+  .tvd-preview-plot { padding: 8px; }
+  .tvd-preview .scientific-chart { width: 336px; margin-top: 12px; }
+}
+@media (max-width: 720px) {
+  #tvd.content-page { padding: 112px 18px 70px; }
+  .tvd-preview { grid-template-columns: minmax(0,352px) minmax(0,1fr); }
+}
+@media (max-width: 570px) {
+  .tvd-preview { grid-template-columns: minmax(0,1fr); }
+  .tvd-preview .chart-legend { grid-template-columns: repeat(2,minmax(0,1fr)); margin: 8px 12px 12px; }
+}

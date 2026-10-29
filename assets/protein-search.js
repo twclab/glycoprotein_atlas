@@ -57,7 +57,7 @@
         const id = canonical.get(q)?.values().next().value || alternate.get(q)?.values().next().value;
         return byProtein.get(id)?.row;
       },
-      matchesProtein(proteinId, query, siteText = "") {
+      matchesProtein(proteinId, query, siteText = "", {includeCanonicalPrefixes = false} = {}) {
         if (!String(query || "").trim()) return true;
         const q = normalize(query), record = byProtein.get(proteinId);
         if (!q) return false;
@@ -66,7 +66,11 @@
           const exact = [...(canonical.get(q) || []), ...(alternate.get(q) || [])];
           exactProteinIds = exact.length ? new Set(exact) : null;
         }
-        return exactProteinIds ? exactProteinIds.has(proteinId) : !!record && Number.isFinite(score(record, q)) || normalize(siteText).includes(q);
+        const canonicalPrefix = includeCanonicalPrefixes && !!record &&
+          (record.gene.startsWith(q) || record.protein.startsWith(q));
+        return exactProteinIds
+          ? exactProteinIds.has(proteinId) || canonicalPrefix
+          : (!!record && Number.isFinite(score(record, q))) || normalize(siteText).includes(q);
       },
     };
   }

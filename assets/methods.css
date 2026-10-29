@@ -26,7 +26,7 @@
 .permutation-step:last-child { margin-bottom: 0; }
 .permutation-step figure { width: 100%; max-width: min(411px,calc((100svh - 200px)*.60465)); margin: 0 auto 28px; }
 .permutation-story.is-scroll-story { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); align-items: start; gap: 36px; }
-.methods-section:has(.is-scroll-story) > h3 { position: sticky; top: 88px; z-index: 2; margin-bottom: 20px; padding: 4px 0 8px; background: white; }
+.methods-section:has(.is-scroll-story) > h3 { position: sticky; top: 88px; z-index: 2; width: max-content; max-width: 100%; margin-bottom: 20px; padding: 4px 0 8px; background: white; }
 .is-scroll-story .permutation-stage { position: sticky; top: 148px; height: min(680px,calc(100svh - 200px)); }
 .is-scroll-story .permutation-stage figure { height: 100%; margin: 0; }
 .is-scroll-story .permutation-stage img { height: 100%; object-fit: contain; }

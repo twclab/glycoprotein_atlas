@@ -2,12 +2,13 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { windowRange, changeCounts } = require('../assets/comparison-layout.js');
+const { ROW_HEIGHT, windowRange, changeCounts } = require('../assets/comparison-layout.js');
 const data = name => JSON.parse(fs.readFileSync(path.join(__dirname, '../data/comparisons', name)));
 
 test('the full 5,266-site list mounts a bounded first window', () => {
+  assert.equal(ROW_HEIGHT, 84);
   const range = windowRange(5266, 0, 500);
-  assert.deepEqual(range, { start: 0, end: 24, before: 0, after: 5242 * 104 });
+  assert.deepEqual(range, { start: 0, end: 24, before: 0, after: 5242 * ROW_HEIGHT });
 });
 test('empty and short lists have no phantom spacer rows', () => {
   assert.deepEqual(windowRange(0, 0, 500), { start: 0, end: 0, before: 0, after: 0 });
@@ -15,24 +16,24 @@ test('empty and short lists have no phantom spacer rows', () => {
 });
 test('every site is reachable, including after a direct jump to the end', () => {
   for (let index = 0; index < 5266; index++) {
-    const range = windowRange(5266, index * 104, 500);
+    const range = windowRange(5266, index * ROW_HEIGHT, 500);
     assert.ok(range.start <= index && range.end > index);
     assert.ok(range.end - range.start <= 24);
-    assert.equal(range.before + (range.end - range.start) * 104 + range.after, 5266 * 104);
+    assert.equal(range.before + (range.end - range.start) * ROW_HEIGHT + range.after, 5266 * ROW_HEIGHT);
   }
   assert.equal(windowRange(5266, Number.MAX_SAFE_INTEGER, 500).end, 5266);
 });
 test('a selected site centered in the scroll pane is always mounted', () => {
   for (const index of [0, 1, 400, 800, 5265]) {
-    const range = windowRange(5266, Math.max(0, index * 104 - (500 - 104) / 2), 500);
+    const range = windowRange(5266, Math.max(0, index * ROW_HEIGHT - (500 - ROW_HEIGHT) / 2), 500);
     assert.ok(range.start <= index && range.end > index);
   }
 });
 test('fractional scroll and different pane heights preserve the visible rows', () => {
   for (const height of [180, 420, 500, 1200]) {
-    const range = windowRange(5266, 10400.5, height);
+    const range = windowRange(5266, 100 * ROW_HEIGHT + 0.5, height);
     assert.ok(range.start <= 100);
-    assert.ok(range.end >= 100 + Math.ceil(height / 104));
+    assert.ok(range.end >= 100 + Math.ceil(height / ROW_HEIGHT));
   }
 });
 test('filtering a scrolled list cannot leave an empty window past its end', () => {
@@ -81,7 +82,7 @@ test('paper pair order and display orientation keep signed scores and compositio
   }
 });
 
-test('rendered matrix uses colored gain and loss headers without marginal totals', async () => {
+test('rendered matrix keeps colored count totals at left and below the heatmap', async () => {
   const vm = require('node:vm');
   const layout = require('../assets/comparison-layout.js');
   const manifest = data('manifest.json'), hits = data('atlas_brain_O_vs_Y_hits.json');
@@ -109,14 +110,20 @@ test('rendered matrix uses colored gain and loss headers without marginal totals
     fetch: async url => ({ ok: true, json: async () => url.includes('manifest.json') ? manifest : hits }) };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8'), context);
   await context.window.ATLAS_COMPARISONS.renderAge({ dataset: 'atlas_brain', comparison: 'O_vs_Y', query: '' });
+  for (const selector of ['[data-age-selection]', '[data-age-matrix-title]', '[data-age-hits-title]']) {
+    assert.match(node(selector).innerHTML, /<span class="comparison-organ" style="color:#D98276">Brain \(Old versus Young\)<\/span>/);
+  }
   const html = node('[data-age-matrix]').innerHTML;
   assert.match(html, /Dominant glycan type loss/);
-  assert.match(html, /<caption>Dominant glycan type gain<\/caption>/);
+  assert.match(html, /<tfoot><tr class="matrix-gain-totals">/);
+  assert.match(html, /<th colspan="9" class="matrix-gain-title">Dominant glycan type gain<\/th>/);
   assert.match(html, /Number of glycosites/);
-  assert.match(html, /<span>1<\/span><span>10<\/span><span>20<\/span><span>30\+<\/span>/);
-  assert.doesNotMatch(html, /All gains|All losses|<tfoot>|>0<\/button>/);
+  assert.match(html, /<div class="matrix-count-scale"><span>1<\/span><i aria-hidden="true"><\/i><span>30\+<\/span><\/div>/);
+  assert.doesNotMatch(html, /All gains|All losses|<thead>|>0<\/button>/);
   assert.match(html, /aria-label="Paucimannose gain: 26 hits"/);
   assert.match(html, /aria-label="Paucimannose loss: 1 hit"/);
+  assert.match(html, /data-gain="paucimannose"[^>]*class="matrix-margin-button"[^>]*><span>26<\/span><\/button>/);
+  assert.match(html, /data-loss="paucimannose"[^>]*class="matrix-margin-button"[^>]*><span>1<\/span><\/button>/);
   const rows = [...html.matchAll(/<th scope="row"><button[^>]*data-loss="([^"]+)"/g)].map(match => match[1]);
   assert.deepEqual(rows, [...layout.MATRIX_CLASSES].reverse());
   node('[data-age-matrix]').querySelectorAll('button').find(button => button.dataset.loss === 'paucimannose' && !button.dataset.gain).click();

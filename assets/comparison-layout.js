@@ -1,7 +1,7 @@
 /* Pure layout calculations shared by the browser and regression tests. */
 (() => {
   'use strict';
-  const ROW_HEIGHT = 104;
+  const ROW_HEIGHT = 84;
   const PAIR_STYLES = Object.freeze([
     { key: 'liver__kidney', organs: ['kidney', 'liver'], color: '#5AA150' },
     { key: 'brain__liver', organs: ['brain', 'liver'], color: '#F28E2C' },
