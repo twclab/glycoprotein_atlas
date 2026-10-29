@@ -70,9 +70,9 @@ test('selected pair is named above the list and reset clears every list filter',
   const firstRow = pairTable.match(/<tr class="site-row[^>]*>[\s\S]*?<\/tr>/)[0];
   assert.match(firstRow, /<small>[^<]+<\/small><\/th><td><div class="comparison-pair"><span>Kidney<\/span><span>Liver<\/span><\/div><\/td>/);
   assert.doesNotMatch(firstRow.match(/<small>[^<]+<\/small>/)[0], /Kidney|Liver| v /);
-  assert.match(pairTable, /<div class="composition-bar-pair" data-hover-label="/);
+  assert.match(pairTable, /<div class="composition-bar-pair"><div class="comparison-composition-bar composition-bar"/);
   assert.match(pairTable, /<div class="inter-metric-values"[^>]*><span>[\d.]+<\/span><span>[\d.]+<\/span><\/div>/);
-  assert.match(firstRow, /<\/div><\/td><td><div class="composition-bar-pair" data-hover-label="/);
+  assert.match(firstRow, /<\/div><\/td><td><div class="composition-bar-pair"><div class="comparison-composition-bar composition-bar"/);
   assert.match(firstRow, /<\/div><\/td><td><div class="inter-metric-values"/);
   assert.match(firstRow, /<\/div><\/td><td>[\d.]+<\/td><\/tr>/);
   assert.match(pairTable, /class="window-spacer"[^>]*><td colspan="5"/);
@@ -94,11 +94,13 @@ test('selected pair is named above the list and reset clears every list filter',
   assert.equal((node('[data-inter-hits]').innerHTML.match(/class="site-row /g) || []).length, 24);
 });
 
-test('either composition bar gives the complete paired composition and glycoPSM evidence', async () => {
+test('each composition bar gives only its own organ composition and glycoPSM evidence', async () => {
   const {api, node} = browser();
   await api.loadInter();
   node('[data-inter-pair]').onchange({target: {value: 'brain__liver'}});
   const table = node('[data-inter-hits]').innerHTML;
-  assert.match(table, /data-hover-label="Ckap5 N449 · 15 total glycoPSMs\nBrain \(10 glycoPSMs\): High mannose 60\.0%, Paucimannose 10\.0%, Undecorated 20\.0%, Fucosylated 10\.0%\nLiver \(5 glycoPSMs\): Sialylated 100\.0%"/);
+  assert.match(table, /data-hover-label="Ckap5 N449 · Brain · 10 total glycoPSMs\nHigh mannose 60\.0%, Paucimannose 10\.0%, Undecorated 20\.0%, Fucosylated 10\.0%"/);
+  assert.match(table, /data-hover-label="Ckap5 N449 · Liver · 5 total glycoPSMs\nSialylated 100\.0%"/);
+  assert.doesNotMatch(table, /Ckap5 N449 · 15 total glycoPSMs/);
   assert.doesNotMatch(table, /<i[^>]+data-hover-label=/);
 });

@@ -91,11 +91,9 @@
   function compositionDescription(values) {
     return CLASS_ORDER.map((name,i)=>values[i]>0?`${classLabel(name)} ${fmt(values[i])}%`:null).filter(Boolean).join(', ');
   }
-  function compositionBar(values, organ) {
-    return `<div class="comparison-composition-bar composition-bar" role="img" aria-label="${esc(`${labels[organ]}: ${compositionDescription(values)}`)}">${CLASS_ORDER.map((name,i)=>values[i]>0?`<i style="width:${values[i]}%;background:${paint(name)}"></i>`:'').join('')}</div>`;
-  }
-  function compositionHover(row, a, b) {
-    return `${row.glycosite} · ${num(row.psm_a + row.psm_b)} total glycoPSMs\n${labels[a]} (${num(row.psm_a)} glycoPSMs): ${compositionDescription(row.composition_a)}\n${labels[b]} (${num(row.psm_b)} glycoPSMs): ${compositionDescription(row.composition_b)}`;
+  function compositionBar(values, organ, glycosite, psm) {
+    const description = `${glycosite} · ${labels[organ]} · ${num(psm)} total glycoPSMs\n${compositionDescription(values)}`;
+    return `<div class="comparison-composition-bar composition-bar" role="img" aria-label="${esc(description)}" data-hover-label="${esc(description)}">${CLASS_ORDER.map((name,i)=>values[i]>0?`<i style="width:${values[i]}%;background:${paint(name)}"></i>`:'').join('')}</div>`;
   }
   function changeDetails(row) {
     if (!row.changes) return '';
@@ -113,7 +111,7 @@
       const a = organ || row.organs[0], b = row.organs?.[1], selected = !ageHits && row.pair===inter.pair && row.site_key===inter.selectedSite;
       const cells = ageHits
         ? `<td>${fmt(row.percent_difference)}</td><td>${Number(row.p_value).toExponential(2)}</td><td>${swatch(row.loss)}${esc(classLabel(row.loss))} → ${swatch(row.gain)}${esc(classLabel(row.gain))}${row.changes?`<details class="change-details" data-change-site="${esc(row.site_key)}"><summary>Glycan type composition changes</summary></details>`:''}</td>`
-        : `<td><div class="comparison-pair"><span>${esc(labels[a])}</span><span>${esc(labels[b])}</span></div></td><td><div class="composition-bar-pair" data-hover-label="${esc(compositionHover(row,a,b))}">${compositionBar(row.composition_a,a)}${compositionBar(row.composition_b,b)}</div></td><td>${pairedWeightedValues(row.effective_a,row.effective_b,[a,b])}</td><td>${fmt(row.tvd)}</td>`;
+        : `<td><div class="comparison-pair"><span>${esc(labels[a])}</span><span>${esc(labels[b])}</span></div></td><td><div class="composition-bar-pair">${compositionBar(row.composition_a,a,row.glycosite,row.psm_a)}${compositionBar(row.composition_b,b,row.glycosite,row.psm_b)}</div></td><td>${pairedWeightedValues(row.effective_a,row.effective_b,[a,b])}</td><td>${fmt(row.tvd)}</td>`;
       return `<tr class="${ageHits?'':'site-row'} ${selected?'selected-site':''}" ${selected?'data-selected-site tabindex="-1"':''} ${ageHits?'':`aria-rowindex="${startIndex+index+2}"`}><th scope="row"><a data-comparison-site data-hover-label="${esc(`${row.glycosite} · ${row.protein_id} · ${labels[a]}${b?` v ${labels[b]}`:''} · Open in Explore`)}" href="${esc(siteHref(row, a, b))}">${esc(row.glycosite)}</a><small>${esc(row.protein_id)}${ageHits && row.organs ? ` · ${esc(row.organs.map(x => labels[x]).join(' v '))}` : ''}</small></th>${cells}</tr>`;
     }).join('');
   }
