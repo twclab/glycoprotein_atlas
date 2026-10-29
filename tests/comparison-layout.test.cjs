@@ -5,6 +5,73 @@ const path = require('node:path');
 const { ROW_HEIGHT, windowRange, changeCounts } = require('../assets/comparison-layout.js');
 const data = name => JSON.parse(fs.readFileSync(path.join(__dirname, '../data/comparisons', name)));
 
+test('visible relation labels use spaces around their symbols', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8');
+  assert.match(html, /low-confidence glycosite \(&lt; 5 glycoPSMs\)/);
+  assert.match(app, /Low-confidence site \(< 5 glycoPSMs\)/);
+  assert.match(app, /n = \$\{point\.n\}/);
+  assert.match(app, /n = \$\{row\.n\}/);
+  assert.match(app, /"n = " \+ row\.n/);
+  assert.match(comparisons, />n = 0<\/text>/);
+  assert.match(comparisons, /<small>n = \$\{num\(n\)\}<\/small>/);
+});
+
+test('visible glycan type terminology is not hyphenated', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8');
+  assert.match(html, /Shannon H measures glycan type diversity and evenness/);
+  assert.doesNotMatch(html, /glycan-type diversity/i);
+  assert.doesNotMatch(comparisons, /Glycan-type colors|glycan-type heterogeneity/i);
+});
+
+test('myelin labels use lowercase female and male across views', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  for (const source of [app, comparisons]) {
+    assert.match(source, /myelin_male: "Myelin \(male\)"/);
+    assert.match(source, /myelin_female: "Myelin \(female\)"/);
+    assert.doesNotMatch(source, /Myelin \((?:Male|Female)\)/);
+  }
+  assert.doesNotMatch(styles, /\.segment-organ-row > strong \{[^}]*text-transform: capitalize/);
+});
+
+test('age cards and square matrix cells stay bounded on wide and short screens', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
+  assert.match(css, /\.age-grid \{ grid-template-columns: minmax\(0,min\(680px,56%\)\) minmax\(0,1fr\); height: auto; \}/);
+  assert.match(css, /\.age-grid \.comparison-scroll \{ max-width: 544px; align-content: start; \}/);
+  const matrixRule = css.match(/\.age-grid \.gain-loss-matrix \{([^}]*)\}/g)?.at(-1);
+  assert.ok(matrixRule, 'the age matrix has its own sizing rule');
+  assert.match(matrixRule, /--matrix-cell: clamp\(14px, min\([^;]*100cqi[^;]*100svh[^;]*\), 48px\)/);
+  assert.match(matrixRule, /width: calc\(10 \* var\(--matrix-cell\) \+ 64px\)/);
+  assert.match(css, /\.age-grid \.comparison-hit-scroll \{ contain: size; flex: 1; height: 0; \}/);
+});
+
+test('inter-organ page uses the age page width and top alignment without changing plot height', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assert.match(styles, /#tvd\.content-page, #inter-organ\.content-page \{\s*padding: 84px max\(clamp\(20px, 3vw, 50px\), calc\(\(100% - 1600px\) \/ 2\)\) 90px;/);
+  assert.match(styles, /#tvd\.content-page, #inter-organ\.content-page, #methods\.content-page, #contact\.content-page \{\s*background: linear-gradient\(180deg, var\(--paper\), var\(--white\) 45%\);/);
+  assert.match(comparisons, /#inter-organ \.comparison-intro \{ margin-bottom: 8px; \}/);
+  assert.match(comparisons, /#inter-organ > \[data-inter-content\] > \.comparison-toolbar \{ margin: 10px 0 6px; \}/);
+  assert.match(comparisons, /\.inter-grid \{ grid-template-columns: minmax\(0, 1\.15fr\) minmax\(0, 1fr\); align-items: stretch; \}/);
+  assert.match(comparisons, /#inter-organ \.inter-grid \{ margin-top: 18px; \}/);
+  assert.match(comparisons, /\.inter-grid > \.comparison-card \{ padding: 14px 20px; \}/);
+  assert.match(comparisons, /\.inter-hit-scroll \{ height: 410px;/);
+  assert.match(html, /<section class="content-page comparison-page" id="inter-organ"[^>]*>\s*<div class="comparison-intro"><h2>Inter-organ comparisons<\/h2><\/div>/);
+});
+
+test('contact cards identify author roles without the introductory sentence', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  assert.doesNotMatch(html, /For questions about the atlas and the study, contact:/);
+  assert.match(html, /<h3>Michael Schoof<\/h3><p class="contact-role">Lead author<\/p>/);
+  assert.match(html, /<h3>Tony Wyss-Coray<\/h3><p class="contact-role">Corresponding author<\/p>/);
+  assert.match(html, /<h3>Carolyn Bertozzi<\/h3><p class="contact-role">Corresponding author<\/p>/);
+});
+
 test('the full 5,266-site list mounts a bounded first window', () => {
   assert.equal(ROW_HEIGHT, 84);
   const range = windowRange(5266, 0, 500);
@@ -114,9 +181,12 @@ test('rendered matrix keeps colored count totals at left and below the heatmap',
     assert.match(node(selector).innerHTML, /<span class="comparison-organ" style="color:#D98276">Brain \(Old versus Young\)<\/span>/);
   }
   const html = node('[data-age-matrix]').innerHTML;
-  assert.match(html, /Dominant glycan type loss/);
+  assert.match(html, /class="matrix-loss-title"><span>Dominant glycan type loss<\/span><\/th>/);
   assert.match(html, /<tfoot><tr class="matrix-gain-totals">/);
-  assert.match(html, /<th colspan="9" class="matrix-gain-title">Dominant glycan type gain<\/th>/);
+  assert.match(html, /<th colspan="9" class="matrix-gain-title"><span>Dominant glycan type gain<\/span><\/th>/);
+  const css = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
+  assert.match(css, /\.matrix-gain-title \{[^}]*font-weight: 400;[^}]*100% 2px no-repeat/);
+  assert.match(css, /\.matrix-loss-title \{[^}]*font-weight: 400;[^}]*2px 100% no-repeat/);
   assert.match(html, /Number of glycosites/);
   assert.match(html, /<div class="matrix-count-scale"><span>1<\/span><i aria-hidden="true"><\/i><span>30\+<\/span><\/div>/);
   assert.doesNotMatch(html, /All gains|All losses|<thead>|>0<\/button>/);

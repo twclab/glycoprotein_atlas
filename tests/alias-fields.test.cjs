@@ -144,6 +144,16 @@ test('Age scatter highlights, age-hit filtering and the inter-organ list resolve
   assert.ok(mounted.length > 0 && mounted.every(found => found === id));
 });
 
+test('inter-organ search keeps canonical prefixes while exact short aliases are present', async () => {
+  const view = await browser();
+  await view.comparisons.loadInter();
+  for (const [query, count] of [['a', 5077], ['as', 23], ['asa', 18], ['asah', 17], ['asah1', 13]]) {
+    view.node('[data-inter-search]').oninput({target: {value: query}});
+    assert.equal(view.node('[data-inter-count]').textContent, `${count.toLocaleString('en-US')} of 5,266`, query);
+  }
+  assert.match(view.node('[data-inter-hits]').innerHTML, /Asah1 N258/);
+});
+
 test('Browse hits reset also clears the Age search, selected dot, and preview', async () => {
   const view = await browser();
   await view.loadTVD(); await settle();

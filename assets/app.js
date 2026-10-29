@@ -2,7 +2,7 @@
   "use strict";
 
   const ORGANS = ["brain", "spleen", "liver", "kidney", "plasma", "myelin_male", "myelin_female"];
-  const ORGAN_LABELS = { brain: "Brain", spleen: "Spleen", liver: "Liver", kidney: "Kidney", plasma: "Plasma", myelin_male: "Myelin (Male)", myelin_female: "Myelin (Female)" };
+  const ORGAN_LABELS = { brain: "Brain", spleen: "Spleen", liver: "Liver", kidney: "Kidney", plasma: "Plasma", myelin_male: "Myelin (male)", myelin_female: "Myelin (female)" };
   const AGE_BINS = ["Y", "MA", "O"];
   const AGE_BIN_LABELS = { Y: "Y", MA: "MA", O: "O" };
   const PAGE_TITLES = {
@@ -684,7 +684,7 @@
       }).join("");
       const marks = points.map((point) => {
         const uncertainty = Number.isFinite(point.sem) ? ` ± ${point.sem.toFixed(1)}% SEM` : "";
-        const sampleSize = Number.isFinite(point.n) ? ` · n=${point.n}` : "";
+        const sampleSize = Number.isFinite(point.n) ? ` · n = ${point.n}` : "";
         return `<circle cx="${x(point.index)}" cy="${y(point.percent)}" r="3.5" fill="${name === "fucosylated_and_sialylated" ? "url(#dual-glycan)" : CLASS_COLORS[name]}" data-tooltip="${escapeHTML(`${labels[point.index]} · ${CLASS_LABELS[name]} ${point.percent.toFixed(1)}%${uncertainty}${sampleSize}`)}"></circle>`;
       }).join("");
       const line = name === "fucosylated_and_sialylated"
@@ -720,7 +720,7 @@
       const marks = valid.map((row) => {
         const px = x(row.age), py = y(row.mean), sem = row.sem || 0;
         const y1 = y(Math.min(max, row.mean + sem)), y2 = y(Math.max(min, row.mean - sem));
-        return `<path d="M${px},${y1}V${y2}M${px - 3.5},${y1}H${px + 3.5}M${px - 3.5},${y2}H${px + 3.5}" stroke="${ORGAN_COLORS[organ]}" stroke-width="1.1" opacity=".86"/><circle cx="${px}" cy="${py}" r="3.5" fill="${ORGAN_COLORS[organ]}" data-tooltip="${escapeHTML(`${ORGAN_LABELS[organ]} · ${row.age} months · mean ${row.mean.toFixed(3)} ± ${sem.toFixed(3)} SEM · n=${row.n}${row.n <= 2 ? " *" : ""}`)}"></circle>`;
+        return `<path d="M${px},${y1}V${y2}M${px - 3.5},${y1}H${px + 3.5}M${px - 3.5},${y2}H${px + 3.5}" stroke="${ORGAN_COLORS[organ]}" stroke-width="1.1" opacity=".86"/><circle cx="${px}" cy="${py}" r="3.5" fill="${ORGAN_COLORS[organ]}" data-tooltip="${escapeHTML(`${ORGAN_LABELS[organ]} · ${row.age} months · mean ${row.mean.toFixed(3)} ± ${sem.toFixed(3)} SEM · n = ${row.n}${row.n <= 2 ? " *" : ""}`)}"></circle>`;
       }).join("");
       return `<polyline points="${points}" fill="none" stroke="${ORGAN_COLORS[organ]}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${marks}`;
     }).join("");
@@ -760,7 +760,7 @@
       const upper = y(Math.min(max, value(row) + (sem || 0)));
       const lower = y(Math.max(0, value(row) - (sem || 0)));
       const error = Number.isFinite(sem) ? `<path d="M${px},${upper}V${lower}M${px - 3.5},${upper}H${px + 3.5}M${px - 3.5},${lower}H${px + 3.5}" stroke="#28768a" stroke-width="1.1" opacity=".86"/>` : "";
-      const tooltip = `${labels[index]} · ${pooled ? "pooled glycoPSMs" : "mean across detected samples"} · ${effective ? "weighted glycan types" : "Shannon H"} ${value(row).toFixed(3)}${Number.isFinite(sem) ? ` ± ${sem.toFixed(3)} SEM` : ""} · ${pooled ? row.pooled.glycosite_psms + " glycoPSMs" : "n=" + row.n}`;
+      const tooltip = `${labels[index]} · ${pooled ? "pooled glycoPSMs" : "mean across detected samples"} · ${effective ? "weighted glycan types" : "Shannon H"} ${value(row).toFixed(3)}${Number.isFinite(sem) ? ` ± ${sem.toFixed(3)} SEM` : ""} · ${pooled ? row.pooled.glycosite_psms + " glycoPSMs" : "n = " + row.n}`;
       return `${error}<circle cx="${px}" cy="${py}" r="3.4" fill="#28768a" data-tooltip="${escapeHTML(tooltip)}"></circle>`;
     }).join("");
     const axisTitle = effective ? "Weighted glycan types" : "Heterogeneity score (Shannon H)";
@@ -1121,7 +1121,7 @@
     if (site.total_psm < 5) {
       const warning = document.createElement("div");
       warning.className = "tooltip-warning";
-      warning.textContent = "* Low-confidence site (<5 glycoPSMs)";
+      warning.textContent = "* Low-confidence site (< 5 glycoPSMs)";
       dom.tooltip.append(warning);
     }
   }

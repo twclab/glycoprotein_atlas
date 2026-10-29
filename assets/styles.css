@@ -348,7 +348,7 @@ a { color: inherit; }
 .profile-site-label:hover, .profile-site-label:focus-visible { color: var(--teal-700); outline: 0; text-decoration: underline; }
 .segment-organ-rows { display: grid; gap: 6px; }
 .segment-organ-row { height: 33px; }
-.segment-organ-row > strong { padding-right: 10px; font-size: 12px; text-align: right; text-transform: capitalize; }
+.segment-organ-row > strong { padding-right: 10px; font-size: 12px; text-align: right; }
 .composition-tile { position: absolute; top: 2px; display: flex; width: 64px; height: 28px; overflow: visible; border: 1px solid rgba(18,45,42,.26); border-radius: 2px; padding: 0; background: var(--gray-100); cursor: pointer; transform: translateX(-50%); }
 .composition-tile i { display: block; height: 100%; }
 .composition-tile i:first-child { border-radius: 1px 0 0 1px; }
@@ -438,8 +438,10 @@ a { color: inherit; }
     radial-gradient(circle at 88% 4%, rgba(174, 226, 219, .34), transparent 25%),
     linear-gradient(180deg, var(--paper), var(--white) 45%);
 }
-#tvd.content-page {
+#tvd.content-page, #inter-organ.content-page {
   padding: 84px max(clamp(20px, 3vw, 50px), calc((100% - 1600px) / 2)) 90px;
+}
+#tvd.content-page, #inter-organ.content-page, #methods.content-page, #contact.content-page {
   background: linear-gradient(180deg, var(--paper), var(--white) 45%);
 }
 #tvd .comparison-intro { margin-bottom: 8px; }
@@ -1066,7 +1068,7 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
   .tvd-preview .scientific-chart { width: 336px; margin-top: 12px; }
 }
 @media (max-width: 720px) {
-  #tvd.content-page { padding: 112px 18px 70px; }
+  #tvd.content-page, #inter-organ.content-page { padding: 112px 18px 70px; }
   .tvd-preview { grid-template-columns: minmax(0,352px) minmax(0,1fr); }
 }
 @media (max-width: 570px) {

@@ -11,7 +11,7 @@ The gain/loss panel is **Figure 3C** in the supplied October draft. Age comparis
 | 3A | Age comparisons: TVD vs −log₁₀(p value) | Select a dataset/comparison and search; a point selects a composition preview with links to its precise glycosite in Explore |
 | 3C and S15D | Dominant loss/gain matrix | Cell selects both directions; colored count boxes at left and below the heatmap select one direction; full hit list includes expandable glycan type composition changes |
 | 2B | Inter-organ: atlas organs, TVD | All ten organ pairs; boxes filter the list, dots select and scroll to a list row, and its site link opens Explore |
-| 2C and S10 | Remodeling and glycan-type heterogeneity | All three remodeling states, six diversity relationships; click a segment to filter the site list |
+| 2C and S10 | Remodeling and glycan type heterogeneity | All three remodeling states, six diversity relationships; click a segment to filter the site list |
 | 4H | Inter-organ: brain and myelin | Brain/male myelin, brain/female myelin, male/female myelin distributions and complete site lists |
 | 1R and S3 | Methods and pairwise detail | TVD definition, percentage-point differences, Shannon H and weighted glycan types |
 

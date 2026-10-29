@@ -8,6 +8,7 @@
 .methods-section img { display: block; width: 100%; height: auto; }
 .methods-copy p { margin: 18px 0 0; color: var(--ink-soft); font-size: 18px; line-height: 1.7; }
 .methods-copy p:first-child { margin-top: 0; }
+.methods-copy p.methods-example-conclusion { margin-top: 36px; }
 .methods-carousel-stage { position: relative; aspect-ratio: 369.6468 / 99.1584; margin-bottom: 28px; }
 .methods-carousel-stage figure { position: absolute; inset: 0; margin: 0; }
 .methods-carousel-stage img { width: 100%; height: 100%; }
