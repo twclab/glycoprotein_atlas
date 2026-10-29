@@ -996,7 +996,9 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
 .abundance-scale-label { width: 100%; text-align: center; }
 .exact-name { border-right: 0; }
 .exact-age-heading span { border-bottom: 2px solid #111; color: var(--axis-ink); font-size: var(--text-axis); font-weight: 400; }
-.exact-head .exact-name, .exact-header { color: var(--ink-soft); font-family: var(--sans); font-size: var(--text-axis); font-weight: 400; }
+.exact-head .exact-name, .exact-header { font-family: var(--sans); font-size: var(--text-axis); font-weight: 400; }
+.exact-head .exact-name { color: var(--axis-ink); }
+.exact-header { color: var(--ink-soft); }
 @media (max-width: 1600px) {
   .chart-panel:has(.protein-legend-entry) { position: relative; }
   .protein-legend-entry .legend-note { position: absolute; top: 108px; left: 12px; z-index: 2; }
@@ -1031,7 +1033,7 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
 .abundance-scale span:first-child { text-align: right; }
 .abundance-scale span:last-child { text-align: left; }
 .abundance-scale i { width: 140px; }
-.exact-age-heading span { position: relative; border-bottom: 0; color: var(--ink-soft); }
+.exact-age-heading span { position: relative; border-bottom: 0; color: var(--axis-ink); }
 .exact-age-heading span::after { content: ""; position: absolute; top: calc(100% + 6px); left: 0; right: 0; height: 1px; background: var(--axis-ink); }
 
 /* Keep selector arrows close to the option text across the comparison and explorer controls. */
