@@ -1,5 +1,5 @@
 /* Comparison pages share the explorer's typography and glycan palette. */
-.comparison-page { padding-top: 115px; }
+.comparison-page { padding-top: var(--atlas-page-top); }
 .comparison-intro { max-width: 850px; margin-bottom: 28px; }
 .comparison-intro h2 { margin: 0 0 12px; font-size: clamp(32px, 4vw, 48px); font-weight: 500; letter-spacing: -.035em; }
 .comparison-intro p { color: var(--ink-soft); font-size: 16px; line-height: 1.6; }
@@ -106,14 +106,14 @@
 #contact .contact-grid article { min-height: 150px; }
 #contact .contact-grid a { display: inline-block; margin-top: 12px; font-size: 14px; overflow-wrap: anywhere; }
 @media (min-width: 1400px) {
-  .comparison-page { padding-left: max(32px,calc((100% - 1420px)/2)); padding-right: max(32px,calc((100% - 1420px)/2)); }
+  .comparison-page { padding-left: max(var(--atlas-page-gutter),calc((100% - var(--atlas-page-width))/2)); padding-right: max(var(--atlas-page-gutter),calc((100% - var(--atlas-page-width))/2)); }
 }
 @media (max-width: 1100px) {
   .comparison-grid { grid-template-columns: 1fr; }
   .comparison-hit-scroll { max-height: 420px; }
 }
 @media (max-width: 720px) {
-  .comparison-page { padding: 112px 18px 70px; }
+  .comparison-page { padding: var(--atlas-page-top) var(--atlas-page-gutter) 70px; }
   .comparison-card { padding: 16px; }
   .comparison-toolbar { display: grid; grid-template-columns: 1fr; }
   .diversity-row { grid-template-columns: 1fr; gap: 4px; }

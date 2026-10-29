@@ -129,7 +129,8 @@
   }
   function boxPlot(groups, { metric = 'tvd', caption, selected = '', plotWidth = 720 } = {}) {
     const w = Math.max(520, plotWidth), h = 684;
-    const left = 72, top = 44, bottom = groups.some(g => g.label.length > 24) ? 225 : 155;
+    const longLabels = groups.some(g => g.label.length > 24);
+    const left = longLabels ? 140 : 72, top = 44, bottom = longLabels ? 250 : 155;
     const width = w-left-20, height = h-top-bottom;
     const values = groups.flatMap(g => g.rows.map(r => metric === 'tvd' ? r.tvd : r[`${metric}_b`] - r[`${metric}_a`]));
     const limit = Math.max(1, ...values.map(Math.abs));
@@ -282,7 +283,7 @@
   function mountInter() {
     const start=performance.now(), page=document.querySelector('[data-inter-content]'), groups=inter.groups;
     const options=(obj,value)=>Object.entries(obj).map(([k,v])=>`<option value="${k}" ${k===value?'selected':''}>${esc(v)}</option>`).join('');
-    page.innerHTML=`<div class="comparison-toolbar"><label>Datasets<select data-inter-scope>${options({atlas:'Atlas organs · pooled',myelin:'Brain and myelin · pooled'},inter.scope)}</select></label><label>Organ pair<select data-inter-pair>${options({all:'All pairs',...Object.fromEntries(groups.map(g=>[g.key,g.label]))},inter.pair)}</select></label><label>Box-plot metric<select data-inter-metric>${options({tvd:'TVD (%)',effective:'Weighted glycan types: B − A'},inter.metric)}</select></label></div>
+    page.innerHTML=`<div class="comparison-toolbar"><label>Datasets<select data-inter-scope>${options({atlas:'Atlas organs',myelin:'Brain and myelin'},inter.scope)}</select></label><label>Organ pair<select data-inter-pair>${options({all:'All pairs',...Object.fromEntries(groups.map(g=>[g.key,g.label]))},inter.pair)}</select></label><label>Box-plot metric<select data-inter-metric>${options({tvd:'TVD (%)',effective:'Weighted glycan types: B − A'},inter.metric)}</select></label></div>
       <p class="comparison-note">All ages pooled within each site and dataset; ≥5 glycoPSMs in both datasets. Weighted glycan types = exp(Shannon H).</p>
       <div class="comparison-legend composition-legend" aria-label="Glycan-type colors">${CLASS_ORDER.map(name=>`<span>${swatch(name)}${esc(classLabel(name))}</span>`).join('')}</div>
       <div class="comparison-grid inter-grid"><article class="comparison-card"><h3 data-inter-plot-title></h3><p class="comparison-note">Select a box to browse the pair, or a point to find its glycosite.</p><div class="comparison-boxes" data-inter-boxes></div></article>

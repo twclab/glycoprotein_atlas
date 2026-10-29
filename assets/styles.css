@@ -1,4 +1,7 @@
 :root {
+  --atlas-page-top: 84px;
+  --atlas-page-gutter: clamp(20px, 3vw, 50px);
+  --atlas-page-width: 1600px;
   --text-xs: 12px;
   --text-sm: 14px;
   --text-base: 16px;
@@ -261,7 +264,7 @@ a { color: inherit; }
 .search-result span { overflow: hidden; color: var(--ink-soft); font-size: var(--text-xs); text-overflow: ellipsis; white-space: nowrap; }
 .search-result small { color: var(--gray-500); font-size: var(--text-xs); text-align: right; }
 .search-empty { margin: 0; padding: 18px; color: var(--gray-500); font-size: 12px; text-align: center; }
-.explore-view { min-height: 100vh; padding: 84px clamp(20px, 3vw, 50px) 42px; background: var(--paper); }
+.explore-view { min-height: 100vh; padding: var(--atlas-page-top) max(var(--atlas-page-gutter), calc((100% - var(--atlas-page-width)) / 2)) 42px; background: var(--paper); }
 .explore-topbar {
   position: fixed;
   z-index: 40;
@@ -301,7 +304,7 @@ a { color: inherit; }
 .loader { width: 26px; height: 26px; border: 2px solid var(--teal-100); border-top-color: var(--teal-700); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(1turn); } }
 .protein-dashboard { width: min(1600px, 100%); margin: 0 auto; }
-.protein-heading { display: flex; justify-content: space-between; gap: 28px; align-items: end; padding: 3px 2px 10px; }
+.protein-heading { display: flex; justify-content: space-between; gap: 28px; align-items: end; padding: 0 0 10px; }
 .protein-heading h2 { margin: 0; font-family: var(--display); font-size: clamp(34px, 3.5vw, 50px); font-weight: 700; letter-spacing: -.025em; line-height: 1; }
 .protein-heading h2 small { margin-left: 9px; color: var(--teal-700); font-family: var(--sans); font-size: 12px; font-weight: 700; letter-spacing: .04em; vertical-align: middle; }
 .protein-heading > div > p:last-child { max-width: 650px; margin: 5px 0 0; color: var(--ink-soft); font-size: var(--text-xs); }
@@ -433,19 +436,18 @@ a { color: inherit; }
 
 .content-page {
   min-height: 100svh;
-  padding: 150px max(32px, calc((100% - 1200px) / 2)) 110px;
+  padding: var(--atlas-page-top) max(var(--atlas-page-gutter), calc((100% - var(--atlas-page-width)) / 2)) 90px;
   background:
     radial-gradient(circle at 88% 4%, rgba(174, 226, 219, .34), transparent 25%),
     linear-gradient(180deg, var(--paper), var(--white) 45%);
 }
 #tvd.content-page {
-  padding: 84px max(clamp(20px, 3vw, 50px), calc((100% - 1600px) / 2)) 90px;
   background: linear-gradient(180deg, var(--paper), var(--white) 45%);
 }
 #tvd .comparison-intro { margin-bottom: 8px; }
 #tvd .tvd-controls { margin: 10px 0 6px; }
 #tvd .age-selection { margin: 4px 0 10px; padding: 8px 0; }
-#contact.content-page, #raw-data.content-page { padding-top: 110px; }
+#raw-data.content-page { padding-top: var(--atlas-page-top); }
 #raw-data .page-grid { margin-top: 0; }
 .page-hero { max-width: 850px; }
 .narrow-page-hero { max-width: 720px; }
@@ -614,7 +616,7 @@ body.exploring .content-page { display: none; }
   .hero-search { min-height: 62px; padding-left: 17px; border-radius: 18px; }
   .hero-search input { padding: 8px 10px; font-size: 13px; }
   .hero-search button { min-width: 80px; border-radius: 12px; }
-  .explore-view { padding: 82px 13px 40px; }
+  .explore-view { padding: var(--atlas-page-top) var(--atlas-page-gutter) 40px; }
   .explore-topbar { grid-template-columns: 1fr; min-height: 68px; padding: 10px 13px; }
   .compact-brand { display: none; }
   .protein-heading { align-items: start; flex-direction: column; gap: 16px; }
@@ -636,7 +638,7 @@ body.exploring .content-page { display: none; }
   .panel-header { flex-direction: column; }
   .control-stack { justify-content: flex-start; }
   .annotation-panel { grid-template-columns: 1fr; gap: 9px; }
-  .content-page { padding: 120px 18px 70px; }
+  .content-page { padding: var(--atlas-page-top) var(--atlas-page-gutter) 70px; }
   .page-hero h2 { font-size: clamp(45px, 14vw, 64px); }
   .page-lede { font-size: 13px; }
   .page-stat-grid { grid-template-columns: repeat(2, 1fr); margin-top: 48px; }
@@ -662,7 +664,7 @@ body.exploring .content-page { display: none; }
 .tooltip { font-size: 15px; }
 
 /* Protein identity and one overlay heading; preserve room for the age plots. */
-.protein-heading { align-items: center; padding-bottom: 10px; gap: 18px; }
+.protein-heading { align-items: flex-start; padding-bottom: 10px; gap: 18px; }
 .protein-heading h2 { font-size: 40px; }
 .protein-heading-side { max-width: 76%; }
 .protein-map { padding: 12px 14px; }
@@ -815,10 +817,10 @@ body.exploring .content-page { display: none; }
 .tooltip-tvd-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: baseline; margin-top: 7px; }
 .tooltip-tvd-row strong { white-space: nowrap; }
 @media (max-width: 1400px) {
+  :root { --atlas-page-top: 116px; }
   .explore-topbar { grid-template-columns: 170px minmax(0, 1fr); gap: 5px 14px; }
   .explore-top-actions { grid-column: 1 / -1; justify-content: flex-start; overflow-x: auto; }
   .explore-nav { display: flex; min-width: max-content; gap: 12px; }
-  .explore-view { padding-top: 116px; }
   .main-nav { gap: 12px; }
 }
 @media (max-width: 1050px) {
@@ -828,7 +830,6 @@ body.exploring .content-page { display: none; }
   .main-nav { flex-wrap: nowrap; justify-content: flex-start; }
   .explore-topbar { grid-template-columns: 1fr; }
   .explore-top-actions { grid-column: 1; }
-  .explore-view { padding-top: 119px; }
   .tvd-controls { display: grid; }
   .tvd-search-control { width: 100%; }
   .tvd-search-control label { flex: 1; }
@@ -961,7 +962,7 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
 
 @media (max-width: 720px) {
   .compact-brand { display: block; }
-  .explore-view { padding-top: 172px; }
+  :root { --atlas-page-top: 172px; --atlas-page-gutter: 13px; }
 }
 
 /* Lamp1 review: preserve DIN only for the atlas name, and use Arial elsewhere. */
@@ -1066,7 +1067,7 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
   .tvd-preview .scientific-chart { width: 336px; margin-top: 12px; }
 }
 @media (max-width: 720px) {
-  #tvd.content-page { padding: 112px 18px 70px; }
+  #tvd.content-page { padding: var(--atlas-page-top) var(--atlas-page-gutter) 70px; }
   .tvd-preview { grid-template-columns: minmax(0,352px) minmax(0,1fr); }
 }
 @media (max-width: 570px) {
