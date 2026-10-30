@@ -893,6 +893,8 @@
     const crossOrgans = ORGANS.filter((organ) => eligible(siteFor(organ, state.pairSharedSite)));
     state.pairOrganA = state.activeOrgan;
     if (!crossOrgans.includes(state.pairOrganB) || state.pairOrganB === state.pairOrganA) state.pairOrganB = crossOrgans.find((organ) => organ !== state.pairOrganA);
+    const datasetAName = ORGAN_LABELS[state.pairOrganA];
+    const datasetBName = ORGAN_LABELS[state.pairOrganB];
     const a = sameOrgan ? siteFor(state.pairSiteOrgan, state.pairSiteA) : siteFor(state.pairOrganA, state.pairSharedSite);
     const b = sameOrgan ? siteFor(state.pairSiteOrgan, state.pairSiteB) : siteFor(state.pairOrganB, state.pairSharedSite);
     const organOptions = (selected, other) => crossOrgans.filter((organ) => organ !== other).map((organ) => `<option value="${organ}" ${organ === selected ? "selected" : ""}>${ORGAN_LABELS[organ]}</option>`).join("");
@@ -903,7 +905,7 @@
       : `<label>Glycosite<select data-pair-shared-site>${sharedSiteOptions}</select></label>`;
     const bottomControls = sameOrgan
       ? `<label>Glycosite A<select data-pair-site-a>${siteOptions(state.pairSiteA, state.pairSiteB)}</select></label><label>Glycosite B<select data-pair-site-b>${siteOptions(state.pairSiteB, state.pairSiteA)}</select></label>`
-      : `<label>Dataset A<select data-pair-organ-a>${organOptions(state.pairOrganA, state.pairOrganB)}</select></label><label>Dataset B<select data-pair-organ-b>${organOptions(state.pairOrganB, state.pairOrganA)}</select></label>`;
+      : `<label>${escapeHTML(datasetAName)}<select data-pair-organ-a aria-label="First dataset">${organOptions(state.pairOrganA, state.pairOrganB)}</select></label><label>${escapeHTML(datasetBName)}<select data-pair-organ-b aria-label="Second dataset">${organOptions(state.pairOrganB, state.pairOrganA)}</select></label>`;
     const selector = `<div class="pairwise-controls"><div class="pairwise-top-row">${modeControl}${secondTopControl}</div><div class="pair-selectors">${bottomControls}</div></div>`;
     if (!a || !b) {
       dom.pairwiseList.innerHTML = `${selector}<p class="empty-note">No second ${sameOrgan ? "site" : "dataset"} is available for this comparison.</p>`;
@@ -912,8 +914,8 @@
     } else {
       const vectorA = pooledClassVector(a), vectorB = pooledClassVector(b);
       const gene = state.currentProtein.gene || state.currentProtein.protein_id;
-      const labelA = `${sameOrgan ? "Glycosite A" : "Dataset A"} · ${ORGAN_LABELS[sameOrgan ? state.pairSiteOrgan : state.pairOrganA]} | ${gene} N${a.position}`;
-      const labelB = `${sameOrgan ? "Glycosite B" : "Dataset B"} · ${ORGAN_LABELS[sameOrgan ? state.pairSiteOrgan : state.pairOrganB]} | ${gene} N${b.position}`;
+      const labelA = `${sameOrgan ? "Glycosite A · " : ""}${ORGAN_LABELS[sameOrgan ? state.pairSiteOrgan : state.pairOrganA]} | ${gene} N${a.position}`;
+      const labelB = `${sameOrgan ? "Glycosite B · " : ""}${ORGAN_LABELS[sameOrgan ? state.pairSiteOrgan : state.pairOrganB]} | ${gene} N${b.position}`;
       const classNames = orderedClasses([...new Set([...vectorA.keys(), ...vectorB.keys()])]);
       const totalVariation = classNames.reduce((sum, name) => sum + Math.abs((vectorA.get(name) || 0) - (vectorB.get(name) || 0)), 0) / 2;
       const bar = (vector, label) => `<div class="comparison-profile"><strong>${escapeHTML(label)}</strong><div class="composition-bar">${classNames.map((name) => `<i style="width:${vector.get(name) || 0}%;background:${classPaint(name)}"></i>`).join("")}</div></div>`;
@@ -928,7 +930,7 @@
         return `<tr><th><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</th><td>${displayA}</td><td>${displayB}</td><td>${displayDifference}</td></tr>`;
       }).join("");
       const distanceMetric = `<div class="comparison-distance"><div class="comparison-metric"><span>Total variation distance (TVD)</span><div class="comparison-distance-value"><strong>${fmt(totalVariation, 1)}%</strong><div class="distance-track" aria-hidden="true"><i style="width:${Math.min(100, totalVariation)}%"></i></div></div></div></div>`;
-      dom.pairwiseList.innerHTML = `${selector}<div class="comparison-columns">${profile(a, statsA, vectorA, labelA)}${profile(b, statsB, vectorB, labelB)}</div>${distanceMetric}<div class="comparison-table-wrap"><table><thead><tr><th>Glycan type</th><th>${sameOrgan ? "Glycosite A" : "Dataset A"}</th><th>${sameOrgan ? "Glycosite B" : "Dataset B"}</th><th>${sameOrgan ? "Glycosite B − A" : "Dataset B − A"}</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+      dom.pairwiseList.innerHTML = `${selector}<div class="comparison-columns">${profile(a, statsA, vectorA, labelA)}${profile(b, statsB, vectorB, labelB)}</div>${distanceMetric}<div class="comparison-table-wrap"><table><thead><tr><th>Glycan type</th><th>${sameOrgan ? "Glycosite A" : escapeHTML(datasetAName)}</th><th>${sameOrgan ? "Glycosite B" : escapeHTML(datasetBName)}</th><th>${sameOrgan ? "Glycosite B − A" : `${escapeHTML(datasetBName)} − ${escapeHTML(datasetAName)}`}</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
     }
     bindMode();
     dom.pairwiseList.querySelector("[data-pair-shared-site]")?.addEventListener("change", (event) => {
