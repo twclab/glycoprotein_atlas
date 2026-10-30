@@ -181,7 +181,7 @@
         if (!protein) {
           dom.dashboard.hidden = true;
           dom.loading.hidden = false;
-          dom.loading.innerHTML = "<p>Choose a protein to open the atlas.</p>";
+          dom.loading.innerHTML = "<p>Choose a protein to open the atlas. Cat is a good protein</p>";
           showExplore(true);
           return;
         }
@@ -579,7 +579,7 @@
         : `<p class="empty-note">No N-glycosite composition is available for this protein.</p>`;
       dom.classLegend.innerHTML = "";
       dom.shannonChart.innerHTML = isCat
-        ? catFigure(catPhotos.diversity, "No site-resolved Shannon diversity is available for this protein. Here is another cat instead")
+        ? catFigure(catPhotos.diversity, "No N-glycosite heterogeneity calculation is available for this protein. Here is another cat instead")
         : `<p class="empty-note">No site-resolved Shannon diversity is available for this protein.</p>`;
       dom.shannonLegend.innerHTML = "";
       dom.exactGrid.innerHTML = isCat

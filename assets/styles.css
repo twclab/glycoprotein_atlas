@@ -787,7 +787,17 @@ body.exploring .content-page { display: none; }
 .cat-easter-egg img { display: block; width: 100%; height: 100%; min-height: 0; border-radius: 12px; object-fit: cover; }
 .cat-easter-egg figcaption { color: var(--ink-soft); font-size: 15px; }
 .cat-support-photo { grid-template-rows: auto auto; height: auto; margin: 10px 0 0; }
-.cat-support-photo img { height: auto; object-fit: contain; }
+.cat-support-photo img { width: auto; height: auto; max-width: 100%; max-height: 680px; margin-inline: auto; object-fit: contain; }
+.exact-panel .cat-support-photo img { max-height: 500px; }
+.pairwise-detail-panel:has(.cat-support-photo), .exact-panel:has(.cat-support-photo) { min-height: 850px; }
+.pairwise-detail-panel:has(.cat-support-photo), .exact-panel:has(.cat-support-photo) { display: flex; flex-direction: column; }
+.pairwise-detail-panel:has(.cat-support-photo) .pairwise-detail { flex: 1; display: grid; align-content: center; }
+.exact-panel:has(.cat-support-photo) .exact-grid { flex: 1 1 auto; height: auto; min-height: 0; display: grid; align-content: center; }
+@media (max-width: 1000px) {
+  .pairwise-detail-panel:has(.cat-support-photo), .exact-panel:has(.cat-support-photo) { min-height: clamp(500px, 70vw, 680px); }
+  .pairwise-detail-panel .cat-support-photo img { max-height: min(500px, 55vw); }
+  .exact-panel .cat-support-photo img { max-height: min(380px, 45vw); }
+}
 .tvd-controls { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin: 30px 0 16px; }
 .tvd-controls label { display: grid; gap: 5px; color: var(--ink-soft); font-size: 13px; font-weight: 700; }
 .tvd-controls select, .tvd-controls input { min-width: 150px; height: 40px; border: 1px solid var(--gray-300); border-radius: 8px; padding: 0 10px; background: white; color: var(--ink); }
