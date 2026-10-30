@@ -274,7 +274,7 @@ a { color: inherit; }
   align-items: center;
   min-height: 64px;
   padding: 8px clamp(20px, 3vw, 50px);
-  border-bottom: 1px solid rgba(11, 86, 78, .09);
+  border-bottom: 2px solid rgba(11, 86, 78, .09);
   background: rgba(247, 248, 243, .92);
   backdrop-filter: blur(18px);
 }
