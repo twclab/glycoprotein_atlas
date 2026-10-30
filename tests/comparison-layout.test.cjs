@@ -271,7 +271,7 @@ test('inter-organ page uses the age page width and top alignment without changin
   const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
   assert.match(styles, /#tvd\.content-page, #inter-organ\.content-page \{\s*padding: 84px max\(clamp\(20px, 3vw, 50px\), calc\(\(100% - 1600px\) \/ 2\)\) 90px;/);
-  assert.match(styles, /\.home-view \{[^}]*background: var\(--paper\);/);
+  assert.match(styles, /\.home-view \{[^}]*background:\s*radial-gradient\(circle at 87% 9%/);
   assert.match(styles, /\.explore-view \{[^}]*background: var\(--paper\);/);
   assert.match(styles, /\.content-page \{[^}]*background: var\(--paper\);/);
   assert.match(comparisons, /#inter-organ \.comparison-intro \{ margin-bottom: 8px; \}/);
