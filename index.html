@@ -6,15 +6,15 @@
   <meta name="description" content="Explore age-associated protein abundance and site-resolved N-glycosylation across five mouse atlas organs and male and female myelin.">
   <title>The Glycoprotein Atlas</title>
   <link rel="icon" href="assets/glycan-5.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/styles.css?v=2026-10-29-merge-resolution">
+  <link rel="stylesheet" href="assets/styles.css?v=2026-10-29-exact-type-scale">
   <script src="assets/theme.js?v=2026-10-28-age-views" defer></script>
-  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-29-merge-resolution">
+  <link rel="stylesheet" href="assets/comparisons.css?v=2026-10-29-inter-legend-title">
   <script src="assets/comparison-layout.js?v=2026-10-29-compact-inter-rows" defer></script>
-  <script src="assets/comparisons.js?v=2026-10-29-merge-resolution" defer></script>
+  <script src="assets/comparisons.js?v=2026-10-29-inter-legend-title" defer></script>
   <link rel="stylesheet" href="assets/methods.css?v=2026-10-29-text-edits">
   <script src="assets/methods.js?v=2026-10-28-permutation-scroll-3" defer></script>
   <script src="assets/protein-search.js?v=2026-10-29-lamp-search" defer></script>
-  <script src="assets/app.js?v=2026-10-29-myelin-labels" defer></script>
+  <script src="assets/app.js?v=2026-10-29-exact-heading" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -156,8 +156,8 @@
                 </div>
                 <div class="plot-header-content">
                   <div class="heterogeneity-controls">
-                    <div class="heterogeneity-control-row"><span>Heterogeneity metric</span><div class="segmented-control quiet"><button type="button" class="active" data-diversity-metric="effective" data-tooltip="Weighted glycan types: exp(Shannon H).">Weighted glycan types</button><button type="button" data-diversity-metric="shannon" data-tooltip="Shannon H measures glycan type diversity and evenness.">Shannon H</button></div></div>
-                    <div class="heterogeneity-control-row"><span>Calculation method</span><div class="segmented-control quiet"><button type="button" class="active" data-diversity-grouping="sample" data-tooltip="Calculate each detected sample, then show the mean ± SEM.">Per sample</button><button type="button" data-diversity-grouping="pooled" data-tooltip="Pool glycoPSMs from all detected samples at each age; no SEM.">Pooled by age</button></div></div>
+                    <label class="heterogeneity-control-row">Heterogeneity metric<select data-diversity-metric data-tooltip="Weighted glycan types: exp(Shannon H)."><option value="effective" data-tooltip="Weighted glycan types: exp(Shannon H).">Weighted glycan types</option><option value="shannon" data-tooltip="Shannon H measures glycan type diversity and evenness.">Shannon H</option></select></label>
+                    <label class="heterogeneity-control-row">Calculation method<select data-diversity-grouping data-tooltip="Calculate each detected sample, then show the mean ± SEM."><option value="sample" data-tooltip="Calculate each detected sample, then show the mean ± SEM.">Per sample</option><option value="pooled" data-tooltip="Pool glycoPSMs from all detected samples at each age; no SEM.">Pooled by age</option></select></label>
                   </div>
                   <div class="chart-legend" data-shannon-legend></div>
                 </div>
@@ -179,7 +179,7 @@
                 <h3>Exact N-glycan composition with age</h3>
               </div>
               <div class="exact-toolbar"><div class="exact-site-controls"><label>Organ<select data-exact-organ-select aria-label="Heatmap dataset"></select></label><label>Glycosite<select data-exact-site-select aria-label="Heatmap glycosite"></select></label></div><div class="abundance-scale-wrap"><span class="abundance-scale-label">Percent abundance</span><div class="abundance-scale" data-exact-scale aria-label="Percent abundance"><span>0%</span><i></i><span>100%</span></div></div></div>
-              <p class="exact-key">N: HexNAc · H: Hex · F: Fuc · A: NeuAc · G: NeuGc · P: Phospho</p>
+              <p class="exact-key">N: HexNAc · H: Hex · F: Fuc · S: Neu5Ac · G: Neu5Gc · P: Phospho</p>
               <div class="exact-grid" data-exact-grid tabindex="0" role="region" aria-label="Exact glycan abundance by age"></div>
             </article>
           </div>

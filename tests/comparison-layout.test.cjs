@@ -26,6 +26,149 @@ test('visible glycan type terminology is not hyphenated', () => {
   assert.doesNotMatch(comparisons, /Glycan-type colors|glycan-type heterogeneity/i);
 });
 
+test('exact glycan age heading has a rule on both sides of its label', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(app, /<div class="exact-age-heading"><span><span>Age \(months\)<\/span><\/span><\/div>/);
+  assert.match(styles, /\.exact-age-heading > span \{ background: linear-gradient\(var\(--axis-ink\),var\(--axis-ink\)\) center \/ 100% 1px no-repeat; \}/);
+  assert.match(styles, /\.exact-age-heading > span > span \{ padding-inline: 10px; background: white; \}/);
+  assert.doesNotMatch(styles, /\.exact-age-heading span::after/);
+});
+
+test('exact glycan age heading omits Composition but preserves the age columns', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  assert.match(app, /<div class="exact-row exact-head"><span class="exact-name" aria-hidden="true"><\/span>\$\{keys\.map/);
+  assert.doesNotMatch(app, /<span class="exact-name">Composition<\/span>/);
+});
+
+test('exact glycan row labels and age numbers are both 14 px', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(styles, /\.exact-name \{ font: 14px\/34px ui-monospace, monospace; \}/);
+  assert.match(styles, /\.exact-header \{ color: var\(--ink-soft\); font-family: var\(--sans\); font-size: 14px; font-weight: 400; \}/);
+});
+
+test('exact glycan secondary headings and notation key use the revised type scale', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(styles, /\.exact-key \{ font-size: 14px;/);
+  assert.match(styles, /\.abundance-scale-label, \.abundance-scale \{ color: var\(--axis-ink\); font-size: 16px;/);
+  assert.match(styles, /\.exact-age-heading > span \{ font-size: 16px; \}/);
+});
+
+test('exact glycan notation uses S for Neu5Ac and G for Neu5Gc', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  assert.match(html, /S: Neu5Ac · G: Neu5Gc/);
+  assert.ok(app.includes('replace(/Neu5Ac\\((\\d+)\\)/g, "S$1 ")'));
+  assert.ok(app.includes('replace(/Neu5Gc\\((\\d+)\\)/g, "G$1 ")'));
+  assert.match(app, /const tooltip = `\$\{displayName\} ·/);
+  assert.doesNotMatch(html, /A: NeuAc|G: NeuGc/);
+});
+
+test('small positive exact-glycan percentages do not display as zero', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const formatter = app.match(/  function formatExactPercent\(percent\) \{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(formatter, 'the exact-glycan percentage formatter exists');
+  const format = new Function(`${formatter}; return formatExactPercent;`)();
+  assert.equal(format(0), '0.0%');
+  assert.equal(format(0.01992825827), '0.02%');
+  assert.equal(format(0.004), '< 0.01%');
+  assert.equal(format(0.1), '0.1%');
+  assert.match(app, /const displayPercent = formatExactPercent\(percent\)/);
+  assert.match(app, /\$\{displayPercent\} of pooled glycoPSMs/);
+  assert.match(app, /escapeHTML\(displayPercent\)/);
+});
+
+test('pairwise menus share one wide row and wrap as the card narrows', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(styles, /\.pairwise-detail \{ container-type: inline-size; \}/);
+  assert.match(styles, /\.pairwise-controls \{ grid-template-columns: minmax\(0, 2fr\) repeat\(3, minmax\(0, 1fr\)\); gap: 12px; \}/);
+  assert.match(styles, /\.pairwise-controls \.pairwise-top-row, \.pairwise-controls \.pair-selectors, \.pairwise-controls \.pair-selectors:has\(\[data-pair-site-a\]\) \{ display: contents; \}/);
+  assert.match(styles, /@container \(max-width: 700px\) \{\s*\.pairwise-controls \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
+  assert.match(styles, /@container \(max-width: 420px\) \{\s*\.pairwise-controls \{ grid-template-columns: 1fr; \}/);
+});
+
+test('pairwise and exact composition cards align titles and control spacing', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(styles, /\.pairwise-detail-panel \{ padding-top: 20px; \}/);
+  assert.match(styles, /\.pairwise-detail-panel \.panel-header \{ min-height: 0; margin-bottom: 18px; \}/);
+  assert.match(styles, /\.pairwise-detail-panel h3, \.exact-panel h3 \{ margin: 0; font-size: 18px; \}/);
+  assert.match(styles, /\.exact-toolbar \{[^}]*margin-top: 18px; \}/);
+});
+
+test('exact composition card matches pairwise height with an internal scroll on wide screens', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(styles, /@media \(min-width: 1001px\) \{\s*\.support-grid \{ align-items: stretch; \}/);
+  assert.match(styles, /\.exact-panel \{ display: flex; flex-direction: column; min-height: 0; \}/);
+  assert.match(styles, /\.exact-grid \{ flex: 1 1 0; height: 0; min-height: 0; overflow: auto; \}/);
+  assert.match(styles, /@media \(max-width: 1000px\) \{\s*\.exact-grid \{ max-height: 520px; overflow: auto; \}/);
+});
+
+test('pairwise metric boxes are compact and dataset labels have balanced spacing', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(styles, /\.comparison-columns \{[^}]*margin-top: 16px; \}/);
+  assert.match(styles, /\.comparison-profile > strong \{ display: block; min-height: 0; margin-bottom: 16px; font-size: 14px; line-height: 1\.25; \}/);
+  assert.match(styles, /\.comparison-site-metrics \{ display: grid; gap: 5px; margin-top: 8px; \}/);
+  assert.match(styles, /\.comparison-metric \{ min-height: 52px; padding: 6px 10px; border: 1px solid var\(--gray-100\); border-radius: 7px; \}/);
+});
+
+test('pairwise TVD bar sits beside its value inside the metric box', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(app, /class="comparison-distance"><div class="comparison-metric"><span>Total variation distance \(TVD\)<\/span><div class="comparison-distance-value"><strong>/);
+  assert.match(app, /<div class="distance-track" aria-hidden="true"><i style="width:/);
+  assert.match(styles, /\.comparison-distance-value \{ display: flex; align-items: center; gap: 12px; margin-top: 4px; \}/);
+  assert.match(styles, /\.comparison-distance-value \.distance-track \{ flex: 1; min-width: 0; margin-top: 0; \}/);
+});
+
+test('heterogeneity metric and calculation method use synchronized dropdowns', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(html, /<label class="heterogeneity-control-row">Heterogeneity metric<select data-diversity-metric/);
+  assert.match(html, /<option value="effective"[^>]*>Weighted glycan types<\/option><option value="shannon"[^>]*>Shannon H<\/option>/);
+  assert.match(html, /<label class="heterogeneity-control-row">Calculation method<select data-diversity-grouping/);
+  assert.match(html, /<option value="sample"[^>]*>Per sample<\/option><option value="pooled"[^>]*>Pooled by age<\/option>/);
+  assert.match(app, /dom\.diversityMetricSelect\.addEventListener\("change"/);
+  assert.match(app, /dom\.diversityGroupingSelect\.addEventListener\("change"/);
+  const defaults = app.match(/function setSiteDefaults\(site\) \{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(defaults, 'site defaults remain available');
+  assert.match(defaults, /state\.diversityGrouping = moderateOrLower \? "pooled" : "sample";/);
+  assert.match(defaults, /syncDiversityControls\(\);/);
+  assert.match(styles, /\.heterogeneity-controls \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+  assert.match(styles, /@container \(max-width: 330px\) \{\s*\.heterogeneity-controls \{ grid-template-columns: 1fr; \}/);
+});
+
+test('glycosite labels are not underlined across comparison and Explore views', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
+  assert.match(comparisons, /\.hit-table a \{[^}]*text-decoration: none;/);
+  assert.match(styles, /\.tvd-panel \.age-selection a \{[^}]*text-decoration: none;/);
+  assert.match(styles, /\.profile-site-label:focus-visible \{ outline: 2px solid var\(--teal-700\);/);
+  assert.doesNotMatch(styles, /\.profile-site-label:hover, \.profile-site-label:focus-visible \{[^}]*text-decoration: underline/);
+});
+
+test('age preview keeps its heading and colors the selected glycosite by organ', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  assert.match(app, /dom\.tvdPreviewTitle\.innerHTML = `N-glycosite composition with age: <a href="\$\{escapeHTML\(href\)\}" data-tvd-preview-open style="color:\$\{ORGAN_COLORS\[organ\]\}">/);
+  assert.doesNotMatch(app, /dom\.tvdPreviewTitle\.textContent = "Loading glycosite…"/);
+});
+
+test('age comparison headings sit inside their plot and preview cards', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(html, /<div class="tvd-panel"><div class="age-selection"><strong data-age-selection>.*?<\/strong><\/div><div class="tvd-plot"/);
+  assert.match(html, /<div class="tvd-panel"><div class="age-selection"><strong data-tvd-preview-title>.*?<\/strong><\/div><article class="scientific-panel tvd-preview"/);
+  assert.match(styles, /\.tvd-panel \{[^}]*border: 1px solid var\(--gray-300\);[^}]*border-radius: 14px;/);
+  assert.match(styles, /\.tvd-panel \.tvd-plot, \.tvd-panel \.tvd-preview \{ border: 0; \}/);
+});
+
+test('age and inter-organ card headings share one size and default text color', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
+  assert.match(css, /\.comparison-page \{ --comparison-card-title-size: 20px;/);
+  assert.match(css, /\.age-selection strong \{ color: var\(--ink\); font-size: var\(--comparison-card-title-size\);/);
+  assert.match(css, /\.comparison-card h3 \{[^}]*color: var\(--ink\); font-size: var\(--comparison-card-title-size\);/);
+});
+
 test('myelin labels use lowercase female and male across views', () => {
   const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
   const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8');
@@ -41,7 +184,10 @@ test('myelin labels use lowercase female and male across views', () => {
 test('age cards and square matrix cells stay bounded on wide and short screens', () => {
   const css = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
   assert.match(css, /\.age-grid \{ grid-template-columns: minmax\(0,min\(680px,56%\)\) minmax\(0,1fr\); height: auto; \}/);
-  assert.match(css, /\.age-grid \.comparison-scroll \{ max-width: 544px; align-content: start; \}/);
+  assert.match(css, /\.age-grid \.comparison-scroll \{ width: 100%; max-width: 544px; margin-inline: auto; justify-items: center; align-content: start; \}/);
+  assert.match(css, /\.age-grid \.matrix-table-wrap \{ width: 100%; display: flex; justify-content: center; \}/);
+  assert.match(css, /\.age-grid \.matrix-count-key \{[^}]*width: min\(280px, 100%\); margin: 0 0 12px;/);
+  assert.match(css, /\.age-grid \.matrix-class-legend \{[^}]*width: min\(100%, 512px\); margin: 0 0 18px;/);
   const matrixRule = css.match(/\.age-grid \.gain-loss-matrix \{([^}]*)\}/g)?.at(-1);
   assert.ok(matrixRule, 'the age matrix has its own sizing rule');
   assert.match(matrixRule, /--matrix-cell: clamp\(14px, min\([^;]*100cqi[^;]*100svh[^;]*\), 48px\)/);
@@ -56,12 +202,30 @@ test('inter-organ page uses the age page width and top alignment without changin
   assert.match(styles, /#tvd\.content-page, #inter-organ\.content-page \{\s*padding: 84px max\(clamp\(20px, 3vw, 50px\), calc\(\(100% - 1600px\) \/ 2\)\) 90px;/);
   assert.match(styles, /#tvd\.content-page, #inter-organ\.content-page, #methods\.content-page, #contact\.content-page \{\s*background: linear-gradient\(180deg, var\(--paper\), var\(--white\) 45%\);/);
   assert.match(comparisons, /#inter-organ \.comparison-intro \{ margin-bottom: 8px; \}/);
-  assert.match(comparisons, /#inter-organ > \[data-inter-content\] > \.comparison-toolbar \{ margin: 10px 0 6px; \}/);
+  assert.match(comparisons, /#inter-organ > \[data-inter-content\] > \.comparison-toolbar \{ align-items: end; margin: 10px 0 6px; \}/);
   assert.match(comparisons, /\.inter-grid \{ grid-template-columns: minmax\(0, 1\.15fr\) minmax\(0, 1fr\); align-items: stretch; \}/);
   assert.match(comparisons, /#inter-organ \.inter-grid \{ margin-top: 18px; \}/);
   assert.match(comparisons, /\.inter-grid > \.comparison-card \{ padding: 14px 20px; \}/);
   assert.match(comparisons, /\.inter-hit-scroll \{ height: 410px;/);
   assert.match(html, /<section class="content-page comparison-page" id="inter-organ"[^>]*>\s*<div class="comparison-intro"><h2>Inter-organ comparisons<\/h2><\/div>/);
+});
+
+test('inter-organ toolbars match age comparison control styling and use box plot terminology', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
+  const js = fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8');
+  assert.match(css, /\.comparison-toolbar label \{[^}]*color: var\(--gray-500\);[^}]*font-size: 15px; font-weight: 700; letter-spacing: \.03em;/);
+  assert.match(css, /\.comparison-toolbar input, \.comparison-toolbar select \{[^}]*height: 40px;[^}]*border-radius: 8px;/);
+  assert.match(css, /\.comparison-reset \{[^}]*border-radius: 8px;/);
+  assert.match(js, /<label>Box plot metric<select data-inter-metric>/);
+  assert.doesNotMatch(js, /Box-plot metric/);
+});
+
+test('inter-organ glycan type legend has a left-hand label and divider', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
+  const js = fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8');
+  assert.match(js, /class="composition-legend-title">Glycan types<\/strong><div class="composition-legend-items">/);
+  assert.match(css, /\.composition-legend \{ display: grid; grid-template-columns: max-content minmax\(0, 1fr\);/);
+  assert.match(css, /\.composition-legend-title \{[^}]*border-right: 2px solid #111;/);
 });
 
 test('contact cards identify author roles without the introductory sentence', () => {

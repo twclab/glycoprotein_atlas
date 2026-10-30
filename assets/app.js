@@ -73,6 +73,8 @@
     proteinLegend: document.querySelector("[data-protein-legend]"),
     shannonChart: document.querySelector("[data-shannon-chart]"),
     shannonLegend: document.querySelector("[data-shannon-legend]"),
+    diversityMetricSelect: document.querySelector("[data-diversity-metric]"),
+    diversityGroupingSelect: document.querySelector("[data-diversity-grouping]"),
     exactGrid: document.querySelector("[data-exact-grid]"),
     exactOrganSelect: document.querySelector("[data-exact-organ-select]"),
     exactSiteSelect: document.querySelector("[data-exact-site-select]"),
@@ -455,16 +457,23 @@
     dom.exactSiteSelect.addEventListener("change", () => {
       selectSiteEverywhere(state.activeOrgan, dom.exactSiteSelect.value);
     });
-    document.querySelectorAll("[data-diversity-metric]").forEach((button) => button.addEventListener("click", () => {
-      state.diversityMetric = button.dataset.diversityMetric;
-      document.querySelectorAll("[data-diversity-metric]").forEach((node) => node.classList.toggle("active", node === button));
+    dom.diversityMetricSelect.addEventListener("change", () => {
+      state.diversityMetric = dom.diversityMetricSelect.value;
+      syncDiversityControls();
       renderShannonChart(selectedSite(state.activeOrgan));
-    }));
-    document.querySelectorAll("[data-diversity-grouping]").forEach((button) => button.addEventListener("click", () => {
-      state.diversityGrouping = button.dataset.diversityGrouping;
-      document.querySelectorAll("[data-diversity-grouping]").forEach((node) => node.classList.toggle("active", node === button));
+    });
+    dom.diversityGroupingSelect.addEventListener("change", () => {
+      state.diversityGrouping = dom.diversityGroupingSelect.value;
+      syncDiversityControls();
       renderShannonChart(selectedSite(state.activeOrgan));
-    }));
+    });
+  }
+
+  function syncDiversityControls() {
+    for (const [select, value] of [[dom.diversityMetricSelect, state.diversityMetric], [dom.diversityGroupingSelect, state.diversityGrouping]]) {
+      select.value = value;
+      select.dataset.tooltip = select.selectedOptions[0]?.dataset.tooltip || "";
+    }
   }
 
   function selectSiteEverywhere(organ, siteId) {
@@ -487,8 +496,7 @@
     state.diversityMetric = "effective";
     state.diversityGrouping = moderateOrLower ? "pooled" : "sample";
     document.querySelectorAll("[data-age-mode]").forEach((button) => button.classList.toggle("active", button.dataset.ageMode === state.ageMode));
-    document.querySelectorAll("[data-diversity-metric]").forEach((button) => button.classList.toggle("active", button.dataset.diversityMetric === state.diversityMetric));
-    document.querySelectorAll("[data-diversity-grouping]").forEach((button) => button.classList.toggle("active", button.dataset.diversityGrouping === state.diversityGrouping));
+    syncDiversityControls();
   }
 
   function renderDetail() {
@@ -768,6 +776,11 @@
     dom.shannonLegend.innerHTML = "";
   }
 
+  function formatExactPercent(percent) {
+    if (percent > 0 && percent < 0.005) return "< 0.01%";
+    return `${percent.toFixed(percent > 0 && percent < 0.05 ? 2 : 1)}%`;
+  }
+
   function renderExactGrid(site) {
     const values = site.exact_compositions?.ages;
     if (!values) {
@@ -790,21 +803,23 @@
     scale.setAttribute("aria-label", `Percent abundance: 0 to ${scaleMax} percent`);
     const siteCoverage = new Map((site.shannon?.ages || []).map((row) => [String(row.key), row.n || 0]));
     const totalPSMs = new Map((site.shannon?.ages || []).map((row) => [String(row.key), row.pooled?.glycosite_psms]));
-    const header = `<div class="exact-age-heading"><span>Age (months)</span></div><div class="exact-row exact-head"><span class="exact-name">Composition</span>${keys.map((key) => `<span class="exact-header">${escapeHTML(key)}</span>`).join("")}</div>`;
+    const header = `<div class="exact-age-heading"><span><span>Age (months)</span></span></div><div class="exact-row exact-head"><span class="exact-name" aria-hidden="true"></span>${keys.map((key) => `<span class="exact-header">${escapeHTML(key)}</span>`).join("")}</div>`;
     const rows = names.map((name) => {
+      const displayName = name.replace(/NeuAc/g, "Neu5Ac").replace(/NeuGc/g, "Neu5Gc");
       const type = byAge.map((rows) => rows.get(name)?.glycan_type).find(Boolean) || "undecorated";
       const cells = byAge.map((ageRows, index) => {
         const row = ageRows.get(name);
         const detected = (siteCoverage.get(keys[index]) || 0) > 0;
         const percent = row?.pooled_percent ?? 0;
+        const displayPercent = formatExactPercent(percent);
         const psm = detected ? row?.psm ?? 0 : null;
         const color = heatColor(percent / scaleMax);
         const ageText = `${keys[index]} ${keys[index] === "1" ? "month" : "months"}`;
-        const tooltip = `${name} · ${CLASS_LABELS[type] || type} · ${ageText} · ${psm === null ? "Site not detected" : `${percent.toFixed(1)}% of pooled glycoPSMs · ${formatNumber(psm)}/${formatNumber(totalPSMs.get(keys[index]))} glycoPSMs`}`;
-        return `<button type="button" class="exact-cell ${detected ? "" : "missing"}" style="background:${color}" aria-label="${escapeHTML(tooltip)}" data-tooltip="${escapeHTML(tooltip)}"><span class="exact-value" style="color:${percent / scaleMax > .72 ? "#182020" : "#fff"}">${detected ? `${percent.toFixed(1)}%` : "—"}</span></button>`;
+        const tooltip = `${displayName} · ${CLASS_LABELS[type] || type} · ${ageText} · ${psm === null ? "Site not detected" : `${displayPercent} of pooled glycoPSMs · ${formatNumber(psm)}/${formatNumber(totalPSMs.get(keys[index]))} glycoPSMs`}`;
+        return `<button type="button" class="exact-cell ${detected ? "" : "missing"}" style="background:${color}" aria-label="${escapeHTML(tooltip)}" data-tooltip="${escapeHTML(tooltip)}"><span class="exact-value" style="color:${percent / scaleMax > .72 ? "#182020" : "#fff"}">${detected ? escapeHTML(displayPercent) : "—"}</span></button>`;
       }).join("");
-      const shortName = name.replace(/HexNAc\((\d+)\)/g, "N$1 ").replace(/Hex\((\d+)\)/g, "H$1 ").replace(/Fuc\((\d+)\)/g, "F$1 ").replace(/NeuAc\((\d+)\)/g, "A$1 ").replace(/NeuGc\((\d+)\)/g, "G$1 ").replace(/Phospho\((\d+)\)/g, "P$1 ").trim();
-      return `<div class="exact-row"><span class="exact-name" title="${escapeHTML(name)}">${escapeHTML(shortName)}<i class="legend-swatch" style="background:${classPaint(type)}"></i></span>${cells}</div>`;
+      const shortName = displayName.replace(/HexNAc\((\d+)\)/g, "N$1 ").replace(/Hex\((\d+)\)/g, "H$1 ").replace(/Fuc\((\d+)\)/g, "F$1 ").replace(/Neu5Ac\((\d+)\)/g, "S$1 ").replace(/Neu5Gc\((\d+)\)/g, "G$1 ").replace(/Phospho\((\d+)\)/g, "P$1 ").trim();
+      return `<div class="exact-row"><span class="exact-name" title="${escapeHTML(displayName)}">${escapeHTML(shortName)}<i class="legend-swatch" style="background:${classPaint(type)}"></i></span>${cells}</div>`;
     }).join("");
     dom.exactGrid.innerHTML = header + rows;
     dom.exactGrid.style.setProperty("--exact-columns", keys.length);
@@ -888,7 +903,8 @@
         const valueA = vectorA.get(name) || 0, valueB = vectorB.get(name) || 0;
         return `<tr><th><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</th><td>${fmt(valueA, 1)}%</td><td>${fmt(valueB, 1)}%</td><td>${valueB - valueA >= 0 ? "+" : ""}${fmt(valueB - valueA, 1)} pp</td></tr>`;
       }).join("");
-      dom.pairwiseList.innerHTML = `${selector}<div class="comparison-columns">${profile(a, statsA, vectorA, labelA)}${profile(b, statsB, vectorB, labelB)}</div><div class="comparison-distance">${metric("Total variation distance (TVD)", `${fmt(totalVariation, 1)}%`)}<div class="distance-track"><i style="width:${Math.min(100, totalVariation)}%"></i></div></div><div class="comparison-table-wrap"><table><thead><tr><th>Glycan type</th><th>${sameOrgan ? "Glycosite A" : "Dataset A"}</th><th>${sameOrgan ? "Glycosite B" : "Dataset B"}</th><th>${sameOrgan ? "Glycosite B − A" : "Dataset B − A"}</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+      const distanceMetric = `<div class="comparison-distance"><div class="comparison-metric"><span>Total variation distance (TVD)</span><div class="comparison-distance-value"><strong>${fmt(totalVariation, 1)}%</strong><div class="distance-track" aria-hidden="true"><i style="width:${Math.min(100, totalVariation)}%"></i></div></div></div></div>`;
+      dom.pairwiseList.innerHTML = `${selector}<div class="comparison-columns">${profile(a, statsA, vectorA, labelA)}${profile(b, statsB, vectorB, labelB)}</div>${distanceMetric}<div class="comparison-table-wrap"><table><thead><tr><th>Glycan type</th><th>${sameOrgan ? "Glycosite A" : "Dataset A"}</th><th>${sameOrgan ? "Glycosite B" : "Dataset B"}</th><th>${sameOrgan ? "Glycosite B − A" : "Dataset B − A"}</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
     }
     bindMode();
     dom.pairwiseList.querySelector("[data-pair-shared-site]")?.addEventListener("change", (event) => {
@@ -1039,7 +1055,7 @@
       point.classList.toggle("selected-site", selected);
       point.setAttribute("aria-pressed", String(selected));
     });
-    dom.tvdPreviewTitle.textContent = "Loading glycosite…";
+    dom.tvdPreviewTitle.textContent = "N-glycosite composition with age";
     dom.tvdPreviewChart.innerHTML = "";
     dom.tvdPreviewLegend.innerHTML = "";
     state.tvdPreviewSite = null;
@@ -1050,7 +1066,7 @@
       if (!site) throw new Error(`Glycosite ${siteId} is absent from ${organ}`);
       state.tvdPreviewSite = site;
       const href = `#explore/${encodeURIComponent(proteinId)}?${new URLSearchParams({ organ, site: siteId })}`;
-      dom.tvdPreviewTitle.innerHTML = `<a href="${escapeHTML(href)}" data-tvd-preview-open>${escapeHTML(site.label || `${indexRow.gene} N${site.position}`)}</a>`;
+      dom.tvdPreviewTitle.innerHTML = `N-glycosite composition with age: <a href="${escapeHTML(href)}" data-tvd-preview-open style="color:${ORGAN_COLORS[organ]}">${escapeHTML(site.label || `${indexRow.gene} N${site.position}`)}</a>`;
       renderClassChart(site, dom.tvdPreviewChart, dom.tvdPreviewLegend, "age_bins");
       dom.tvdPreviewTitle.querySelector("a").onclick = async (event) => {
         event.preventDefault();
