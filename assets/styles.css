@@ -118,10 +118,7 @@ a { color: inherit; }
   place-items: center;
   overflow: hidden;
   padding: 132px 30px 55px;
-  background:
-    radial-gradient(circle at 87% 9%, rgba(156, 221, 211, .32), transparent 31%),
-    radial-gradient(circle at 10% 88%, rgba(255, 255, 255, .85), transparent 28%),
-    linear-gradient(160deg, #f7f8f3 45%, #ecf5f1 100%);
+  background: var(--paper);
 }
 .home-view::before {
   content: "";
