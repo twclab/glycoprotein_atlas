@@ -9,6 +9,7 @@
   const classLabel = (name) => CLASS_LABELS[name] || (name === "mixed" ? "Mixed" : name);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const num = (v) => Number(v).toLocaleString("en-US");
+  const glycoPSMCount = (v, qualifier = "") => `${num(v)} ${qualifier ? `${qualifier} ` : ""}${Number(v) === 1 ? "glycoPSM" : "glycoPSMs"}`;
   const fmt = (v) => Number(v).toFixed(1);
   const cache = new Map();
   const profiling = new URLSearchParams(location.search).has('profileComparisons');
@@ -22,7 +23,7 @@
     if (profiling) console.info('ATLAS_PROFILE '+JSON.stringify({operation,milliseconds:+(performance.now()-start).toFixed(2),...extra}));
   }
   async function get(file) {
-    if (!cache.has(file)) cache.set(file, fetch(`data/comparisons/${file}?v=2026-10-24-composition`).then(r => {
+    if (!cache.has(file)) cache.set(file, fetch(`data/comparisons/${file}?v=2026-10-29-coverage-tier`).then(r => {
       if (!r.ok) throw new Error(`${file}: ${r.status}`);
       return r.json();
     }).catch(error => { cache.delete(file); throw error; }));
@@ -92,7 +93,7 @@
     return CLASS_ORDER.map((name,i)=>values[i]>0?`${classLabel(name)} ${fmt(values[i])}%`:null).filter(Boolean).join(', ');
   }
   function compositionBar(values, organ, glycosite, psm) {
-    const description = `${glycosite} · ${labels[organ]} · ${num(psm)} total glycoPSMs\n${compositionDescription(values)}`;
+    const description = `${glycosite} · ${labels[organ]} · ${glycoPSMCount(psm, "total")}\n${compositionDescription(values)}`;
     return `<div class="comparison-composition-bar composition-bar" role="img" aria-label="${esc(description)}" data-hover-label="${esc(description)}">${CLASS_ORDER.map((name,i)=>values[i]>0?`<i style="width:${values[i]}%;background:${paint(name)}"></i>`:'').join('')}</div>`;
   }
   function changeDetails(row) {
@@ -109,8 +110,9 @@
   function hitRows(rows, { organ, ageHits = false, startIndex = 0 } = {}) {
     return rows.map((row,index) => {
       const a = organ || row.organs[0], b = row.organs?.[1], selected = !ageHits && row.pair===inter.pair && row.site_key===inter.selectedSite;
+      const tier = Number.isInteger(row.coverage_tier) && row.coverage_tier >= 0 && row.coverage_tier <= 7 ? `${row.coverage_tier}/7` : '—';
       const cells = ageHits
-        ? `<td>${fmt(row.percent_difference)}</td><td>${Number(row.p_value).toExponential(2)}</td><td>${swatch(row.loss)}${esc(classLabel(row.loss))} → ${swatch(row.gain)}${esc(classLabel(row.gain))}${row.changes?`<details class="change-details" data-change-site="${esc(row.site_key)}"><summary>Glycan type composition changes</summary></details>`:''}</td>`
+        ? `<td>${fmt(row.percent_difference)}</td><td>${Number(row.p_value).toExponential(2)}</td><td>${tier}</td><td>${swatch(row.loss)}${esc(classLabel(row.loss))} → ${swatch(row.gain)}${esc(classLabel(row.gain))}${row.changes?`<details class="change-details" data-change-site="${esc(row.site_key)}"><summary>Glycan type composition changes</summary></details>`:''}</td>`
         : `<td><div class="comparison-pair"><span>${esc(labels[a])}</span><span>${esc(labels[b])}</span></div></td><td><div class="composition-bar-pair">${compositionBar(row.composition_a,a,row.glycosite,row.psm_a)}${compositionBar(row.composition_b,b,row.glycosite,row.psm_b)}</div></td><td>${pairedWeightedValues(row.effective_a,row.effective_b,[a,b])}</td><td>${fmt(row.tvd)}</td>`;
       return `<tr class="${ageHits?'':'site-row'} ${selected?'selected-site':''}" ${selected?'data-selected-site tabindex="-1"':''} ${ageHits?'':`aria-rowindex="${startIndex+index+2}"`}><th scope="row"><a data-comparison-site data-hover-label="${esc(`${row.glycosite} · ${row.protein_id} · ${labels[a]}${b?` v ${labels[b]}`:''} · Open in Explore`)}" href="${esc(siteHref(row, a, b))}">${esc(row.glycosite)}</a><small>${esc(row.protein_id)}${ageHits && row.organs ? ` · ${esc(row.organs.map(x => labels[x]).join(' v '))}` : ''}</small></th>${cells}</tr>`;
     }).join('');
@@ -120,8 +122,8 @@
   function hitTable(rows, options = {}) {
     const { ageHits = false, totalRows = rows.length, before = 0, after = 0 } = options;
     if (!totalRows) return emptyList;
-    const columns = ageHits ? 4 : 5;
-    return `<table class="hit-table ${ageHits?'age-hit-table':'inter-hit-table'}" aria-rowcount="${totalRows+1}" style="--comparison-row-height:${ROW_HEIGHT}px">${ageHits?'':'<colgroup><col style="width:18%"><col style="width:17%"><col style="width:31%"><col style="width:18%"><col style="width:16%"></colgroup>'}<thead><tr><th scope="col">Glycosite</th>${ageHits ? '<th scope="col">TVD (%)</th><th scope="col">P value</th><th scope="col">Dominant loss → Dominant gain</th>' : '<th scope="col">Comparison</th><th scope="col">Glycosite composition</th><th scope="col">Weighted glycan types</th><th scope="col">TVD (%)</th>'}</tr></thead><tbody>${spacer(before,columns)}${hitRows(rows,options)}${spacer(after,columns)}</tbody></table>`;
+    const columns = 5;
+    return `<table class="hit-table ${ageHits?'age-hit-table':'inter-hit-table'}" aria-rowcount="${totalRows+1}" style="--comparison-row-height:${ROW_HEIGHT}px">${ageHits?'<colgroup><col style="width:23%"><col style="width:12%"><col style="width:14%"><col style="width:16%"><col style="width:35%"></colgroup>':'<colgroup><col style="width:18%"><col style="width:17%"><col style="width:31%"><col style="width:18%"><col style="width:16%"></colgroup>'}<thead><tr><th scope="col">Glycosite</th>${ageHits ? '<th scope="col">TVD (%)</th><th scope="col">P value</th><th scope="col">Coverage tier</th><th scope="col">Dominant loss → Dominant gain</th>' : '<th scope="col">Comparison</th><th scope="col">Glycosite composition</th><th scope="col">Weighted glycan types</th><th scope="col">TVD (%)</th>'}</tr></thead><tbody>${spacer(before,columns)}${hitRows(rows,options)}${spacer(after,columns)}</tbody></table>`;
   }
   function quantile(sorted, p) {
     const i = (sorted.length - 1) * p, j = Math.floor(i);

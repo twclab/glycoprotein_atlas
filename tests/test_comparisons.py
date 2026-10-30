@@ -81,6 +81,8 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(record['n_direction_unavailable'], 0)
             for row in actual:
                 self.assertEqual({k: row[k] for k in expected[row['site_key']]}, expected[row['site_key']])
+                self.assertIsInstance(row['coverage_tier'], int)
+                self.assertIn(row['coverage_tier'], range(8))
                 self.assertIn(row['loss'], (*metrics.CLASSES, 'mixed'))
                 self.assertIn(row['gain'], (*metrics.CLASSES, 'mixed'))
 
@@ -90,6 +92,7 @@ class ReleaseTests(unittest.TestCase):
             rows=json.loads((self.data/f'atlas_{organ}_O_vs_Y_hits.json').read_text())
             self.assertEqual(len(rows), n)
         brain=json.loads((self.data/'atlas_brain_O_vs_Y_hits.json').read_text())
+        self.assertEqual(next(r['coverage_tier'] for r in brain if r['glycosite']=='Stbd1 N135'), 3)
         self.assertEqual(sum(r['gain']=='paucimannose' for r in brain), 26)
         self.assertEqual(sum(r['loss']=='paucimannose' for r in brain), 1)
         mog=next(r for r in brain if r['glycosite']=='Mog N59')

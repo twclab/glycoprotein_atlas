@@ -5,6 +5,38 @@ const path = require('node:path');
 const { ROW_HEIGHT, windowRange, changeCounts } = require('../assets/comparison-layout.js');
 const data = name => JSON.parse(fs.readFileSync(path.join(__dirname, '../data/comparisons', name)));
 
+test('age-group key is visible only for grouped ages and uses cohort-specific months', () => {
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(html, /<p class="age-bin-key" data-age-bin-key>Y = Young \(1–6 months\)&#10;MA = Middle-aged \(9–16 months\)&#10;O = Old \(19–28 months\)<\/p>/);
+  assert.match(app, /myelin_male: "Y = Young \(3 months\)\\nMA = Middle-aged \(16 months\)\\nO = Old \(29 months\)"/);
+  assert.match(app, /myelin_female: "Y = Young \(3–4 months\)\\nMA = Middle-aged \(13 months\)\\nO = Old \(27 months\)"/);
+  assert.match(app, /dom\.ageBinKey\.hidden = !site \|\| state\.ageMode !== "age_bins"/);
+  assert.match(styles, /\.age-bin-key \{ margin: -3px 0 0; color: var\(--ink-soft\); font-size: 14px; line-height: 1\.4; white-space: pre-line; \}/);
+});
+
+test('numeric glycoPSM counts are singular only for one', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8');
+  const appFormat = app.match(/  function formatNumber\(value\) \{[^\n]+\}/)?.[0];
+  const appCount = app.match(/  function formatGlycoPSMCount\(value, qualifier = ""\) \{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(appFormat && appCount, 'the count formatter is present');
+  const formatCount = new Function(`${appFormat}\n${appCount}\nreturn formatGlycoPSMCount;`)();
+  assert.equal(formatCount(1), '1 glycoPSM');
+  assert.equal(formatCount('1', 'total'), '1 total glycoPSM');
+  assert.equal(formatCount(0), '0 glycoPSMs');
+  assert.equal(formatCount(2, 'total'), '2 total glycoPSMs');
+  const comparisonNum = comparisons.match(/  const num = \(v\) => [^\n]+/)?.[0];
+  const comparisonCount = comparisons.match(/  const glycoPSMCount = \(v, qualifier = ""\) => [^\n]+/)?.[0];
+  assert.ok(comparisonNum && comparisonCount, 'the inter-organ count formatter is present');
+  const formatComparisonCount = new Function(`${comparisonNum}\n${comparisonCount}\nreturn glycoPSMCount;`)();
+  assert.equal(formatComparisonCount(1, 'total'), '1 total glycoPSM');
+  assert.equal(formatComparisonCount(2, 'total'), '2 total glycoPSMs');
+  assert.match(app, /evidence\.textContent = formatGlycoPSMCount\(site\.total_psm\)/);
+  assert.match(comparisons, /glycoPSMCount\(psm, "total"\)/);
+});
+
 test('visible relation labels use spaces around their symbols', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
   const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
@@ -64,6 +96,12 @@ test('exact glycan notation uses S for Neu5Ac and G for Neu5Gc', () => {
   assert.doesNotMatch(html, /A: NeuAc|G: NeuGc/);
 });
 
+test('exact glycan values keep the normal cursor', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(styles, /\.exact-cell \{[^}]*cursor: default;/);
+  assert.doesNotMatch(styles, /\.exact-cell \{[^}]*cursor: help;/);
+});
+
 test('small positive exact-glycan percentages do not display as zero', () => {
   const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
   const formatter = app.match(/  function formatExactPercent\(percent\) \{[\s\S]*?\n  \}/)?.[0];
@@ -120,6 +158,31 @@ test('pairwise TVD bar sits beside its value inside the metric box', () => {
   assert.match(styles, /\.comparison-distance-value \.distance-track \{ flex: 1; min-width: 0; margin-top: 0; \}/);
 });
 
+test('pairwise percentages use two decimals only when either dataset value is small', () => {
+  const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
+  const formatter = app.match(/  function formatPairwisePercentRow\(valueA, valueB\) \{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(formatter, 'the pairwise row formatter exists');
+  const format = new Function(`${formatter}; return formatPairwisePercentRow;`)();
+  assert.deepEqual(format(0.0058726802913, 0.050220972278), ['0.01%', '0.05%', '+0.04 pp']);
+  assert.deepEqual(format(0, 0.05), ['0.00%', '0.05%', '+0.05 pp']);
+  assert.deepEqual(format(1.3154803852, 3.5556448373), ['1.3%', '3.6%', '+2.2 pp']);
+  assert.deepEqual(format(9.6605590792, 12.6456408196), ['9.7%', '12.6%', '+3.0 pp']);
+  assert.deepEqual(format(66.4258867747, 61.6110887907), ['66.4%', '61.6%', '-4.8 pp']);
+  assert.deepEqual(format(0.001, 0.003), ['< 0.01%', '< 0.01%', '+0.002 pp']);
+  assert.deepEqual(format(0.003, 0.001), ['< 0.01%', '< 0.01%', '-0.002 pp']);
+  assert.deepEqual(format(0, 0), ['0.0%', '0.0%', '0.0 pp']);
+  assert.match(app, /const \[displayA, displayB, displayDifference\] = formatPairwisePercentRow\(valueA, valueB\);/);
+});
+
+test('pairwise table uses compact left-aligned white-header styling', () => {
+  const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
+  assert.match(styles, /\.comparison-table-wrap table \{[^}]*font-size: 14px;/);
+  assert.match(styles, /\.comparison-table-wrap th, \.comparison-table-wrap td \{[^}]*padding: 5px 7px; line-height: 16px; text-align: left;/);
+  assert.match(styles, /\.comparison-table-wrap tbody th \{ font-weight: 400; \}/);
+  assert.match(styles, /\.comparison-table-wrap thead th \{ background: white;/);
+  assert.match(styles, /\.comparison-profile > strong \{[^}]*color: var\(--ink-soft\);/);
+});
+
 test('heterogeneity metric and calculation method use synchronized dropdowns', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
   const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
@@ -167,6 +230,14 @@ test('age and inter-organ card headings share one size and default text color', 
   assert.match(css, /\.comparison-page \{ --comparison-card-title-size: 20px;/);
   assert.match(css, /\.age-selection strong \{ color: var\(--ink\); font-size: var\(--comparison-card-title-size\);/);
   assert.match(css, /\.comparison-card h3 \{[^}]*color: var\(--ink\); font-size: var\(--comparison-card-title-size\);/);
+});
+
+test('age hit columns are left aligned and use balanced widths', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
+  const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.js'), 'utf8');
+  assert.match(css, /\.age-hit-table \{ min-width: 505px; table-layout: fixed; \}/);
+  assert.match(css, /\.age-hit-table thead th, \.age-hit-table tbody th, \.age-hit-table tbody td \{ text-align: left; vertical-align: top; \}/);
+  assert.match(comparisons, /<colgroup><col style="width:23%"><col style="width:12%"><col style="width:14%"><col style="width:16%"><col style="width:35%"><\/colgroup>/);
 });
 
 test('myelin labels use lowercase female and male across views', () => {

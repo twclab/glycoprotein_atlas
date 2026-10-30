@@ -163,17 +163,19 @@ def build(root, output):
             if row['p_value'] >= .05:
                 continue
             site = site_lookup.get((organ, row['site_key']))
+            coverage_tier = site.get('site_psm_depth_tier') if site else None
             bins = site['glycan_classes']['age_bins'] if site else {}
             va, vb = vector(bins.get(a_key, [])), vector(bins.get(b_key, []))
             if va is None or vb is None:
-                hits.append(dict(row, loss='unavailable', gain='unavailable', changes=None))
+                hits.append(dict(row, coverage_tier=coverage_tier,
+                                 loss='unavailable', gain='unavailable', changes=None))
                 unavailable += 1
                 continue
             # Direction and reported TVD must describe the same composition estimator.
             if not math.isclose(tvd(va, vb), row['percent_difference'], abs_tol=1e-5):
                 raise ValueError(f'Age TVD estimator mismatch: {dataset} {name} {row["site_key"]}')
             loss, gain = dominant_change(va, vb)
-            hits.append(dict(row, loss=loss, gain=gain,
+            hits.append(dict(row, coverage_tier=coverage_tier, loss=loss, gain=gain,
                              changes=[round(x-y, 8) for x, y in zip(va, vb)]))
         filename = f'{dataset}_{name}_hits.json'
         write(filename, hits)

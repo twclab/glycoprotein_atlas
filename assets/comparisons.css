@@ -87,7 +87,11 @@
 .inter-metric-values { align-items: center; color: var(--ink); font-size: 14px; font-weight: 600; }
 .comparison-composition-bar { display: flex; height: 18px; overflow: hidden; border-radius: 3px; background: var(--gray-100); outline: 1px solid var(--gray-100); }
 .comparison-composition-bar i { display: block; height: 100%; flex-shrink: 0; }
+.age-hit-table { min-width: 505px; table-layout: fixed; }
 .age-hit-table td:last-child { min-width: 170px; }
+.age-hit-table th:nth-child(4), .age-hit-table td:nth-child(4) { white-space: nowrap; }
+.age-hit-table thead th, .age-hit-table tbody th, .age-hit-table tbody td { text-align: left; vertical-align: top; }
+.age-hit-table .change-details dl { text-align: left; }
 .age-hit-table td .legend-swatch, .change-details dt .legend-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: baseline; }
 .change-details { margin-top: 10px; font-size: 11px; }
 .change-details summary { color: var(--teal-900); cursor: pointer; }

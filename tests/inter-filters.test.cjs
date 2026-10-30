@@ -31,6 +31,16 @@ function browser() {
   return {api: context.window.ATLAS_COMPARISONS, node, requested};
 }
 
+test('age-comparison hits show the source coverage tier in a separate column', async () => {
+  const {api, node} = browser();
+  await api.renderAge({dataset: 'atlas_brain', comparison: 'O_vs_Y', query: ''});
+  const table = node('[data-age-hits]').innerHTML;
+  assert.match(table, /<th scope="col">Glycosite<\/th><th scope="col">TVD \(%\)<\/th><th scope="col">P value<\/th><th scope="col">Coverage tier<\/th><th scope="col">Dominant loss → Dominant gain<\/th>/);
+  const firstRow = table.match(/<tr class="[^"]*"[^>]*>[\s\S]*?<\/tr>/)?.[0];
+  assert.ok(firstRow, 'the first age hit is rendered');
+  assert.match(firstRow, /Stbd1 N135[\s\S]*?<td>46\.9<\/td><td>3\.89e-4<\/td><td>3\/7<\/td>/);
+});
+
 test('only pooled atlas and brain/myelin scopes are offered', async () => {
   const {api, node, requested} = browser();
   await api.loadInter();

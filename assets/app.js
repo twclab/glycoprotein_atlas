@@ -5,6 +5,11 @@
   const ORGAN_LABELS = { brain: "Brain", spleen: "Spleen", liver: "Liver", kidney: "Kidney", plasma: "Plasma", myelin_male: "Myelin (male)", myelin_female: "Myelin (female)" };
   const AGE_BINS = ["Y", "MA", "O"];
   const AGE_BIN_LABELS = { Y: "Y", MA: "MA", O: "O" };
+  const AGE_BIN_KEYS = {
+    atlas: "Y = Young (1–6 months)\nMA = Middle-aged (9–16 months)\nO = Old (19–28 months)",
+    myelin_male: "Y = Young (3 months)\nMA = Middle-aged (16 months)\nO = Old (29 months)",
+    myelin_female: "Y = Young (3–4 months)\nMA = Middle-aged (13 months)\nO = Old (27 months)",
+  };
   const PAGE_TITLES = {
     methods: "Methods",
     contact: "Contact",
@@ -66,6 +71,7 @@
     segmentLegend: document.querySelector("[data-segment-legend]"),
     organSelect: document.querySelector("[data-organ-select]"),
     siteSelect: document.querySelector("[data-global-site-select]"),
+    ageBinKey: document.querySelector("[data-age-bin-key]"),
     siteMetrics: document.querySelector("[data-site-metrics]"),
     classChart: document.querySelector("[data-class-chart]"),
     classLegend: document.querySelector("[data-class-legend]"),
@@ -539,7 +545,7 @@
     const tierLabel = tier === 0 ? "Insufficient" : tier === 1 ? "Low" : tier <= 4 ? "Moderate" : tier <= 6 ? "High" : "Ultra high";
     const metrics = [
       ["Detected samples", `${formatNumber(detected)}/${formatNumber(possible)}`],
-      ["Site evidence", `${formatNumber(site.total_psm)} total glycoPSMs · ${detected ? formatNumber(Math.round(site.total_psm / detected)) : "—"} average per detected sample`],
+      ["Site evidence", `${formatGlycoPSMCount(site.total_psm, "total")} · ${detected ? formatNumber(Math.round(site.total_psm / detected)) : "—"} average per detected sample`],
       ["Glycosite coverage tier", `${tier}/7 · ${tierLabel}`],
       ["Observed glycans", formatNumber(pooled.observed_glycans)],
       ["Observed glycan types", formatNumber(pooled.observed_glycan_types)],
@@ -552,6 +558,8 @@
 
   function renderDetailCharts() {
     const site = selectedSite(state.activeOrgan);
+    dom.ageBinKey.textContent = AGE_BIN_KEYS[state.activeOrgan] || AGE_BIN_KEYS.atlas;
+    dom.ageBinKey.hidden = !site || state.ageMode !== "age_bins";
     renderExactControls(site);
     document.querySelector("[data-diversity-title]").textContent = "N-glycosite heterogeneity with age";
     renderProteinChart();
@@ -768,7 +776,7 @@
       const upper = y(Math.min(max, value(row) + (sem || 0)));
       const lower = y(Math.max(0, value(row) - (sem || 0)));
       const error = Number.isFinite(sem) ? `<path d="M${px},${upper}V${lower}M${px - 3.5},${upper}H${px + 3.5}M${px - 3.5},${lower}H${px + 3.5}" stroke="#28768a" stroke-width="1.1" opacity=".86"/>` : "";
-      const tooltip = `${labels[index]} · ${pooled ? "pooled glycoPSMs" : "mean across detected samples"} · ${effective ? "weighted glycan types" : "Shannon H"} ${value(row).toFixed(3)}${Number.isFinite(sem) ? ` ± ${sem.toFixed(3)} SEM` : ""} · ${pooled ? row.pooled.glycosite_psms + " glycoPSMs" : "n = " + row.n}`;
+      const tooltip = `${labels[index]} · ${pooled ? "pooled glycoPSMs" : "mean across detected samples"} · ${effective ? "weighted glycan types" : "Shannon H"} ${value(row).toFixed(3)}${Number.isFinite(sem) ? ` ± ${sem.toFixed(3)} SEM` : ""} · ${pooled ? formatGlycoPSMCount(row.pooled.glycosite_psms) : "n = " + row.n}`;
       return `${error}<circle cx="${px}" cy="${py}" r="3.4" fill="#28768a" data-tooltip="${escapeHTML(tooltip)}"></circle>`;
     }).join("");
     const axisTitle = effective ? "Weighted glycan types" : "Heterogeneity score (Shannon H)";
@@ -815,7 +823,7 @@
         const psm = detected ? row?.psm ?? 0 : null;
         const color = heatColor(percent / scaleMax);
         const ageText = `${keys[index]} ${keys[index] === "1" ? "month" : "months"}`;
-        const tooltip = `${displayName} · ${CLASS_LABELS[type] || type} · ${ageText} · ${psm === null ? "Site not detected" : `${displayPercent} of pooled glycoPSMs · ${formatNumber(psm)}/${formatNumber(totalPSMs.get(keys[index]))} glycoPSMs`}`;
+        const tooltip = `${displayName} · ${CLASS_LABELS[type] || type} · ${ageText} · ${psm === null ? "Site not detected" : `${displayPercent} of pooled glycoPSMs · ${formatNumber(psm)}/${formatGlycoPSMCount(totalPSMs.get(keys[index]))}`}`;
         return `<button type="button" class="exact-cell ${detected ? "" : "missing"}" style="background:${color}" aria-label="${escapeHTML(tooltip)}" data-tooltip="${escapeHTML(tooltip)}"><span class="exact-value" style="color:${percent / scaleMax > .72 ? "#182020" : "#fff"}">${detected ? escapeHTML(displayPercent) : "—"}</span></button>`;
       }).join("");
       const shortName = displayName.replace(/HexNAc\((\d+)\)/g, "N$1 ").replace(/Hex\((\d+)\)/g, "H$1 ").replace(/Fuc\((\d+)\)/g, "F$1 ").replace(/Neu5Ac\((\d+)\)/g, "S$1 ").replace(/Neu5Gc\((\d+)\)/g, "G$1 ").replace(/Phospho\((\d+)\)/g, "P$1 ").trim();
@@ -834,6 +842,21 @@
     const channel = (hex, offset) => Number.parseInt(hex.slice(offset, offset + 2), 16);
     const mix = (offset) => Math.round(channel(stops[index], offset) * (1 - t) + channel(stops[index + 1], offset) * t);
     return `rgb(${mix(1)},${mix(3)},${mix(5)})`;
+  }
+
+  function formatPairwisePercentRow(valueA, valueB) {
+    const difference = valueB - valueA;
+    const digits = [valueA, valueB].some(value => value > 0 && value < 0.1) ? 2 : 1;
+    const display = (value, unit) => {
+      const magnitude = Math.abs(value);
+      const sign = value > 0 && unit === "pp" ? "+" : value < 0 ? "-" : "";
+      if (magnitude > 0 && magnitude < 0.5 * 10 ** -digits) {
+        if (unit === "%") return `< ${(10 ** -digits).toFixed(digits)}%`;
+        return `${sign}${magnitude.toFixed(Math.max(digits, Math.ceil(-Math.log10(magnitude))))} pp`;
+      }
+      return `${sign}${magnitude.toFixed(digits)}${unit === "%" ? "%" : " pp"}`;
+    };
+    return [display(valueA, "%"), display(valueB, "%"), display(difference, "pp")];
   }
 
   function renderPairwise(site) {
@@ -901,7 +924,8 @@
       const profile = (row, stats, vector, label) => `<div class="comparison-column">${bar(vector, label)}<div class="comparison-site-metrics">${metric("Total glycoPSMs", formatNumber(row.total_psm))}${metric("Detected samples", `${formatNumber(stats.n_samples_detected)}/${formatNumber(stats.n_samples_possible)}`)}${metric("Glycosite heterogeneity score (Shannon H)", fmt(stats.glycan_type_shannon_h))}${metric("Observed glycan types", formatNumber(stats.observed_glycan_types))}${metric("Weighted glycan types", fmt(stats.effective_glycan_types))}${metric("Dominant glycan type", dominant(row))}</div></div>`;
       const tableRows = classNames.map((name) => {
         const valueA = vectorA.get(name) || 0, valueB = vectorB.get(name) || 0;
-        return `<tr><th><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</th><td>${fmt(valueA, 1)}%</td><td>${fmt(valueB, 1)}%</td><td>${valueB - valueA >= 0 ? "+" : ""}${fmt(valueB - valueA, 1)} pp</td></tr>`;
+        const [displayA, displayB, displayDifference] = formatPairwisePercentRow(valueA, valueB);
+        return `<tr><th><i class="legend-swatch" style="background:${classPaint(name)}"></i>${escapeHTML(CLASS_LABELS[name] || name)}</th><td>${displayA}</td><td>${displayB}</td><td>${displayDifference}</td></tr>`;
       }).join("");
       const distanceMetric = `<div class="comparison-distance"><div class="comparison-metric"><span>Total variation distance (TVD)</span><div class="comparison-distance-value"><strong>${fmt(totalVariation, 1)}%</strong><div class="distance-track" aria-hidden="true"><i style="width:${Math.min(100, totalVariation)}%"></i></div></div></div></div>`;
       dom.pairwiseList.innerHTML = `${selector}<div class="comparison-columns">${profile(a, statsA, vectorA, labelA)}${profile(b, statsB, vectorB, labelB)}</div>${distanceMetric}<div class="comparison-table-wrap"><table><thead><tr><th>Glycan type</th><th>${sameOrgan ? "Glycosite A" : "Dataset A"}</th><th>${sameOrgan ? "Glycosite B" : "Dataset B"}</th><th>${sameOrgan ? "Glycosite B − A" : "Dataset B − A"}</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
@@ -1021,7 +1045,7 @@
         { group: groupA, n: row.n_a, psm: row.psm_a },
         { group: groupB, n: row.n_b, psm: row.psm_b },
       ].sort((a, b) => AGE_BINS.indexOf(a.group) - AGE_BINS.indexOf(b.group));
-      const sampleAttributes = sampleRows.map((sample, index) => `data-tvd-sample-label${index}="Detected ${escapeHTML(groupNames[sample.group] || sample.group)} Samples" data-tvd-sample-value${index}="${formatNumber(sample.n)} (${formatNumber(sample.psm)} total glycoPSMs)"`).join(" ");
+      const sampleAttributes = sampleRows.map((sample, index) => `data-tvd-sample-label${index}="Detected ${escapeHTML(groupNames[sample.group] || sample.group)} Samples" data-tvd-sample-value${index}="${formatNumber(sample.n)} (${formatGlycoPSMCount(sample.psm, "total")})"`).join(" ");
       return `<circle class="${highlighted ? "search-hit" : ""} ${state.tvdSelectedSite === row.site_key ? "selected-site" : ""}" cx="${x(row.percent_difference)}" cy="${y(row.neg_log10_p_value)}" r="${highlighted ? 6.5 : 5}" fill="${highlighted ? "#224B96" : row.p_value < .05 ? "#CD4D2C" : "#78909b"}" fill-opacity="${highlighted ? 1 : .72}" data-tvd-protein="${escapeHTML(row.protein_id)}" data-tvd-site="${escapeHTML(row.site_key)}" data-tvd-dataset="${dom.tvdDataset.value.replace(/^atlas_/, "")}" data-tvd-tooltip data-tvd-title="${escapeHTML(title)}" data-tvd-difference="${row.percent_difference.toFixed(1)}%" data-tvd-p="${Number(row.p_value).toExponential(2)}" ${sampleAttributes} data-tooltip="${escapeHTML(title)}" tabindex="0" role="button" aria-label="Show ${escapeHTML(title)} composition with age" aria-pressed="${state.tvdSelectedSite === row.site_key}"></circle>`;
     };
     const results = query ? visible.filter(matches) : visible;
@@ -1118,7 +1142,7 @@
     header.textContent = `${organ[0].toUpperCase()}${organ.slice(1)} · ${site.position ? `N${site.position}` : site.label}${site.comparison_eligible ? "" : " *"}`;
     const evidence = document.createElement("div");
     evidence.className = "tooltip-psm";
-    evidence.textContent = `${formatNumber(site.total_psm)} glycoPSMs`;
+    evidence.textContent = formatGlycoPSMCount(site.total_psm);
     dom.tooltip.append(header, evidence);
     const vector = pooledClassVector(site);
     orderedClasses([...vector.keys()]).forEach((name) => {
@@ -1271,6 +1295,9 @@
   function announce(message) { dom.live.textContent = message; }
   function normalize(value) { return String(value || "").trim().toLowerCase(); }
   function formatNumber(value) { return value == null || !Number.isFinite(Number(value)) ? "—" : Number(value).toLocaleString("en-US", { maximumFractionDigits: 1 }); }
+  function formatGlycoPSMCount(value, qualifier = "") {
+    return `${formatNumber(value)} ${qualifier ? `${qualifier} ` : ""}${Number(value) === 1 ? "glycoPSM" : "glycoPSMs"}`;
+  }
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
   }
