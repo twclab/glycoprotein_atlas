@@ -271,7 +271,9 @@ test('inter-organ page uses the age page width and top alignment without changin
   const comparisons = fs.readFileSync(path.join(__dirname, '../assets/comparisons.css'), 'utf8');
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
   assert.match(styles, /#tvd\.content-page, #inter-organ\.content-page \{\s*padding: 84px max\(clamp\(20px, 3vw, 50px\), calc\(\(100% - 1600px\) \/ 2\)\) 90px;/);
-  assert.match(styles, /#tvd\.content-page, #inter-organ\.content-page, #methods\.content-page, #contact\.content-page \{\s*background: linear-gradient\(180deg, var\(--paper\), var\(--white\) 45%\);/);
+  assert.match(styles, /\.home-view \{[^}]*background: var\(--paper\);/);
+  assert.match(styles, /\.explore-view \{[^}]*background: var\(--paper\);/);
+  assert.match(styles, /\.content-page \{[^}]*background: var\(--paper\);/);
   assert.match(comparisons, /#inter-organ \.comparison-intro \{ margin-bottom: 8px; \}/);
   assert.match(comparisons, /#inter-organ > \[data-inter-content\] > \.comparison-toolbar \{ align-items: end; margin: 10px 0 6px; \}/);
   assert.match(comparisons, /\.inter-grid \{ grid-template-columns: minmax\(0, 1\.15fr\) minmax\(0, 1fr\); align-items: stretch; \}/);

@@ -118,10 +118,7 @@ a { color: inherit; }
   place-items: center;
   overflow: hidden;
   padding: 132px 30px 55px;
-  background:
-    radial-gradient(circle at 87% 9%, rgba(156, 221, 211, .32), transparent 31%),
-    radial-gradient(circle at 10% 88%, rgba(255, 255, 255, .85), transparent 28%),
-    linear-gradient(160deg, #f7f8f3 45%, #ecf5f1 100%);
+  background: var(--paper);
 }
 .home-view::before {
   content: "";
@@ -439,15 +436,10 @@ a { color: inherit; }
 .content-page {
   min-height: 100svh;
   padding: var(--atlas-page-top) max(var(--atlas-page-gutter), calc((100% - var(--atlas-page-width)) / 2)) 90px;
-  background:
-    radial-gradient(circle at 88% 4%, rgba(174, 226, 219, .34), transparent 25%),
-    linear-gradient(180deg, var(--paper), var(--white) 45%);
+  background: var(--paper);
 }
 #tvd.content-page, #inter-organ.content-page {
   padding: 84px max(clamp(20px, 3vw, 50px), calc((100% - 1600px) / 2)) 90px;
-}
-#tvd.content-page, #inter-organ.content-page, #methods.content-page, #contact.content-page {
-  background: linear-gradient(180deg, var(--paper), var(--white) 45%);
 }
 #tvd .comparison-intro { margin-bottom: 8px; }
 #tvd .tvd-controls { margin: 10px 0 6px; }
