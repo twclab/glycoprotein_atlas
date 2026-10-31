@@ -1053,7 +1053,8 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
 
 @media (min-width: 1001px) {
   .support-grid { align-items: stretch; }
-  .exact-panel { display: flex; flex-direction: column; min-height: 0; }
+  .pairwise-detail-panel, .exact-panel { min-height: 745px; }
+  .exact-panel { display: flex; flex-direction: column; }
   .exact-grid { flex: 1 1 0; height: 0; min-height: 0; overflow: auto; }
 }
 @media (max-width: 1000px) {

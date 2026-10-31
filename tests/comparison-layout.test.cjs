@@ -136,7 +136,8 @@ test('pairwise and exact composition cards align titles and control spacing', ()
 test('exact composition card matches pairwise height with an internal scroll on wide screens', () => {
   const styles = fs.readFileSync(path.join(__dirname, '../assets/styles.css'), 'utf8');
   assert.match(styles, /@media \(min-width: 1001px\) \{\s*\.support-grid \{ align-items: stretch; \}/);
-  assert.match(styles, /\.exact-panel \{ display: flex; flex-direction: column; min-height: 0; \}/);
+  assert.match(styles, /\.pairwise-detail-panel, \.exact-panel \{ min-height: 745px; \}/);
+  assert.match(styles, /\.exact-panel \{ display: flex; flex-direction: column; \}/);
   assert.match(styles, /\.exact-grid \{ flex: 1 1 0; height: 0; min-height: 0; overflow: auto; \}/);
   assert.match(styles, /@media \(max-width: 1000px\) \{\s*\.exact-grid \{ max-height: 520px; overflow: auto; \}/);
 });
