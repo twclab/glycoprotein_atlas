@@ -150,14 +150,16 @@ test('pairwise metric boxes are compact and dataset labels have balanced spacing
   assert.match(styles, /\.comparison-metric \{ min-height: 52px; padding: 6px 10px; border: 1px solid var\(--gray-100\); border-radius: 7px; \}/);
 });
 
-test('pairwise cross-dataset labels use the selected dataset names', () => {
+test('pairwise dropdown headings stay fixed while comparison labels use dataset names', () => {
   const app = fs.readFileSync(path.join(__dirname, '../assets/app.js'), 'utf8');
   const render = app.match(/  function renderPairwise\(site\) \{[\s\S]*?\n  \}/)?.[0];
   assert.ok(render, 'the pairwise renderer exists');
   assert.match(render, /const datasetAName = ORGAN_LABELS\[state\.pairOrganA\];/);
   assert.match(render, /const datasetBName = ORGAN_LABELS\[state\.pairOrganB\];/);
-  assert.match(render, /<label>\$\{escapeHTML\(datasetAName\)\}<select data-pair-organ-a/);
-  assert.match(render, /<label>\$\{escapeHTML\(datasetBName\)\}<select data-pair-organ-b/);
+  assert.match(render, /<label>Organ A<select data-pair-organ-a aria-label="Organ A"/);
+  assert.match(render, /<label>Organ B<select data-pair-organ-b aria-label="Organ B"/);
+  assert.match(render, /const labelA = .*ORGAN_LABELS\[sameOrgan \? state\.pairSiteOrgan : state\.pairOrganA\]/);
+  assert.match(render, /const labelB = .*ORGAN_LABELS\[sameOrgan \? state\.pairSiteOrgan : state\.pairOrganB\]/);
   assert.match(render, /\$\{escapeHTML\(datasetBName\)\} − \$\{escapeHTML\(datasetAName\)\}/);
   assert.doesNotMatch(render, /Dataset A|Dataset B/);
 });

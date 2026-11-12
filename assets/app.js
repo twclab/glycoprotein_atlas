@@ -905,7 +905,7 @@
       : `<label>Glycosite<select data-pair-shared-site>${sharedSiteOptions}</select></label>`;
     const bottomControls = sameOrgan
       ? `<label>Glycosite A<select data-pair-site-a>${siteOptions(state.pairSiteA, state.pairSiteB)}</select></label><label>Glycosite B<select data-pair-site-b>${siteOptions(state.pairSiteB, state.pairSiteA)}</select></label>`
-      : `<label>${escapeHTML(datasetAName)}<select data-pair-organ-a aria-label="First dataset">${organOptions(state.pairOrganA, state.pairOrganB)}</select></label><label>${escapeHTML(datasetBName)}<select data-pair-organ-b aria-label="Second dataset">${organOptions(state.pairOrganB, state.pairOrganA)}</select></label>`;
+      : `<label>Organ A<select data-pair-organ-a aria-label="Organ A">${organOptions(state.pairOrganA, state.pairOrganB)}</select></label><label>Organ B<select data-pair-organ-b aria-label="Organ B">${organOptions(state.pairOrganB, state.pairOrganA)}</select></label>`;
     const selector = `<div class="pairwise-controls"><div class="pairwise-top-row">${modeControl}${secondTopControl}</div><div class="pair-selectors">${bottomControls}</div></div>`;
     if (!a || !b) {
       dom.pairwiseList.innerHTML = `${selector}<p class="empty-note">No second ${sameOrgan ? "site" : "dataset"} is available for this comparison.</p>`;
