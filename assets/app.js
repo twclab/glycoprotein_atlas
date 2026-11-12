@@ -218,7 +218,10 @@
         event.preventDefault();
         const input = form.querySelector("[data-search-input]");
         const result = search(input.value, 1)[0];
-        if (result) await openProtein(result);
+        if (result) {
+          trackProteinSearch(result);
+          await openProtein(result);
+        }
       });
     });
     document.addEventListener("click", (event) => {
@@ -248,7 +251,13 @@
         <small>${escapeHTML(row.protein_id)}<br>${row.n_glycosites} site${row.n_glycosites === 1 ? "" : "s"} · ${row.n_proteome_organs} organ${row.n_proteome_organs === 1 ? "" : "s"}</small>
       </button>`).join("") + (matches.length > 50 ? `<p class="search-empty">Showing 50 of ${formatNumber(matches.length)} matches. Refine your search.</p>` : "");
     container.querySelectorAll("[data-result-id]").forEach((button) => {
-      button.addEventListener("click", async () => openProtein(state.byProtein.get(button.dataset.resultId)));
+      button.addEventListener("click", async () => {
+        const result = state.byProtein.get(button.dataset.resultId);
+        if (result) {
+          trackProteinSearch(result);
+          await openProtein(result);
+        }
+      });
       button.addEventListener("keydown", (event) => {
         if (event.key === "ArrowDown") { event.preventDefault(); button.nextElementSibling?.focus(); }
         if (event.key === "ArrowUp") { event.preventDefault(); (button.previousElementSibling || input).focus(); }
@@ -259,6 +268,12 @@
 
   function search(query, limit = 10) {
     return state.proteinSearch?.search(query, limit) || [];
+  }
+
+  function trackProteinSearch(protein) {
+    if (typeof window.umami?.track === "function") {
+      window.umami.track("protein_search", { protein_id: protein.protein_id });
+    }
   }
 
   function findExact(value) {
