@@ -156,12 +156,11 @@ test('pairwise dropdown headings stay fixed while comparison labels use dataset 
   assert.ok(render, 'the pairwise renderer exists');
   assert.match(render, /const datasetAName = ORGAN_LABELS\[state\.pairOrganA\];/);
   assert.match(render, /const datasetBName = ORGAN_LABELS\[state\.pairOrganB\];/);
-  assert.match(render, /<label>Organ A<select data-pair-organ-a aria-label="Organ A"/);
-  assert.match(render, /<label>Organ B<select data-pair-organ-b aria-label="Organ B"/);
+  assert.match(render, /<label>Dataset A<select data-pair-organ-a aria-label="Dataset A"/);
+  assert.match(render, /<label>Dataset B<select data-pair-organ-b aria-label="Dataset B"/);
   assert.match(render, /const labelA = .*ORGAN_LABELS\[sameOrgan \? state\.pairSiteOrgan : state\.pairOrganA\]/);
   assert.match(render, /const labelB = .*ORGAN_LABELS\[sameOrgan \? state\.pairSiteOrgan : state\.pairOrganB\]/);
   assert.match(render, /\$\{escapeHTML\(datasetBName\)\} − \$\{escapeHTML\(datasetAName\)\}/);
-  assert.doesNotMatch(render, /Dataset A|Dataset B/);
 });
 
 test('pairwise TVD bar sits beside its value inside the metric box', () => {
