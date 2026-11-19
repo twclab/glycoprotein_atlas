@@ -981,9 +981,9 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
 .chart-panel .chart-legend .legend-item { line-height: 1.05; }
 .scientific-chart .age-tick, .scientific-chart .axis-label { font-size: var(--text-axis); }
 .legend-mark { display: block; width: 28px; height: 12px; flex: 0 0 28px; overflow: visible; }
-.protein-legend-entry { max-width: 100%; overflow: visible; }
+.protein-legend-entry { grid-column: 1 / -1; min-width: 0; max-width: 100%; }
 .protein-legend-entry .legend-item { white-space: nowrap; }
-.protein-legend-entry .legend-note { margin-left: 0; color: var(--ink-soft); font-size: 16px; white-space: nowrap; }
+.protein-legend-entry .legend-note { display: block; max-width: 100%; margin-left: 0; color: var(--gray-500); font-size: 12px; line-height: 1.5; text-align: center; white-space: normal; }
 .low-replicate-star { position: static; display: inline-flex; align-items: center; margin-left: 3px; font-size: 2em; line-height: .5; transform: translateY(5px); }
 .chart-panel:has([data-shannon-chart]) { container-type: inline-size; }
 @container (max-width: 330px) {
@@ -1015,10 +1015,6 @@ button, input, select, textarea, .exact-name { font-family: var(--display); }
 .exact-head .exact-name { font-family: var(--sans); font-size: var(--text-axis); font-weight: 400; }
 .exact-head .exact-name { color: var(--axis-ink); }
 .exact-header { color: var(--ink-soft); font-family: var(--sans); font-size: 14px; font-weight: 400; }
-@media (max-width: 1600px) {
-  .chart-panel:has(.protein-legend-entry) { position: relative; }
-  .protein-legend-entry .legend-note { position: absolute; top: 108px; left: 12px; z-index: 2; }
-}
 @media (max-width: 1000px) {
   .scientific-plot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-statistics { grid-column: 1 / -1; }

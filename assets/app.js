@@ -439,7 +439,7 @@
     dom.proteomicsOnlyLinks.querySelectorAll("[data-proteomics-only-organ]").forEach((button) => {
       button.addEventListener("click", () => {
         selectSiteEverywhere(button.dataset.proteomicsOnlyOrgan, null);
-        dom.proteinChart.closest(".chart-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+        dom.proteinChart.closest(".chart-panel").scrollIntoView({ behavior: "smooth", block: "end" });
       });
     });
     dom.segmentConfidenceNote.hidden = !glycoOrgans.some((organ) =>
